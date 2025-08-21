@@ -54,7 +54,6 @@ def send_periodic_emails(config: dict):
             logger.error(f"Error sending periodic email: {e}")
 
 def build_graph(config: dict, checkpointer: InMemorySaver | SqliteSaver):
-    os.environ["OPENAI_API_KEY"] = os.environ["API_KEY"]
     
     graph_builder = StateGraph(State)
 

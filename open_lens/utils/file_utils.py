@@ -2,9 +2,20 @@ import os, sys
 import json
 from loguru import logger
 
+with open("open_lens/tools/openhands_configs/config.toml", "r") as f:
+    oh_config_template = f.read()
+
 def prepare_file_config(thread_id: str, question: str, dataset_path: str, email: str):
     save_path = os.path.join("./outputs", thread_id)
     os.makedirs(save_path, exist_ok=True)
+    
+    oh_config = oh_config_template.replace("{api_key}", os.getenv("OPENAI_API_KEY"))
+    oh_config = oh_config_template.replace("{base_url}", os.getenv("BASE_URL"))
+    oh_config = oh_config_template.replace("{code_model}", os.getenv("CODE_MODEL"))
+    this_config_path = os.path.join(save_path, "openhands_config.toml")
+    with open(this_config_path, "w") as f:
+        f.write(oh_config)
+    logger.info(f"Using OpenHands config: {oh_config}")
 
     init_state = {"question": question, "messages": [], "thread_id": thread_id, "save_path": save_path}
     config = {"save_path": save_path, "thread_id": thread_id, "question": question, "dataset_path": dataset_path, "email": email}

@@ -33,6 +33,7 @@ def run_docker_container(cmd: str, config: dict):
     pwd = os.getcwd()
     workspace_dir = os.path.join(pwd, config["save_path"], "workspace")
     
+    this_openhands_config_path = os.path.join(pwd, config["save_path"], "openhands_config.toml")
     if config["dataset_path"]:
         dataset_path = os.path.join(pwd, config["dataset_path"])
         latex_template_path = os.path.join(pwd, "open_lens/tools/latex_template/neurips")
@@ -41,6 +42,7 @@ def run_docker_container(cmd: str, config: dict):
             "run",
             "-t",
             "--gpus", "all",
+            "-v", f"{this_openhands_config_path}:/helper/config.toml",
             "-v", "./open_lens:/helper/open_lens",
             "-v", f"{workspace_dir}:/workspace",
             "-v", f"{dataset_path}:/workspace/datasets:ro",
@@ -81,7 +83,7 @@ def run_docker_container(cmd: str, config: dict):
         process = subprocess.Popen(docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)  # 合并stdout和stderr  # 行缓冲模式
 
         with open(log_save_path, "a") as f:
-            f.write(f"Process pid: {process.pid}")
+            f.write(f"Process pid: {process.pid}\n\n")
             
         # 实时处理输出流
         output_chunk = ""
@@ -146,7 +148,7 @@ def run_openhands_prompt(prompts, config: dict):
         prompt += postfix
         # 构建在Docker容器中执行的命令
         cmd = (
-            f"cp /helper/open_lens/tools/openhands_configs/config.toml /helper/OpenHands/ && "
+            f"cp /helper/config.toml /helper/OpenHands/ && "
             f"source /helper/open_lens/tools/openhands_configs/openhands_env.sh && "
             f"cd /helper/OpenHands && "
             f"mkdir -p /workspace/manuscript/ && chmod -R 777 /workspace/manuscript/ && cp /workspace/latex_template/*.sty /workspace/manuscript/ &&"

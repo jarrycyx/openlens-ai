@@ -36,8 +36,9 @@ def main():
     
     with sidebar_container_api:
         base_url = st.text_input("API Base URL", value=os.environ.get("BASE_URL", ""))
-        api_key = st.text_input("API Key", value=os.environ.get("API_KEY", ""))
-        model = st.text_input("Model", value=os.environ.get("MODEL", ""))
+        api_key = st.text_input("API Key", value=os.environ.get("OPENAI_API_KEY", ""))
+        model = st.text_input("Chat Model", value=os.environ.get("MODEL", ""))
+        code_model = st.text_input("Code Model", value=os.environ.get("CODE_MODEL", ""))
 
     # 如果有正在运行的监控线程，但 save_path 已更改，则停止旧线程
     if (
@@ -131,10 +132,12 @@ def main():
         if question and dataset_path and model and base_url and api_key and email:
             if model != os.environ.get("MODEL", ""):
                 os.environ["MODEL"] = model
-            if api_key != os.environ.get("API_KEY", ""):
-                os.environ["API_KEY"] = api_key
+            if api_key != os.environ.get("OPENAI_API_KEY", ""):
+                os.environ["OPENAI_API_KEY"] = api_key
             if base_url != os.environ.get("BASE_URL", ""):
                 os.environ["BASE_URL"] = base_url
+            if code_model != os.environ.get("CODE_MODEL", ""):
+                os.environ["CODE_MODEL"] = code_model
             
             st.chat_message("human").write("**Question:** " + question + "\n\n**Dataset Path:** " + dataset_path)
             # 准备配置

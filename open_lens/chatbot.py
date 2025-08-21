@@ -84,7 +84,7 @@ def vector_search(messages: list, query: str, token_cnt: int = 10000):
         "query": query,
         "documents": all_docs_str
     }
-    api_key = os.environ.get("API_KEY", "")
+    api_key = os.environ.get("OPENAI_API_KEY", "")
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}"

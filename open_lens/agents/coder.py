@@ -130,7 +130,7 @@ def build_coder(config: dict) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/Test_20250812190249_What_is_the_prediction_precision_of_CSA-AKI_based_")
+    config, state, last_subgraph = load_state("outputs/OL_20250821133009_What_is_the_pre_istorical_data_2634")
     graph = build_coder(config)
 
     graph.invoke(state)
