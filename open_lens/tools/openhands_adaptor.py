@@ -80,6 +80,9 @@ def run_docker_container(cmd: str, config: dict):
         # 启动子进程（实时流处理核心）
         process = subprocess.Popen(docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)  # 合并stdout和stderr  # 行缓冲模式
 
+        with open(log_save_path, "a") as f:
+            f.write(f"Process pid: {process.pid}")
+            
         # 实时处理输出流
         output_chunk = ""
         pattern = r"(\d{2}:\d{2}:\d{2} - openhands:)" # 用时间戳拆分日志
