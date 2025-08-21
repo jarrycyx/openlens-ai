@@ -168,4 +168,9 @@ def main():
             run_graph(config, graph, save_path, init_state)
 
         else:
-            st.error("Please provide both question and dataset path.")
+            if not question:
+                st.error("Please enter a question.")
+            elif not dataset_path:
+                st.error("Please enter a dataset path.")
+            elif not email:
+                st.error("Please enter an email.")

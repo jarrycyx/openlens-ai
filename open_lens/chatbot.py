@@ -177,25 +177,34 @@ def chatbot_with_context_manager(
 
     
     def format_prompt(state: State):
-    
+        data_show = state["data_show"] if "data_show" in state else ""
         plan = state["plan"] if "plan" in state else ""
         question = state["question"] if "question" in state else ""
         subplan = get_subplan(state)
         literature_report = state["literature_report"] if "literature_report" in state else ""
 
         this_prompt = prompt
+        
         try:
-            if len(literature_report) > 2000*4:
+            if len(data_show) > 4000*4:
+                logger.warning("data_show is too long, clamping with vector search")
+                data_show = vector_search(data_show, prompt, token_cnt=4000)
+            this_prompt = this_prompt.replace("{data_show}", data_show)
+        except Exception as e:
+            logger.warning("Error occurred when formatting literature report", str(e))
+            
+        try:
+            if len(literature_report) > 4000*4:
                 logger.warning("Literature report is too long, clamping with vector search")
-                literature_report = vector_search(literature_report, prompt, token_cnt=2000*4)
+                literature_report = vector_search(literature_report, prompt, token_cnt=4000)
             this_prompt = this_prompt.replace("{literature_report}", literature_report)
         except Exception as e:
             logger.warning("Error occurred when formatting literature report", str(e))
             
         try:
-            if len(plan) > 2000*4:
+            if len(plan) > 4000*4:
                 logger.warning("Plan is too long, clamping with vector search")
-                plan = vector_search(plan, prompt, token_cnt=2000*4)
+                plan = vector_search(plan, prompt, token_cnt=4000)
             this_prompt = this_prompt.replace("{plan}", plan)
         except Exception as e:
             logger.warning("Error occurred when formatting plan", str(e))

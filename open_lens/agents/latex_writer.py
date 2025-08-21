@@ -43,25 +43,6 @@ def build_latex_writer(config: dict) -> StateGraph:
     tools = [report_writer_tool]
     llm_with_tools = llm.bind_tools(tools)
 
-    # def read_reports_node(state: State):
-        
-    #     # 获取工作区中的所有md和txt文件
-    #     workspace_dir = os.path.join(config["save_path"], "workspace")
-    #     md_files = glob.glob(os.path.join(workspace_dir, "*.md"))
-    #     txt_files = glob.glob(os.path.join(workspace_dir, "*.txt"))
-    #     all_files_content = {}
-        
-    #     for file_path in md_files + txt_files:
-    #         try:
-    #             with open(file_path, "r", encoding="utf-8") as f:
-    #                 relative_path = os.path.relpath(file_path, workspace_dir)
-    #                 all_files_content[relative_path] = f.read()
-    #         except Exception as e:
-    #             all_files_content[os.path.basename(file_path)] = f"Error reading file: {str(e)}"
-        
-    #     state["workspace_files"] = all_files_content
-    #     return state
-
     def clear_state(state: State):
         state["messages"] = []
         return state

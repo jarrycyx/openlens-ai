@@ -41,7 +41,7 @@ stop_sending_emails = threading.Event()
 def send_periodic_emails(config: dict):
     """每10分钟发送一次进度邮件"""
     logger.info("Starting to send periodic emails...")
-    while not stop_sending_emails.wait(600):  # 600秒 = 10分钟
+    while not stop_sending_emails.wait(1200):  # 600秒 = 10分钟
         try:
             zipfile, latest_md = collect_files(config)
             send_email(

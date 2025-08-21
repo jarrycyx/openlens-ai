@@ -22,7 +22,7 @@ class State(TypedDict):
     literature_tool_call_counter: int
     last_tool_call: str
     literature_report: str
-
+    data_show: str
 
 
 def get_subplan(state: State) -> str:

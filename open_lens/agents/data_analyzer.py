@@ -2,6 +2,7 @@ import os
 import json
 import dotenv
 from IPython.display import Image, display
+from loguru import logger
 
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
@@ -11,6 +12,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langchain_core.messages import ToolMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 
+from ..chatbot import vector_search
 from ..tools.tool_utils import BasicToolNode, route_tools, route_by_tool_call, route_by_file_existence
 from ..tools.openhands_adaptor import OpenHandsTool
 from ..tools.reports import ReportReaderTool, ReportWriterTool
@@ -66,9 +68,10 @@ def build_data_analyzer(config: dict) -> StateGraph:
     def chatbot(state: State):
         with open(os.path.join(state["save_path"], "workspace", "data_analyze", "data_show.md"), "r") as f:
             data_show = f.read()
+        
         state["data_show"] = data_show
         this_prompt = data_report_prompt.format(question=state["question"], data_show=data_show)
-        this_chatbot = chatbot_with_context_manager(config, llm_with_tools, this_prompt)
+        this_chatbot = chatbot_with_context_manager(config, llm_with_tools, data_report_prompt)
         state = this_chatbot(state)
         return state
 
@@ -94,7 +97,7 @@ def build_data_analyzer(config: dict) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/OL_20250821162536_What_is_the_pre_istorical_data_7082")
+    config, state, last_subgraph = load_state("outputs/OL_20250821133009_What_is_the_pre_istorical_data_2634")
     graph = build_data_analyzer(config)
 
     graph.invoke(state)
