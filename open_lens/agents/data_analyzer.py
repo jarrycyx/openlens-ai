@@ -16,6 +16,8 @@ from ..tools.openhands_adaptor import OpenHandsTool
 from ..tools.reports import ReportReaderTool, ReportWriterTool
 from ..state import State
 from ..chatbot import chatbot_with_context_manager
+from ..state import load_state
+from ..utils.file_utils import prepare_file_config
 
 dotenv.load_dotenv()
 
@@ -90,19 +92,9 @@ def build_data_analyzer(config: dict) -> StateGraph:
 
     return graph
 
+
 if __name__ == "__main__":
-    print(os.environ.get("BASE_URL", ""))
-    llm = ChatOpenAI(model="qwen3-235b-a22b",
-                     base_url="https://cloud.infini-ai.com/maas/v1/",
-                     extra_body={"chat_template_kwargs": {"enable_thinking": True}})
-    search_tool = TavilySearch(max_results=5, search_depth="advanced")
-    code_tool = OpenHandsTool()
-    report_writer_tool = ReportWriterTool()
-    tools = [report_writer_tool]
-    llm_with_tools = llm.bind_tools(tools)
-    res = llm_with_tools.invoke(
-        [HumanMessage(content="What is the current weather in San Francisco? /think")],
-    )
-    print(res)
-    
-    
+    config, state, last_subgraph = load_state("outputs/OL_20250821162536_What_is_the_pre_istorical_data_7082")
+    graph = build_data_analyzer(config)
+
+    graph.invoke(state)

@@ -2,6 +2,8 @@ import sys, os
 import re
 import subprocess
 import traceback
+import threading
+import time
 from typing import Optional, Type, Dict, Any, Union
 from datetime import datetime
 from loguru import logger
@@ -78,48 +80,79 @@ def run_docker_container(cmd: str, config: dict):
 
     log_lines = []  # 保存所有日志行
 
-    try:
-        # 启动子进程（实时流处理核心）
-        process = subprocess.Popen(docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)  # 合并stdout和stderr  # 行缓冲模式
+    for try_i in range(5):
+        try:
+            # 启动子进程（实时流处理核心）
+            process = subprocess.Popen(docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)  # 合并stdout和stderr  # 行缓冲模式
 
-        with open(log_save_path, "a") as f:
-            f.write(f"Process pid: {process.pid}\n\n")
+            with open(log_save_path, "a") as f:
+                f.write(f"Process pid: {process.pid}\n\n")
+                logger.info(f"Process pid: {process.pid}")
+                
+            # 创建全局变量来记录读取的行数
+            line_count = {"count": 0}
+            # 创建守护线程来监控进程
+            monitor_thread = threading.Thread(target=monitor_process, args=(process.pid, line_count), daemon=True)
+            monitor_thread.start()
             
-        # 实时处理输出流
-        output_chunk = ""
-        pattern = r"(\d{2}:\d{2}:\d{2} - openhands:)" # 用时间戳拆分日志
-        frontend_add_tool_call("openhands", {})
-        while True:
-            output_line = process.stdout.readline()
-            output_line = re.sub(r"\033\[[\d;]*m", "", output_line)
-            if output_line == "" and process.poll() is not None:
-                break
-            if output_line:
-                if re.match(pattern, output_line):
-                    clean_chunk = split_and_clean_log(output_chunk).strip("\n ")
-                    if clean_chunk:
-                        logger.info(clean_chunk)
-                    output_chunk = ""
-                output_chunk += output_line
-                # 同时保存到日志集合
-                log_lines.append(output_line)    
-                with open(log_save_path, "a") as f:
-                    f.write(output_line)
+            # 实时处理输出流
+            output_chunk = ""
+            pattern = r"(\d{2}:\d{2}:\d{2} - openhands:)" # 用时间戳拆分日志
+            frontend_add_tool_call("openhands", {})
+            while True:
+                output_line = process.stdout.readline()
+                output_line = re.sub(r"\033\[[\d;]*m", "", output_line)
+                if output_line == "" and process.poll() is not None:
+                    break
+                if output_line:
+                    # 更新读取的行数
+                    line_count["count"] += 1
+                    
+                    if re.match(pattern, output_line):
+                        clean_chunk = split_and_clean_log(output_chunk).strip("\n ")
+                        if clean_chunk:
+                            logger.info(clean_chunk)
+                        output_chunk = ""
+                    output_chunk += output_line
+                    # 同时保存到日志集合
+                    log_lines.append(output_line)    
+                    with open(log_save_path, "a") as f:
+                        f.write(output_line)
 
-        # 检查退出状态
-        return_code = process.poll()
-        if return_code != 0:
-            raise subprocess.CalledProcessError(return_code, docker_cmd)
-        
-        
+            # 检查退出状态
+            return_code = process.poll()
+            if return_code != 0:
+                raise subprocess.CalledProcessError(return_code, docker_cmd)
+            
+            
 
-        logger.info("Docker container executed successfully.")
-        return "".join(log_lines)  # 返回完整日志
+            logger.info("Docker container executed successfully.")
+            return "".join(log_lines)  # 返回完整日志
+            break
+        except Exception as e:
+            error_log = "".join(log_lines) + f"\nERROR: {str(e)}"
+            traceback.print_exc()
+            return error_log
 
-    except Exception as e:
-        error_log = "".join(log_lines) + f"\nERROR: {str(e)}"
-        traceback.print_exc()
-        return error_log
+
+def monitor_process(pid: int, line_count: dict):
+    """监控进程输出行数的守护线程函数"""
+    logger.info(f"Starting process monitor for PID {pid}")
+    start_count = line_count["count"]
+    # 等待1分钟
+    time.sleep(60)
+    logger.info(f"Process {pid} has been running for 1 minute, checking line count...")
+    # 检查1分钟内读取的行数是否不超过10行
+    if line_count["count"] - start_count <= 30:
+        try:
+            # 结束进程
+            os.kill(pid, 9)  # SIGKILL
+            logger.info(f"Process {pid} killed due to insufficient output")
+        except ProcessLookupError:
+            # 进程已经结束
+            pass
+        except Exception as e:
+            logger.error(f"Error killing process {pid}: {e}")
 
 
 def run_openhands_prompt(prompts, config: dict):
