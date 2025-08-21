@@ -29,3 +29,5 @@ downloads
 .langgraph_api
 exp/docker
 **/.env
+
+debug

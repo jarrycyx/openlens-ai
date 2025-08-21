@@ -10,15 +10,15 @@
 
 ## 🔍 Key Features
 
-- [x] **Automated Literature Review**: Search and summarize medical papers based on your research question
-- [x] **Data Analysis**: Analyze medical datasets and generate comprehensive reports
-- [x] **Experiment Design**: Suggest and validate experimental approaches
-- [x] **Code Generation and Execution**: Generate and execute code for data analysis and experiments
-- [x] **Multi-Agent Collaboration**: Coordinate multiple specialized agents to handle complex research tasks
-- [x] **LaTeX Paper Generation**: Automated creation and management of research papers and reports in LaTeX format
-- [x] **Interactive UI**: Streamlit-based interface for monitoring and interacting with the research process
-- [x] **Context Management**: Automated management of contextual information for agents via vector search
-- [ ] **Vision-Language Feedback**: Integrate with VLM for visualization and feedback
+- ✅ **Automated Literature Review**: Search and summarize medical papers based on your research question
+- ✅ **Data Analysis**: Analyze medical datasets and generate comprehensive reports
+- ✅ **Experiment Design**: Suggest and validate experimental approaches
+- ✅ **Code Generation and Execution**: Generate and execute code for data analysis and experiments
+- ✅ **Multi-Agent Collaboration**: Coordinate multiple specialized agents to handle complex research tasks
+- ✅ **LaTeX Paper Generation**: Automated creation and management of research papers and reports in LaTeX format
+- ✅ **Interactive UI**: Streamlit-based interface for monitoring and interacting with the research process
+- ✅ **Context Management**: Automated management of contextual information for agents via vector search
+- ⬜ **Vision-Language Feedback**: Integrate with VLM for visualization and feedback
 
 ## 🚀 Quick Start
 
