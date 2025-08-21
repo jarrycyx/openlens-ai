@@ -1,0 +1,90 @@
+# Base image with Python and Conda
+FROM nvidia/cuda:12.6.2-devel-ubuntu22.04
+USER root
+
+# Set environment variables to avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update package index and install dependencies
+RUN apt-get update
+RUN apt-get install -y software-properties-common ca-certificates
+RUN add-apt-repository 'ppa:deadsnakes/ppa'
+RUN apt-get install -y \
+    wget \
+    curl \
+    gnupg \
+    lsb-release \
+    build-essential \
+    vim \
+    make \
+    nvidia-cuda-toolkit \
+    netcat \
+    git \
+    openssl \
+    zsh \
+    python3.12 \
+    tmux
+
+
+# Install Node.js 20.x and npm
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
+    apt-get update && \
+    apt-get install -y nodejs && \
+    npm install -g npm@latest
+
+
+# Verify Node.js version
+RUN node --version
+
+
+
+### Although we do not use docker in docker, this is needed for OpenHands
+# Create the keyrings directory and add Docker's official GPG key
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+# Set up the Docker repository
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+    | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Update package index again and install Docker Engine
+RUN apt-get update && apt-get install -y \
+    docker-ce \
+    docker-ce-cli \
+    containerd.io \
+    docker-compose-plugin 
+
+
+RUN python3 -c "print('Python hello')"
+RUN rm -rf /usr/bin/python3 /usr/bin/python
+RUN ln -s /usr/bin/python3.12 /usr/bin/python
+RUN ln -s /usr/bin/python3.12 /usr/bin/python3
+RUN python3 -V && curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH="/root/.local/bin:$PATH"
+
+RUN mkdir -p /helper
+# Clone OpenHands repository
+COPY OpenHands /helper/OpenHands
+RUN cd /helper/OpenHands && git init && make build
+
+# Create necessary directories
+RUN mkdir -p /workspace
+
+# Set bashrc
+COPY open_lens/tools/openhands_configs/openhands_env.sh ~/.bashrc
+
+# setup pip
+RUN cd /helper
+RUN rm -rf /usr/bin/pip3 /usr/bin/pip
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+RUN python get-pip.py
+RUN ln -s /usr/bin/pip /usr/bin/pip3
+
+# Setup basic python environment
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install numpy pandas tqdm omegaconf gpustat einops matplotlib scikit-learn scikit-image matplotlib tensorboard "psycopg[binary]" prettytable xgboost seaborn tabulate psycopg2-binary
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+RUN pip install openai langgraph langchain tensorflow
+
+RUN apt-get install -y texlive-full

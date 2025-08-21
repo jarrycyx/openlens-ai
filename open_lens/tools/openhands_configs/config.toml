@@ -1,0 +1,31 @@
+[core]
+workspace_base="/workspace"
+runtime = "local"
+disable_color = true
+
+[llm]
+# model="openai/qwen3-coder-480b-a35b-instruct"
+model="openai/glm-4.5" # openai的意思是走openai兼容的api，实际提供商是base_url指定的
+api_key="sk-dawxnhiebighfq6o"
+base_url="https://cloud.infini-ai.com/maas/v1/"
+
+
+# model="openai/openai/gpt-oss-120b"
+# api_key="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" # openrouter
+# base_url="https://openrouter.ai/api/v1"
+
+# model="deepseek-v3"
+# api_key="sk-dawxnhiebighfq6o" # infiniai
+# base_url="https://cloud.infini-ai.com/maas/v1/"
+
+# model="qwen3:30b"
+# api_key="" # local
+# base_url="http://127.0.0.1:11434/v1/"
+
+[sandbox]
+user_id = 1000
+
+[mcp]
+stdio_servers = [
+    {name="fetch", command="uvx", args=["mcp-server-fetch"]},
+]
