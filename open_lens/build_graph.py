@@ -162,7 +162,7 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
         logger.info(error_info)
         zipfile, latest_md = collect_files(config)
         send_email(
-            subject=f"OpenLens Job Failed | {config['thread_id']}",
+            subject=f"OpenLens Job Failed | {config.thread_id}",
             content=f"Failed to run graph: {e}\n{error_info}\n\n{latest_md}",
             recipients=config.email,
             attachments=zipfile,

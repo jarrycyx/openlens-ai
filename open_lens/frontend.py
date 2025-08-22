@@ -18,7 +18,7 @@ from .utils.file_utils import prepare_file_config
 from .utils.frontend_utils import WorkspaceMonitor, display_messages_from_file
 from .utils.config import Config
 from .state import load_state
-
+from .utils.process_manager import process_manager
 
 def load_saved_sessions(email_filter=None):
     """Load saved sessions from outputs directory, optionally filtered by email"""
@@ -115,25 +115,41 @@ def start_new_session(sidebar_container_empty, base_url, api_key, model, code_mo
             "_" + email.replace("@", "_").replace(".", "_") + "_" + \
             str(random.randint(1000, 9999))
 
+    # 显示当前进程数量
+    process_count = process_manager.get_process_count()
+
     btn1, btn2 = st.columns(2)
     btn1 = btn1.button("Run Agent", type="secondary")
     # btn2 = btn2.container(horizontal_alignment="right").button("Abort", type="primary")
     
     if btn1:
         if question and dataset_path and (len(email) > 5):
+            # 检查进程数量是否已满
+            if process_manager.is_full():
+                st.error(f"Maximum number of processes ({process_manager.MAX_PROCESSES}) reached. Please wait for some processes to finish.")
+                return
+                
             st.chat_message("human").write("**Question:** " + question + "\n\n**Dataset Path:** " + dataset_path)
-            # 启动新进程运行任务
-            process = subprocess.Popen([
-                "python", "-m", "open_lens.build_graph",
-                "--question", question,
-                "--dataset-path", dataset_path,
-                "--thread-id", thread_id,
-                "--email", email,
-                "--chat-model", model,
-                "--api-key", api_key,
-                "--base-url", base_url,
-                "--code-model", code_model,
-            ])
+            
+            if not process_manager.is_full():
+                # 启动新进程运行任务
+                process = subprocess.Popen([
+                    "python", "-m", "open_lens.build_graph",
+                    "--question", question,
+                    "--dataset-path", dataset_path,
+                    "--thread-id", thread_id,
+                    "--email", email,
+                    "--chat-model", model,
+                    "--api-key", api_key,
+                    "--base-url", base_url,
+                    "--code-model", code_model,
+                ])
+            
+                # 将进程信息添加到进程管理器
+                if not process_manager.add_process(process.pid, thread_id):
+                    process.terminate()  # 如果添加失败，终止进程
+                    st.error(f"Failed to start process. Maximum number of processes ({process_manager.MAX_PROCESSES}) reached.")
+                    return
             
             time.sleep(5)
             config = open(os.path.join("outputs", thread_id, "config.json"), "r").read()
@@ -251,6 +267,11 @@ def main():
     
     st.title("OpenLens AI 📚🔍💡")
     st.subheader("Fully Autonomous Medical Research Agent")
+    
+    # 显示当前进程数量
+    process_count = process_manager.get_process_count()
+    st.caption(f"Current Running Jobs: {process_count}/{process_manager.MAX_PROCESSES}")
+    
     st.write(" ")
 
     # 初始化 session state

@@ -26,7 +26,7 @@ logger.info(f"EMAIL_USER: {EMAIL_USER}")
 logger.info(f"EMAIL_PASSWORD: {EMAIL_PASSWORD}")
 
 def collect_files(config: Config):
-    save_path = config['save_path']
+    save_path = config.save_path
     
     # 定义需要收集的文件类型
     file_patterns = ['*.py', '*.json', '*.md', '*.txt', '*.tex', '*.bib', '*.sty', '*.pdf']
