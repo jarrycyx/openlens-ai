@@ -163,7 +163,7 @@ def display_messages_from_file(config: Config):
             logger.warning(f"Failed to read messages file: {e}")
             return
         
-        logger.info(f"Loaded {len(messages)} messages from {messages_file}")
+        logger.debug(f"Loaded {len(messages)} messages from {messages_file}")
         # 显示消息
         for msg in messages:
             if msg["type"] == "message":
@@ -204,7 +204,10 @@ def show_scrollable(content, file_name, height=200):
 def show_file_in_msg(file_path):
     
     filename = os.path.basename(file_path)
-    file_content = open(file_path, "r").read()
+    try:
+        file_content = open(file_path, "r").read()
+    except:
+        file_content = "Read file failed"
     with st.chat_message("assistant", avatar="📁"):
         st.write(f"**{filename}**")
         show_scrollable(file_content, filename, height=200)
@@ -259,17 +262,21 @@ class WorkspaceMonitor(Thread):
             new_files = list(new_files)[:3]
             update_files = update_files[:3]
             if new_files or update_files or (self.previous_files - current_files):
-                logger.info(f"Checking workspace directory: " + str(current_files))
-                logger.info(f"New files found: {new_files}")
-                logger.info(f"Updated files found: {update_files}")
+                # logger.debug(f"Checking workspace directory: " + str(current_files))
+                logger.debug(f"New files found: {new_files}")
+                logger.debug(f"Updated files found: {update_files}")
                 # 每次都要覆盖掉上次的文件列表
                 self.sidebar_container.empty()
 
                 for file in new_files:
+                    if file.endswith(".pyc"):
+                        continue
                     st.success(f"File added: {file}")
                     show_file_in_msg(os.path.join(self.workspace_path, file))
                 
                 for file in update_files:
+                    if file.endswith(".pyc"):
+                        continue
                     st.success(f"File updated: {file}")
                     show_file_in_msg(os.path.join(self.workspace_path, file))
 
@@ -292,7 +299,9 @@ class WorkspaceMonitor(Thread):
         self.previous_files = set()
         self.previous_files_hash = {}
 
-        while not self._stop_event:
+        for _ in range(120):
+            if self._stop_event:
+                break
             try:
                 self.refresh_file()
                 # 每2秒检查一次

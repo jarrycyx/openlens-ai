@@ -79,7 +79,7 @@ def build_supervisor(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/Agentmed_20250818093400_What_is_the_prediction_precision_of_AKI_based_on_h")
+    config, state, last_subgraph = load_state("outputs/OL_20250822143511_What_is_the_pre_istorical_data__dzdzzd_126_com_2125_2")
     graph = build_supervisor(config)
 
     graph.invoke(state)
