@@ -40,14 +40,15 @@ def _get_messages_file_path(config: Config):
 def _save_message(config: Config, message_data: dict):
     """保存消息到JSON文件，只保留最新的30条消息"""
     messages_file = _get_messages_file_path(config)
-    if not messages_file:
+    message_file_all = messages_file.replace(".json", "_all.json")
+    if not message_file_all:
         return
     
     # 读取现有消息
     messages = []
-    if os.path.exists(messages_file):
+    if os.path.exists(message_file_all):
         try:
-            with open(messages_file, 'r') as f:
+            with open(message_file_all, 'r') as f:
                 messages = json.load(f)
         except Exception as e:
             logger.warning(f"Failed to read messages file: {e}")
@@ -55,10 +56,6 @@ def _save_message(config: Config, message_data: dict):
     
     # 添加新消息
     messages.append(message_data)
-    
-    # 只保留最新的30条消息
-    if len(messages) > 30:
-        messages = messages[-30:]
     
     # 保存回文件
     try:
@@ -69,7 +66,7 @@ def _save_message(config: Config, message_data: dict):
         logger.error(f"Failed to save message to file: {e}")
         
     try:
-        with open(messages_file.replace(".json", "_all.json"), 'w') as f:
+        with open(message_file_all, 'w') as f:
             json.dump(messages, f, indent=2)
     except Exception as e:
         logger.error(f"Failed to save message to file: {e}")
@@ -166,6 +163,7 @@ def display_messages_from_file(config: Config):
             logger.warning(f"Failed to read messages file: {e}")
             return
         
+        logger.info(f"Loaded {len(messages)} messages from {messages_file}")
         # 显示消息
         for msg in messages:
             if msg["type"] == "message":
@@ -236,8 +234,6 @@ class WorkspaceMonitor(Thread):
     def stop(self):
         self._stop_event = True
 
-    
-        
     def refresh_file(self):
         if not os.path.exists(self.workspace_path):
             # 使用 Streamlit 的线程上下文安全方式显示信息
@@ -260,6 +256,8 @@ class WorkspaceMonitor(Thread):
             new_files = current_files - self.previous_files
             update_files = [f for f in current_files if ((f in self.previous_files) and (current_fils_hash[f] != self.previous_files_hash[f]))]
             # 显示新文件通知，如果删除了文件也刷新
+            new_files = list(new_files)[:3]
+            update_files = update_files[:3]
             if new_files or update_files or (self.previous_files - current_files):
                 logger.info(f"Checking workspace directory: " + str(current_files))
                 logger.info(f"New files found: {new_files}")
@@ -297,11 +295,11 @@ class WorkspaceMonitor(Thread):
         while not self._stop_event:
             try:
                 self.refresh_file()
-
                 # 每2秒检查一次
                 time.sleep(5)
             except Exception as e:
                 # 避免线程因异常而终止
+                logger.warning(f"Error in file watcher: {e}")
                 time.sleep(5)
                 continue
 

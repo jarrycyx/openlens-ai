@@ -165,6 +165,7 @@ def start_new_session(sidebar_container_empty, base_url, api_key, model, code_mo
 
             # 如果有旧的监控线程，停止它
             if st.session_state.monitor_thread:
+                logger.info("Stopping old monitor thread")
                 st.session_state.monitor_thread.stop()
 
             # 启动新的监控线程
@@ -246,6 +247,7 @@ def resume_session(sidebar_container_empty):
                     
                     # 如果有旧的监控线程，停止它
                     if st.session_state.monitor_thread:
+                        logger.info("Stopping old monitor thread")
                         st.session_state.monitor_thread.stop()
 
                     # 启动新的监控线程
@@ -305,6 +307,7 @@ def main():
         and hasattr(st.session_state.monitor_thread, "save_path")
         and st.session_state.monitor_thread.save_path != st.session_state.config.save_path
     ):
+        logger.info("Stopping old monitor thread")
 
         st.session_state.monitor_thread.stop()
         st.session_state.monitor_thread = None

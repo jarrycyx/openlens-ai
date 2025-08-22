@@ -17,6 +17,7 @@
    * Verify that the code does not generate simulated or mocked results in place of actual experimental data.
    * Ensure that no synthetic data or fabricated outcomes are present unless explicitly stated in the experimental setup.
    * **If simulated data is found**, adjust the code to ensure only real data is used and rerun the experiment.
+   * Ensure the intermediate results are not demo/tiny versions or placeholders.
 
 4. **Check for Abnormal Intermediate Results:**
 

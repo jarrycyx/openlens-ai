@@ -180,13 +180,14 @@ def run_openhands_prompt(prompts, config: Config):
         # 转义引号和换行符以避免命令执行问题
         prompt = prompt.replace('"', '\\"').replace("\n", "\\n").replace("`", " ")
         prompt += postfix
+        max_iter = os.environ.get("OPENHANDS_MAX_ITER", 20)
         # 构建在Docker容器中执行的命令
         cmd = (
             f"cp /helper/config.toml /helper/OpenHands/ && "
             f"source /helper/open_lens/tools/openhands_configs/openhands_env.sh && "
             f"cd /helper/OpenHands && "
             f"mkdir -p /workspace/manuscript/ && chmod -R 777 /workspace/manuscript/ && cp /workspace/latex_template/*.sty /workspace/manuscript/ &&"
-            f'poetry run python -m openhands.core.main -t "{prompt}" --log-level ERROR'
+            f'poetry run python -m openhands.core.main -t "{prompt}" -i {max_iter}'
         )
         results = run_docker_container(cmd, config)
         # 移除ANSI转义序列（颜色代码等）

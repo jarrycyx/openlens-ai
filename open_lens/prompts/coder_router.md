@@ -11,6 +11,7 @@ As the workflow router, analyze the subtask report and choose the next action:
    - Minor errors in execution/output (fixable without plan changes)  
    - Partial/incomplete but recoverable results  
    - Isolated data anomalies requiring reprocessing  
+   - Results are demo/tiny versions or placeholders.
    - There is not enough information to decide the next course of action
    *Reason example*: "Missing 2/10 data files detected. Last subtask needs rerun with adjusted file handling."  
 

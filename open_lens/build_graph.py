@@ -56,49 +56,61 @@ def send_periodic_emails(config: Config):
             logger.error(f"Error sending periodic email: {e}")
 
 def build_graph(config: Config, checkpointer: InMemorySaver | SqliteSaver):
-    
-    graph_builder = StateGraph(State)
+    try:
+        graph_builder = StateGraph(State)
 
-    keywords_router = route_by_keywords(["DECISION: ALTER_PLAN", "DECISION: REANALYZE_DATA"])
+        keywords_router = route_by_keywords(["DECISION: ALTER_PLAN", "DECISION: REANALYZE_DATA"])
 
-    supervisor_subgraph = build_supervisor(config)
-    coder_subgraph = build_coder(config)
-    data_analyzer_subgraph = build_data_analyzer(config)
-    literature_review_subgraph = build_literature_review_subgraph(config)
-    latex_writer_subgraph = build_latex_writer(config)
-    
-    graph_builder.add_node("supervisor", supervisor_subgraph)
-    graph_builder.add_node("coder", coder_subgraph)
-    graph_builder.add_node("data_analyzer", data_analyzer_subgraph)
-    graph_builder.add_node("literature_reviewer", literature_review_subgraph)
-    graph_builder.add_node("latex_writer", latex_writer_subgraph)
+        supervisor_subgraph = build_supervisor(config)
+        coder_subgraph = build_coder(config)
+        data_analyzer_subgraph = build_data_analyzer(config)
+        literature_review_subgraph = build_literature_review_subgraph(config)
+        latex_writer_subgraph = build_latex_writer(config)
+        
+        graph_builder.add_node("supervisor", supervisor_subgraph)
+        graph_builder.add_node("coder", coder_subgraph)
+        graph_builder.add_node("data_analyzer", data_analyzer_subgraph)
+        graph_builder.add_node("literature_reviewer", literature_review_subgraph)
+        graph_builder.add_node("latex_writer", latex_writer_subgraph)
 
-    graph_builder.add_edge(START, "literature_reviewer")
-    graph_builder.add_edge("literature_reviewer", "data_analyzer")
-    # graph_builder.add_edge(START, "data_analyzer")
-    graph_builder.add_edge("data_analyzer", "supervisor")
-    graph_builder.add_edge("supervisor", "coder")
-    graph_builder.add_conditional_edges(
-        "coder",
-        keywords_router,
-        {"DECISION: ALTER_PLAN": "supervisor", "DECISION: REANALYZE_DATA": "data_analyzer", "NONE": "latex_writer"},
-    )
-    graph_builder.add_edge("latex_writer", END)
+        graph_builder.add_edge(START, "literature_reviewer")
+        graph_builder.add_edge("literature_reviewer", "data_analyzer")
+        # graph_builder.add_edge(START, "data_analyzer")
+        graph_builder.add_edge("data_analyzer", "supervisor")
+        graph_builder.add_edge("supervisor", "coder")
+        graph_builder.add_conditional_edges(
+            "coder",
+            keywords_router,
+            {"DECISION: ALTER_PLAN": "supervisor", "DECISION: REANALYZE_DATA": "data_analyzer", "NONE": "latex_writer"},
+        )
+        graph_builder.add_edge("latex_writer", END)
 
-    graph = graph_builder.compile()
+        graph = graph_builder.compile()
 
-    graph_image = Image(graph.get_graph(xray=True).draw_mermaid_png())
-    # 保存
-    with open(os.path.join(config.save_path, "overall_graph_image.png"), "wb") as f:
-        f.write(graph_image.data)
-    with open(os.path.join(config.save_path, "graph_mermaid.txt"), "w") as f:
-        f.write(graph.get_graph(xray=True).draw_mermaid())
-        # f.write(str(graph.builder.branches))
-    
-    # with open(os.path.join(config.save_path, "workspace", "test.txt"), "w") as f:
-    #     f.write("Hello World!")
-
-    return graph
+        try:
+            graph_image = Image(graph.get_graph(xray=True).draw_mermaid_png())
+            # 保存
+            with open(os.path.join(config.save_path, "overall_graph_image.png"), "wb") as f:
+                f.write(graph_image.data)
+            with open(os.path.join(config.save_path, "graph_mermaid.txt"), "w") as f:
+                f.write(graph.get_graph(xray=True).draw_mermaid())
+        except Exception as e:
+            error_info = traceback.format_exc()
+            frontend_add_message(AIMessage(content=f"Error: {e}\n{error_info}"), config)
+            logger.info(f'Failed to build graph: {e}')
+            logger.info(error_info)
+        return graph
+    except Exception as e:
+        error_info = traceback.format_exc()
+        frontend_add_message(AIMessage(content=f"Error: {e}\n{error_info}"), config)
+        logger.info(f'Failed to build graph: {e}')
+        logger.info(error_info)
+        send_email(
+            subject=f"OpenLens Job Failed | {config.thread_id}",
+            content=f"Failed to run build: {e}\n{error_info}",
+            recipients=config.email,
+            attachments=None,
+        )
 
 
 # async def arun_graph(graph, save_path, init_state):

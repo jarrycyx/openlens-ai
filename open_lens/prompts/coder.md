@@ -10,6 +10,7 @@ is the subtask number) directory to avoid confusion between different subtasks.
 Reminders: 
 - DO NOT mock or simulate results. Always generate real results using an actual workflow setup (e.g., scripts that can directly run with experimental/control group inputs to produce dependent variables).
 - DO NOT execute commands like "ls -R", as it may cause you to exceed context length.
+- Ensure the intermediate results are not demo/tiny versions or placeholders.
 - You should ONLY interact with the tool provided to you AND NEVER ASK FOR HUMAN HELP.
 - Make sure each request to the tool is simple and specific. If the request is too complex, split it into multiple requests. When the tool responds, you can then generate the next request.
 - Source data are stored in /workspace/datasets.
