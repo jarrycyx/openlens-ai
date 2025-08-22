@@ -20,6 +20,7 @@ from ..state import State
 from ..chatbot import chatbot_with_context_manager
 from ..state import load_state
 from ..utils.file_utils import prepare_file_config
+from ..utils.config import Config
 
 dotenv.load_dotenv()
 
@@ -42,7 +43,7 @@ Requirements:
 IMPORTANT: Unexpected/broken characters are typically chinese, korean, or japanese characters that do not make sense at all. Please fix the code and try again.
 """
 
-def build_data_analyzer(config: dict) -> StateGraph:
+def build_data_analyzer(config: Config) -> StateGraph:
     llm = init_chat_model(os.environ.get("MODEL", "deepseek-chat"), 
                           base_url=os.environ.get("BASE_URL", ""), 
                           model_provider="openai",
@@ -78,7 +79,7 @@ def build_data_analyzer(config: dict) -> StateGraph:
     graph_builder = StateGraph(State)
     
     router_by_write_reports = route_by_tool_call("report_writer_tool")
-    route_by_data_show = route_by_file_existence(os.path.join(config["save_path"], "workspace", "data_analyze", "data_show.md"))
+    route_by_data_show = route_by_file_existence(os.path.join(config.save_path, "workspace", "data_analyze", "data_show.md"))
 
     tool_node = BasicToolNode(tools, config)
     graph_builder.add_node("data_chatbot", chatbot)

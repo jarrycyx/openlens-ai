@@ -12,6 +12,8 @@ from streamlit.runtime.scriptrunner import get_script_run_ctx, add_script_run_ct
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 import streamlit_scrollable_textbox as stx
 import glob
+import json
+from .config import Config
 
 
 tool_show_message = {
@@ -29,8 +31,44 @@ logger.info(f"is_in_streamlit: {is_in_streamlit}")
 current_node = ""
 last_message = None
 
-def frontend_add_message(new_message: Union[ToolMessage, HumanMessage, AIMessage]):
-    if not is_in_streamlit == "True":
+def _get_messages_file_path(config: Config):
+    """获取消息文件路径"""
+    streamlit_dir = os.path.join(config.save_path, "streamlit")
+    os.makedirs(streamlit_dir, exist_ok=True)
+    return os.path.join(streamlit_dir, "messages.json")
+
+def _save_message(config: Config, message_data: dict):
+    """保存消息到JSON文件，只保留最新的30条消息"""
+    messages_file = _get_messages_file_path(config)
+    if not messages_file:
+        return
+    
+    # 读取现有消息
+    messages = []
+    if os.path.exists(messages_file):
+        try:
+            with open(messages_file, 'r') as f:
+                messages = json.load(f)
+        except Exception as e:
+            logger.warning(f"Failed to read messages file: {e}")
+            messages = []
+    
+    # 添加新消息
+    messages.append(message_data)
+    
+    # 只保留最新的30条消息
+    if len(messages) > 30:
+        messages = messages[-30:]
+    
+    # 保存回文件
+    try:
+        with open(messages_file, 'w') as f:
+            json.dump(messages, f, indent=2)
+    except Exception as e:
+        logger.error(f"Failed to save message to file: {e}")
+
+def frontend_add_message(new_message: Union[ToolMessage, HumanMessage, AIMessage], config: Config):
+    if not config:
         return
     
     global current_node, last_message
@@ -45,8 +83,8 @@ def frontend_add_message(new_message: Union[ToolMessage, HumanMessage, AIMessage
             role = "tool"
             title = ""
             content = tool_show_message.get(new_message.name, f"Calling {new_message.name}...")
+            # 工具消息不保存
             return
-            # TODO
         elif isinstance(new_message, HumanMessage):
             role = "user"
             title = "Agent"
@@ -60,33 +98,86 @@ def frontend_add_message(new_message: Union[ToolMessage, HumanMessage, AIMessage
             title = ""
             content = new_message.content
         
-        # content = content.replace("#", "###")
-        with st.chat_message(role, avatar="🔍" if role=="user" else None): # 如果是用户信息，实际上是agent信息
-            if title:
-                st.write(f"**{title}**")
-            if len(content) > 300:
-                with st.container(height=150):
-                    st.write(content)
-            else:
-                st.write(content)
+        # 保存消息数据而不是直接显示
+        message_data = {
+            "timestamp": datetime.now().isoformat(),
+            "type": "message",
+            "role": role,
+            "title": title,
+            "content": content
+        }
+        _save_message(config, message_data)
     else:
         logger.warning("Empty message content", new_message)
         
-def frontend_add_tool_call(tool_name: str, tool_args: dict):
-    if not is_in_streamlit:
+def frontend_add_tool_call(tool_name: str, tool_args: dict, config: Config):
+    if not config:
         return
     
     tool_message = tool_show_message.get(tool_name, "Calling {tool_name}...")
     tool_message = tool_message.format(tool_name=tool_name, **tool_args)
-    st.chat_message("tool").write(tool_message)
+    
+    # 保存工具调用数据
+    message_data = {
+        "timestamp": datetime.now().isoformat(),
+        "type": "tool_call",
+        "tool_name": tool_name,
+        "content": tool_message
+    }
+    _save_message(config, message_data)
 
-
-def frontend_update_node(node_name: str):
-    if not is_in_streamlit:
+def frontend_update_node(node_name: str, config: Config):
+    if not config:
         return
     global current_node
     current_node = node_name
-    st.info(f"Subgraph complete: {node_name}")
+    
+    # 保存节点更新数据
+    message_data = {
+        "timestamp": datetime.now().isoformat(),
+        "type": "node_update",
+        "node_name": node_name,
+        "content": f"Subgraph complete: {node_name}"
+    }
+    _save_message(config, message_data)
+
+@st.fragment
+def display_messages_from_file(config: Config):
+    with st.container():
+        """从文件中读取并显示最新的消息"""
+        if not is_in_streamlit == "True":
+            return
+        
+        messages_file = _get_messages_file_path(config)
+        if not messages_file or not os.path.exists(messages_file):
+            return
+        
+        try:
+            with open(messages_file, 'r') as f:
+                messages = json.load(f)
+        except Exception as e:
+            logger.warning(f"Failed to read messages file: {e}")
+            return
+        
+        # 显示消息
+        for msg in messages:
+            if msg["type"] == "message":
+                role = msg["role"]
+                title = msg["title"]
+                content = msg["content"]
+                
+                with st.chat_message(role, avatar="🔍" if role=="user" else None):
+                    if title:
+                        st.write(f"**{title}**")
+                    if len(content) > 300:
+                        with st.container(height=150):
+                            st.write(content)
+                    else:
+                        st.write(content)
+            elif msg["type"] == "tool_call":
+                st.chat_message("tool").write(msg["content"])
+            elif msg["type"] == "node_update":
+                st.info(msg["content"])
 
 
 

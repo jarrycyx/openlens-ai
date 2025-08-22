@@ -16,6 +16,7 @@ from ..tools.exp_plan import PlanReaderTool, PlanWriterTool, subtask_route_tools
 from ..tools.reports import ReportReaderTool, ReportWriterTool
 from ..state import State, load_state, get_subplan
 from ..chatbot import chatbot_with_context_manager
+from ..utils.config import Config
 
 dotenv.load_dotenv()
 
@@ -30,7 +31,7 @@ with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "coder_router
     coder_router_prompt = f.read()
 
 
-def build_coder(config: dict) -> StateGraph:
+def build_coder(config: Config) -> StateGraph:
     concluder_llm = init_chat_model(
         os.environ.get("MODEL", "deepseek-chat"),
         base_url=os.environ.get("BASE_URL", ""),

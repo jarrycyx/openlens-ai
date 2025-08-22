@@ -30,6 +30,7 @@ from ..tools.paper_search_tool import (
     ReadSemanticPaperTool,
 )
 from ..utils.file_utils import prepare_file_config
+from ..utils.config import Config
 
 
 dotenv.load_dotenv()
@@ -43,7 +44,7 @@ with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "literature_s
     search_prompt_template = f.read()
 
 
-def build_literature_review_subgraph(config: dict):
+def build_literature_review_subgraph(config: Config):
     """
     构建文献调研子图，使用paperscraper搜索文献并通过嵌入模型进行RAG处理生成文献调研报告
     """
@@ -72,7 +73,7 @@ def build_literature_review_subgraph(config: dict):
         TavilySearch(max_results=10)
     ]
 
-    llm_react = create_react_agent(search_llm, search_tools, pre_model_hook=react_pre_model_wrapper(config["question"]))
+    llm_react = create_react_agent(search_llm, search_tools, pre_model_hook=react_pre_model_wrapper(config.question))
 
     report_tools = [ReportWriterTool(config, file_name="literature_review.md")]
     llm_report_writer = write_llm.bind_tools(report_tools)
@@ -87,7 +88,7 @@ def build_literature_review_subgraph(config: dict):
     
     def clear_literature_state(state: State):
         state["messages"] = []
-        literature_review_path = os.path.join(config["save_path"], "workspace", "literature_review.md")
+        literature_review_path = os.path.join(config.save_path, "workspace", "literature_review.md")
         with open(literature_review_path, "r") as f:
             literature_review_str = f.read()
         state["literature_report"] = literature_review_str
@@ -98,7 +99,7 @@ def build_literature_review_subgraph(config: dict):
 
     min_react_tool_call = int(os.environ.get("LITERATURE_SEARCH_MIN_TOOL_CALL", 10))
     route_by_tool_counter = lambda state: "REACHED_TOOL_LIMIT" if (state["literature_tool_call_counter"] >= min_react_tool_call) else "CONTINUE"
-    route_by_report = route_by_file_existence(os.path.join(config["save_path"], "workspace", "literature_review.md"))
+    route_by_report = route_by_file_existence(os.path.join(config.save_path, "workspace", "literature_review.md"))
     report_tool_node = BasicToolNode(report_tools, config)
 
     # 添加节点

@@ -12,6 +12,7 @@ from ..tools.tool_utils import BasicToolNode
 from ..tools.openhands_adaptor import OpenHandsTool
 from ..tools.reports import ReportReaderTool, ReportWriterTool
 from ..state import State, load_state
+from ..utils.config import Config
 
 dotenv.load_dotenv()
 
@@ -29,7 +30,7 @@ with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_experi
     exp_conclusion_prompt = f.read()
 
 
-def build_latex_writer(config: dict) -> StateGraph:
+def build_latex_writer(config: Config) -> StateGraph:
     llm = init_chat_model(
         os.environ.get("MODEL", "deepseek-chat"),
         base_url=os.environ.get("BASE_URL", ""),

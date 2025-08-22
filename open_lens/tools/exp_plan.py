@@ -8,6 +8,7 @@ from langgraph.graph import StateGraph, START, END
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
+from ..utils.config import Config
 
 class PlanWriterToolInput(BaseModel):
     objective: str = Field(
@@ -30,7 +31,7 @@ class PlanWriterTool(BaseTool):
     args_schema: Type[BaseModel] = PlanWriterToolInput
     config: Optional[dict] = None
 
-    def __init__(self, config: dict):
+    def __init__(self, config: Config):
         super().__init__()
         self.config = config
     
@@ -48,7 +49,7 @@ class PlanWriterTool(BaseTool):
             if len(sub_task) < 500:
                 raise ValueError("Please provide a more detailed sub-task description.")
         
-        workspace_dir = os.path.join(self.config["save_path"], "workspace")
+        workspace_dir = os.path.join(self.config.save_path, "workspace")
         # 写入JSON格式的计划文件
         with open(f"{workspace_dir}/plan.json", "w") as f:
             json.dump(plan_data, f, indent=2, ensure_ascii=False)
@@ -57,7 +58,7 @@ class PlanWriterTool(BaseTool):
         for i, task in enumerate(sub_tasks):
             plan_markdown += f"\n\n# SUBTASK{i+1:02d}\n {task}\n"
         plan_markdown += f"\nExpected Result: {expected_result}"
-        with open(os.path.join(self.config["save_path"], "plan.md"), "w") as f:
+        with open(os.path.join(self.config.save_path, "plan.md"), "w") as f:
             f.write(plan_markdown)
             
         return f"Plan written successfully with objective: {objective}"
@@ -73,13 +74,13 @@ class PlanReaderTool(BaseTool):
     args_schema: Type[BaseModel] = PlanReaderToolInput
     config: Optional[dict] = None
 
-    def __init__(self, config: dict):
+    def __init__(self, config: Config):
         super().__init__()
         self.config = config
     def _run(self) -> str:
         """读取结构化实验计划的主要方法"""
         try:
-            workspace_dir = os.path.join(self.config["save_path"], "workspace")
+            workspace_dir = os.path.join(self.config.save_path, "workspace")
             with open(f"{workspace_dir}/plan.json", "r") as f:
                 plan_data = json.load(f)
             return plan_data

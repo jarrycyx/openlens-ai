@@ -21,6 +21,7 @@ from langchain.load.load import loads
 
 from .state import State, load_state, get_subplan
 from .utils.frontend_utils import frontend_add_message, frontend_add_tool_call
+from .utils.config import Config
 
 import numpy as np
 
@@ -113,7 +114,7 @@ def vector_search(messages: list, query: str, token_cnt: int = 10000):
 
 
 def chatbot_with_context_manager(
-    config: dict, llm: BaseChatModel, prompt: str, context_manage: Literal["token_cnt", "token_cnt_large", "last_message", "last_tool_message", "vector_search"] = "vector_search"
+    config: Config, llm: BaseChatModel, prompt: str, context_manage: Literal["token_cnt", "token_cnt_large", "last_message", "last_tool_message", "vector_search"] = "vector_search"
 ):
     def detect_error_message(state: State):
         if ("messages" in state) and (len(state["messages"]) > 0):
@@ -147,11 +148,11 @@ def chatbot_with_context_manager(
                     all_messages = new_state["messages"]
                     if len(all_messages) > 0:
                         show_message = all_messages[-1]
-                        frontend_add_message(show_message)
+                        frontend_add_message(show_message, config)
                         if isinstance(show_message, AIMessage):
                             if show_message.tool_calls:
                                 for tool_call in show_message.tool_calls:
-                                    frontend_add_tool_call(tool_call["name"], tool_call["args"])
+                                    frontend_add_tool_call(tool_call["name"], tool_call["args"], config)
                     
                     logger.info(f"Streaming: {node_name}, "
                                 f"tool call #{state['literature_tool_call_counter']}, "
@@ -261,13 +262,13 @@ def chatbot_with_context_manager(
             state["messages"].append(HumanMessage(content=this_prompt))
             message_to_llm.append(state["messages"][-1])
             if not isinstance(llm, CompiledStateGraph):
-                frontend_add_message(state["messages"][-1])
+                frontend_add_message(state["messages"][-1], config)
             logger.info(f"Prompt: {this_prompt}")
         
         logger.info(f"Message count to LLM: {len(message_to_llm)}, token count: {count_tokens_approximately(message_to_llm)}")
 
         time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        save_path = os.path.join(config["save_path"], "llm_calls", f"{time_stamp}.json")
+        save_path = os.path.join(config.save_path, "llm_calls", f"{time_stamp}.json")
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
         with open(save_path, "w") as f:
@@ -284,7 +285,7 @@ def chatbot_with_context_manager(
             while True:
                 try:
                     state["messages"].append(llm.invoke(message_to_llm))
-                    frontend_add_message(state["messages"][-1])
+                    frontend_add_message(state["messages"][-1], config)
                     break
                 except Exception as e:
                     logger.warning(f"Error when calling llm: {e}")

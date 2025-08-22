@@ -13,6 +13,8 @@ from datetime import datetime
 from loguru import logger
 import markdown
 
+from .config import Config
+
 # 从环境变量读取邮件配置
 SMTP_SERVER = os.getenv('SMTP_SERVER', 'smtp.yeah.net')  # SMTP服务器地址
 SMTP_PORT = int(os.getenv('SMTP_PORT', '25'))  # SMTP端口号
@@ -23,7 +25,7 @@ logger.info(f"SMTP_PORT: {SMTP_PORT}")
 logger.info(f"EMAIL_USER: {EMAIL_USER}")
 logger.info(f"EMAIL_PASSWORD: {EMAIL_PASSWORD}")
 
-def collect_files(config: dict):
+def collect_files(config: Config):
     save_path = config['save_path']
     
     # 定义需要收集的文件类型

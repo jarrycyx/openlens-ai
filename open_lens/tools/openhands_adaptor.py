@@ -17,6 +17,7 @@ from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 
 from ..state import State
 from ..utils.frontend_utils import frontend_add_message, frontend_add_tool_call
+from ..utils.config import Config
 
 postfix = """
 Reminders: DO NOT mock or simulate results. Only write python files to generate the code and bash shell scripts to execute them.
@@ -30,14 +31,14 @@ Reminders: DO NOT mock or simulate results. Only write python files to generate 
 # """
 
 
-def run_docker_container(cmd: str, config: dict):
+def run_docker_container(cmd: str, config: Config):
     """运行Docker容器并实时输出+保存日志"""
     pwd = os.getcwd()
-    workspace_dir = os.path.join(pwd, config["save_path"], "workspace")
+    workspace_dir = os.path.join(pwd, config.save_path, "workspace")
     
-    this_openhands_config_path = os.path.join(pwd, config["save_path"], "openhands_config.toml")
-    if config["dataset_path"]:
-        dataset_path = os.path.join(pwd, config["dataset_path"])
+    this_openhands_config_path = os.path.join(pwd, config.save_path, "openhands_config.toml")
+    if config.dataset_path:
+        dataset_path = os.path.join(pwd, config.dataset_path)
         latex_template_path = os.path.join(pwd, "open_lens/tools/latex_template/neurips")
         docker_cmd = [
             "docker",
@@ -73,7 +74,7 @@ def run_docker_container(cmd: str, config: dict):
         
     time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
     save_name = f"openhands_{time_stamp}.log"
-    log_save_path = os.path.join(config["save_path"], "openhands_logs", save_name)
+    log_save_path = os.path.join(config.save_path, "openhands_logs", save_name)
     os.makedirs(os.path.dirname(log_save_path), exist_ok=True)
     with open(log_save_path, "w") as f:
         f.write(" ".join(docker_cmd).replace("\\n", "\n") + "\n\n\n")
@@ -155,7 +156,7 @@ def monitor_process(pid: int, line_count: dict):
             logger.error(f"Error killing process {pid}: {e}")
 
 
-def run_openhands_prompt(prompts, config: dict):
+def run_openhands_prompt(prompts, config: Config):
     """
     运行OpenHands提示并返回结果
     
@@ -227,7 +228,7 @@ class OpenHandsTool(BaseTool):
     args_schema: Type[BaseModel] = OpenhandsToolInput
     config: Optional[dict] = None
 
-    def __init__(self, config: dict):
+    def __init__(self, config: Config):
         super().__init__()
         self.config = config
 

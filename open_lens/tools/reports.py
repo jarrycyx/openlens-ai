@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
 
 from langchain_core.tools import BaseTool
+from ..utils.config import Config
 
 class ReportWriterToolInput(BaseModel):
     data_report: str = Field(
@@ -25,7 +26,7 @@ class ReportWriterTool(BaseTool):
     config: Optional[dict] = None
     file_name: Optional[str] = ""
 
-    def __init__(self, config: dict, file_name: str=""):
+    def __init__(self, config: Config, file_name: str=""):
         super().__init__()
         self.config = config
         self.file_name = file_name
@@ -34,7 +35,7 @@ class ReportWriterTool(BaseTool):
         if self.file_name:
             file_name = self.file_name
         
-        workspace_dir = os.path.join(self.config["save_path"], "workspace")
+        workspace_dir = os.path.join(self.config.save_path, "workspace")
         with open(os.path.join(workspace_dir, file_name), "w") as f:
             f.write(data_report)
         return data_report
@@ -53,7 +54,7 @@ class ReportReaderTool(BaseTool):
     config: Optional[dict] = None
     file_name: str = ""
 
-    def __init__(self, config: dict, file_name: str=""):
+    def __init__(self, config: Config, file_name: str=""):
         super().__init__()
         self.config = config
         self.file_name = file_name
@@ -63,7 +64,7 @@ class ReportReaderTool(BaseTool):
         if self.file_name:
             file_name = self.file_name
         try:
-            workspace_dir = os.path.join(self.config["save_path"], "workspace")
+            workspace_dir = os.path.join(self.config.save_path, "workspace")
             with open(os.path.join(workspace_dir, file_name), "r") as f:
                 data_report = f.read()
             return data_report

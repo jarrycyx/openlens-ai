@@ -15,6 +15,7 @@ from langchain_core.messages.utils import count_tokens_approximately, get_buffer
 
 from ..utils.frontend_utils import frontend_add_message, frontend_add_tool_call
 from ..state import State
+from ..utils.config import Config
 
 dotenv.load_dotenv()
 
@@ -143,7 +144,7 @@ def route_by_keywords(keywords: list):
 class BasicToolNode:
     """A node that runs the tools requested in the last AIMessage."""
 
-    def __init__(self, tools: list, config: dict) -> None:
+    def __init__(self, tools: list, config: Config) -> None:
         self.tools_by_name = {tool.name: tool for tool in tools}
         self.config = config
         
@@ -151,7 +152,7 @@ class BasicToolNode:
     def save_tool_call(self, tool_message: ToolMessage):
         
         time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        save_path = os.path.join(self.config["save_path"], "tool_calls", f"{time_stamp}_{tool_message.name}.txt")
+        save_path = os.path.join(self.config.save_path, "tool_calls", f"{time_stamp}_{tool_message.name}.txt")
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         with open(save_path, "w") as f:
             f.write(get_buffer_string([tool_message]))

@@ -14,6 +14,7 @@ from ..tools.exp_plan import PlanWriterTool, PlanReaderTool
 from ..tools.reports import ReportReaderTool
 from ..state import State, load_state
 from ..chatbot import chatbot_with_context_manager
+from ..utils.config import Config
 
 dotenv.load_dotenv()
 
@@ -24,13 +25,13 @@ with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "supervisor_p
 with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "supervisor_alter_plan.md")) as f:
     alter_prompt = f.read()
 
-def build_supervisor(config: dict) -> StateGraph:
+def build_supervisor(config: Config) -> StateGraph:
     search_tool = TavilySearch(max_results=5, search_depth="advanced")
     plan_writer_tool = PlanWriterTool(config)
     plan_reader_tool = PlanReaderTool(config)
     tools = [plan_writer_tool]
     
-    route_supervisor = route_by_file_existence(os.path.join(config["save_path"], "plan.md"))
+    route_supervisor = route_by_file_existence(os.path.join(config.save_path, "plan.md"))
     
     def plan_reader_node(state: State):
         plan = plan_reader_tool.invoke({})
