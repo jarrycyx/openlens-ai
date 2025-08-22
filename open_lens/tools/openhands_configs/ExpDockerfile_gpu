@@ -65,7 +65,7 @@ ENV PATH="/root/.local/bin:$PATH"
 
 RUN mkdir -p /helper
 # Clone OpenHands repository
-COPY OpenHands /helper/OpenHands
+COPY modules/OpenHands /helper/OpenHands
 RUN cd /helper/OpenHands && git init && make build
 
 # Create necessary directories
