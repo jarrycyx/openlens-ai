@@ -63,6 +63,13 @@ def _save_message(config: Config, message_data: dict):
     # 保存回文件
     try:
         with open(messages_file, 'w') as f:
+            show_messages = messages[-30:] if len(messages) > 30 else messages
+            json.dump(show_messages, f, indent=2)
+    except Exception as e:
+        logger.error(f"Failed to save message to file: {e}")
+        
+    try:
+        with open(messages_file.replace(".json", "_all.json"), 'w') as f:
             json.dump(messages, f, indent=2)
     except Exception as e:
         logger.error(f"Failed to save message to file: {e}")

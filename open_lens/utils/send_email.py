@@ -55,12 +55,13 @@ def collect_files(config: Config):
     # 按修改时间排序.md文件，返回最新的一个
     md_files = [f for f in files if f.endswith('.md')]
     latest_md_file = None
+    latest_md = ""
     if md_files:
         md_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
         latest_md_file = md_files[0]
-    
-    with open(latest_md_file, 'r', encoding='utf-8') as f:
-        latest_md = f.read()
+    if latest_md_file:
+        with open(latest_md_file, 'r', encoding='utf-8') as f:
+            latest_md = f.read()
     
     return zip_filepath, latest_md
 

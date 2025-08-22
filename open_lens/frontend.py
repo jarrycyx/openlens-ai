@@ -140,8 +140,8 @@ def start_new_session(sidebar_container_empty, base_url, api_key, model, code_mo
                     "--thread-id", thread_id,
                     "--email", email,
                     "--chat-model", model,
-                    "--api-key", api_key,
-                    "--base-url", base_url,
+                    "--api-key", os.environ["OPENAI_API_KEY"] if "Default" in api_key else api_key,
+                    "--base-url", os.environ["BASE_URL"] if "Default" in base_url else base_url,
                     "--code-model", code_model,
                 ])
             
@@ -204,7 +204,7 @@ def resume_session(sidebar_container_empty):
         else:
             # 创建一个映射从显示文本到会话数据
             session_options = {
-                f"{s.thread_id[:50]}{'...' if len(s.thread_id) > 50 else ''}": s 
+                f"{s.thread_id[:80]}{'...' if len(s.thread_id) > 80 else ''}": s 
                 for s in saved_sessions
             }
             
@@ -227,7 +227,7 @@ def resume_session(sidebar_container_empty):
                 st.write(f"**Path:** {config.save_path}")
                 
                 # Resume按钮
-                if st.button("Resume Session", type="primary"):
+                if st.button("Resume Session"):
                     st.chat_message("human").write(
                         f"**Resuming Session**\n\n"
                         f"**Thread ID:** {config.thread_id}\n\n"
@@ -293,8 +293,8 @@ def main():
         sidebar_container_empty = st.empty()
     
     with sidebar_container_api:
-        base_url = st.text_input("API Base URL", value=os.environ.get("BASE_URL", ""))
-        api_key = st.text_input("API Key", value=os.environ.get("OPENAI_API_KEY", ""))
+        base_url = st.text_input("API Base URL", value="Default (may be extremely slow)")
+        api_key = st.text_input("API Key", value="Default (may be extremely slow)")
         model = st.text_input("Chat Model", value=os.environ.get("MODEL", ""))
         code_model = st.text_input("Code Model", value=os.environ.get("CODE_MODEL", ""))
 

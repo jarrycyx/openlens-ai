@@ -160,7 +160,13 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
         error_info = traceback.format_exc()
         logger.info(f'Failed to run graph: {e}')
         logger.info(error_info)
-        zipfile, latest_md = collect_files(config)
+        try:
+            zipfile, latest_md = collect_files(config)
+        except Exception as e:
+            error_info = traceback.format_exc()
+            logger.error(f"Failed to collect files: {e}")
+            logger.info(error_info)
+            zipfile, latest_md = None, ""
         send_email(
             subject=f"OpenLens Job Failed | {config.thread_id}",
             content=f"Failed to run graph: {e}\n{error_info}\n\n{latest_md}",
