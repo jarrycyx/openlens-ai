@@ -168,7 +168,7 @@ class BasicToolNode:
             outputs = []
             for tool_call in message.tool_calls:
                 this_tool = self.tools_by_name[tool_call["name"]]
-                frontend_add_tool_call(tool_call["name"], tool_call["args"])
+                frontend_add_tool_call(tool_call["name"], tool_call["args"], self.config)
                 # 如果是异步函数，那就阻塞执行
                 if asyncio.iscoroutine(this_tool):
                     logger.info(f"Waiting for async tool call: {tool_call}")
@@ -187,7 +187,6 @@ class BasicToolNode:
                     )
                 )
                 self.save_tool_call(outputs[-1])
-                # frontend_add_message(outputs[-1])
                 
             state["messages"] += outputs
             state["last_tool_call"] = tool_call["name"]
@@ -205,6 +204,5 @@ class BasicToolNode:
                     )
                 ]
             self.save_tool_call(state["messages"][-1])
-            frontend_add_message(state["messages"][-1])
             state["last_tool_call"] = tool_call["name"]
             return state

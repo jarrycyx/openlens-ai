@@ -18,6 +18,7 @@ from langchain_tavily import TavilySearch
 from langchain.load.dump import dumps
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.sqlite import SqliteSaver
+from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 
 # pip install langgraph-checkpoint-sqlite pysqlite3
 
@@ -158,6 +159,7 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
                 )
     except Exception as e:
         error_info = traceback.format_exc()
+        frontend_add_message(AIMessage(content=f"Error: {e}\n{error_info}"), config)
         logger.info(f'Failed to run graph: {e}')
         logger.info(error_info)
         try:

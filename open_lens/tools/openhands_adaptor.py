@@ -99,7 +99,7 @@ def run_docker_container(cmd: str, config: Config):
             # 实时处理输出流
             output_chunk = ""
             pattern = r"(\d{2}:\d{2}:\d{2} - openhands:)" # 用时间戳拆分日志
-            frontend_add_tool_call("openhands", {})
+            frontend_add_tool_call("openhands", {}, config)
             while True:
                 output_line = process.stdout.readline()
                 output_line = re.sub(r"\033\[[\d;]*m", "", output_line)

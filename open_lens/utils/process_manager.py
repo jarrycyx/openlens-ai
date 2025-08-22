@@ -4,6 +4,7 @@ from typing import Dict, List, Any
 from loguru import logger
 import subprocess
 import time
+import psutil
 
 PROCESS_FILE = os.path.join("outputs", "processes.json")
 
@@ -84,8 +85,11 @@ class ProcessManager:
                 # 检查进程是否仍在运行
                 pid = process['pid']
                 os.kill(pid, 0)  # 不发送信号，只检查进程是否存在
-                active_processes.append(process)
-            except (OSError, KeyError):
+                if psutil.Process(pid).status() != "zombie":
+                    active_processes.append(process)
+                else:
+                    logger.info(f"清理异常进程: {process.get('thread_id', 'Unknown')}")
+            except Exception as e:
                 # 进程不存在或PID无效，跳过该进程
                 logger.info(f"清理已完成的进程: {process.get('thread_id', 'Unknown')}")
                 pass
