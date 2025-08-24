@@ -16,7 +16,7 @@ LaTeX Requirements:
 
 Content Rules:
 - ALL numeric claims MUST match actual result files.
-- Literature citations must correspond to report in /workspace/literature_review.md
+- Literature citations and references must correspond to report in /workspace/literature_review.md and using bibtex. DO NOT include references in plain text.
 - Never fabricate results - use EXACT values from generated result files
 - Technical terms from experiment plan MUST be formally defined
 - Only use enumerated or itemized lists to elaborate key findings or novelty, write continuous text otherwise.

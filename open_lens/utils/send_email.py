@@ -29,7 +29,8 @@ def collect_files(config: Config):
     save_path = config.save_path
     
     # 定义需要收集的文件类型
-    file_patterns = ['*.py', '*.json', '*.md', '*.txt', '*.tex', '*.bib', '*.sty', '*.pdf']
+    file_patterns = ['*.py', '*.json', '*.md', '*.txt', '*.tex', '*.bib', '*.sty', '*.log',
+                     '*.pdf', '*.png', '*.jpg', '*.jpeg', '*.svg']
     
     # 收集所有匹配的文件
     files = []
@@ -48,9 +49,15 @@ def collect_files(config: Config):
     # 将文件打包成zip
     with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for file in files:
-            # 将文件添加到zip中，保持相对路径结构
-            arcname = os.path.relpath(file, save_path)
-            zipf.write(file, arcname)
+            try:
+                # 检查有没有读取权限
+                with open(file, 'rb'):
+                    pass
+                # 将文件添加到zip中，保持相对路径结构
+                arcname = os.path.relpath(file, save_path)
+                zipf.write(file, arcname)
+            except Exception as e:
+                logger.info(f"警告: 无法读取文件 {file}，已跳过. 错误: {e}")
     
     # 按修改时间排序.md文件，返回最新的一个
     md_files = [f for f in files if f.endswith('.md')]

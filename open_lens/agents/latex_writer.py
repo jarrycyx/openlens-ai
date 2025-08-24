@@ -120,7 +120,7 @@ def build_latex_writer(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/Agentmed_20250818110650_What_is_the_prediction_precision_of_AKI_based_on_h")
+    config, state, last_subgraph = load_state("outputs/OL_20250823132617_What_is_the_pre_istorical_data__dzdzzd_126_com_1276")
     graph = build_latex_writer(config)
 
     graph.invoke(state)

@@ -5,6 +5,7 @@ As the workflow router, analyze the subtask report and choose the next action:
    - All verification checks pass  
    - Data fully matches experiment plan requirements  
    - No abnormalities detected  
+   - Required subtasks completed (Future subtasks may still be incomplete).
    *Reason example*: "All outputs validated against plan criteria. Proceeding as scheduled."  
 
 2) **RETURN_TO_LAST_SUBTASK** (if):  

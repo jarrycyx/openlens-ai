@@ -1,4 +1,4 @@
-# OpenLens AI 📚🔍💡: Fully Autonomous Medical Research Agent
+# OpenLens AI 📚🔍💡: Fully Autonomous Research Agent for Health Infomatics
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.9%2B-blue" alt="Python Version">

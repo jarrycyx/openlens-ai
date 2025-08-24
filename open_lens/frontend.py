@@ -270,9 +270,9 @@ def resume_session(sidebar_container_empty):
 
 
 def main():
-    
+    st.set_page_config(page_title="OpenLens AI 📚🔍💡")
     st.title("OpenLens AI 📚🔍💡")
-    st.subheader("Fully Autonomous Medical Research Agent")
+    st.subheader("Fully Autonomous Research Agent for Health Infomatics")
     
     # 显示当前进程数量
     process_count = process_manager.get_process_count()

@@ -151,7 +151,7 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
     
     try:
         step_i = 0
-        for event in graph.stream(init_state):
+        for event in graph.stream(init_state, {"recursion_limit": 100}):
             # event: [("...", "..."), {}]
             if len(list(event.keys())) > 0:
                 state_name = list(event.keys())[0]

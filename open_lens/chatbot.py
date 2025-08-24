@@ -187,12 +187,13 @@ def chatbot_with_context_manager(
         this_prompt = prompt
         
         try:
-            if len(data_show) > 4000*4:
+            if len(data_show) > 32000*4:
                 logger.warning("data_show is too long, clamping with vector search")
                 data_show = vector_search(data_show, prompt, token_cnt=4000)
             this_prompt = this_prompt.replace("{data_show}", data_show)
         except Exception as e:
-            logger.warning("Error occurred when formatting literature report", str(e))
+            logger.warning("Error occurred when formatting data show", str(e))
+            logger.warning(traceback.format_exc())
             
         try:
             if len(literature_report) > 4000*4:
@@ -201,6 +202,7 @@ def chatbot_with_context_manager(
             this_prompt = this_prompt.replace("{literature_report}", literature_report)
         except Exception as e:
             logger.warning("Error occurred when formatting literature report", str(e))
+            logger.warning(traceback.format_exc())
             
         try:
             if len(plan) > 4000*4:
@@ -209,16 +211,19 @@ def chatbot_with_context_manager(
             this_prompt = this_prompt.replace("{plan}", plan)
         except Exception as e:
             logger.warning("Error occurred when formatting plan", str(e))
+            logger.warning(traceback.format_exc())
             
         try:
             this_prompt = this_prompt.replace("{question}", question)
         except Exception as e:
             logger.warning("Error occurred when formatting question", str(e))
+            logger.warning(traceback.format_exc())
             
         try:
             this_prompt = this_prompt.replace("{subplan}", subplan)
         except Exception as e:
             logger.warning("Error occurred when formatting subplan", str(e))
+            logger.warning(traceback.format_exc())
         
         return this_prompt
     def chatbot(state: State):

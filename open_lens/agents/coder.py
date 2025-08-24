@@ -134,4 +134,4 @@ if __name__ == "__main__":
     config, state, last_subgraph = load_state("outputs/OL_20250822143511_What_is_the_pre_istorical_data__dzdzzd_126_com_2125_2_resume_20250822154505")
     graph = build_coder(config)
 
-    graph.invoke(state)
+    graph.invoke(state, {"recursion_limit": 100})

@@ -1,6 +1,7 @@
 import os
 import json
 import dotenv
+import glob
 from IPython.display import Image, display
 from loguru import logger
 
@@ -55,15 +56,32 @@ def build_data_analyzer(config: Config) -> StateGraph:
     llm_with_tools = llm.bind_tools(tools)
 
     def openhands_node(state: State):
-        this_prompt = data_analyzer_prompt.format(question=state["question"])
-        results = code_tool.invoke({"prompts": [this_prompt, execute_check_prompt.format(plan=this_prompt)]})
-        state["messages"] = [
-            ToolMessage(
-                content=results,
-                name="openhands_tool",
-                tool_call_id="openhands_tool",
-            )
-        ]
+        # 检查dataset_path中所有markdown文件的总长度
+        
+        all_doc = ""
+        if config.dataset_path and os.path.exists(config.dataset_path):
+            for file_path in glob.glob(os.path.join(config.dataset_path, "**", "*.md"), recursive=True):
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        all_doc += f"\n\n--- {file_path} ---\n\n" + f.read()
+                except Exception as e:
+                    logger.warning(f"Error reading file {file_path}: {e}")
+        
+        # 如果总长度小于4000，则运行OpenHands
+        if len(all_doc) < 4000:
+            this_prompt = data_analyzer_prompt.format(question=state["question"])
+            results = code_tool.invoke({"prompts": [this_prompt, execute_check_prompt.format(plan=this_prompt)]})
+            state["messages"] = [
+                ToolMessage(
+                    content=results,
+                    name="openhands_tool",
+                    tool_call_id="openhands_tool",
+                )
+            ]
+        else:
+            os.makedirs(os.path.join(state["save_path"], "workspace", "data_analyze"), exist_ok=True)
+            with open(os.path.join(state["save_path"], "workspace", "data_analyze", "data_show.md"), "w") as f:
+                f.write(all_doc)
         return state
 
     def chatbot(state: State):
@@ -98,7 +116,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/OL_20250821133009_What_is_the_pre_istorical_data_2634")
+    config, state, last_subgraph = load_state("outputs/OL_20250822171516_What_is_the_pre_istorical_data__dzdzzd_126_com_2090")
     graph = build_data_analyzer(config)
 
     graph.invoke(state)

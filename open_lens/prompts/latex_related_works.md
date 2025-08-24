@@ -16,7 +16,7 @@ LaTeX Requirements:
      - Make sure to write related works in only one section and do not add subsections.
 
 Content Rules:
-- Literature citations must correspond to report in /workspace/literature_review.md
+- Literature citations and references must correspond to report in /workspace/literature_review.md and using bibtex. DO NOT include references in plain text.
 - Technical terms from experiment plan MUST be formally defined.
 - Write continuous text. DO NOT use enumerated or itemized lists unless absolutely necessary.
 

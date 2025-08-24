@@ -22,7 +22,7 @@ Appendices (3 page max):
 
 Content Rules:  
 - All data description must be based on files in /workspace/data_analyze
-- All figures/tables must be generated from /workspace/results/ and referenced correctly.
+- Copy figures/tables from /workspace/ to /workspace/manuscript/ and reference them correctly.
 - Metrics must match /workspace/results/*.csv exactly.
 - Write continuous text in the main test. DO NOT use enumerated or itemized lists unless you are drawing tables.
 

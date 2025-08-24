@@ -8,11 +8,13 @@ import time
 from threading import Thread
 import hashlib
 from concurrent.futures import ThreadPoolExecutor
+import streamlit as st
 from streamlit.runtime.scriptrunner import get_script_run_ctx, add_script_run_ctx
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 import streamlit_scrollable_textbox as stx
 import glob
 import json
+import traceback
 from .config import Config
 
 
@@ -309,6 +311,7 @@ class WorkspaceMonitor(Thread):
             except Exception as e:
                 # 避免线程因异常而终止
                 logger.warning(f"Error in file watcher: {e}")
+                logger.warning(traceback.format_exc())
                 time.sleep(5)
                 continue
 
