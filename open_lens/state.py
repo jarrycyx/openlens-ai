@@ -51,6 +51,10 @@ def load_state(save_dir: str) -> tuple[Config, State]:
         config = Config(**config)
         print(f"Config save_path: {config.save_path} -> {save_dir}")
         config.save_path = save_dir
+        config.thread_id = os.path.basename(save_dir)
+    
+    with open(config_path, "w") as f:
+        json.dump(config.model_dump(), f, indent=2)
         
         
     state_dir = os.path.join(save_dir, "states")

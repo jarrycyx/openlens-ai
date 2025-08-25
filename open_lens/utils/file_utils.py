@@ -3,6 +3,8 @@ import json
 from loguru import logger
 from .config import Config
 
+
+os.environ["LOGURU_LEVEL"] = 'INFO'
 with open("open_lens/tools/openhands_configs/config.toml", "r") as f:
     oh_config_template = f.read()
 
@@ -30,7 +32,7 @@ def prepare_file_config(thread_id: str, question: str, dataset_path: str, email:
     # os.makedirs(os.path.join("outputs", "log"), exist_ok=True)
     logger.add(os.path.join(save_path, "streamlit.log"), 
                format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|"+thread_id, 
-               colorize=False, rotation="10 MB")
+               colorize=False, rotation="10 MB", level="DEBUG")
 
     # 保存config
     with open(os.path.join(save_path, "config.json"), "w") as f:

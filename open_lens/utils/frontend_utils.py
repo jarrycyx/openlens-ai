@@ -5,6 +5,7 @@ from datetime import datetime
 import time
 from loguru import logger
 import time
+import random
 from threading import Thread
 import hashlib
 from concurrent.futures import ThreadPoolExecutor
@@ -19,13 +20,13 @@ from .config import Config
 
 
 tool_show_message = {
-    "search_arxiv_tool": "Searching Arxiv for **\"{query}\"**",
+    "search_arxiv_tool": "Searching Arxiv for **{query}**",
     "read_arxiv_paper_tool": "Reading Arxiv Paper: **{paper_id}**",
-    "search_medrxiv_tool": "Searching MedRxiv for **\"{query}\"**",
+    "search_medrxiv_tool": "Searching MedRxiv for **{query}**",
     "read_medrxiv_paper_tool": "Reading MedRxiv Paper: **{paper_id}**",
-    "report_writer_tool": "Writing report to **\"{file_name}\"**",
+    "report_writer_tool": "Writing report to **{file_name}**",
     "openhands": "Writing/executing codes",
-    "tavily_search": "Searching on the web for **\"{query}\"**"
+    "tavily_search": "Searching on the web for **{query}**"
 }
 
 is_in_streamlit = os.environ.get("STREAMLIT_RUNNING", "False")
@@ -185,11 +186,38 @@ def display_messages_from_file(config: Config):
                 st.chat_message("tool").write(msg["content"])
             elif msg["type"] == "node_update":
                 st.info(msg["content"])
-
-
-
+            elif "file_content" in msg["type"]:
+                # 显示文件状态信息
+                if "added" in msg["type"]:
+                    st.success(f"File added: {msg['filename']}")
+                elif "updated" in msg["type"]:
+                    st.success(f"File updated: {msg['filename']}")
+                with st.chat_message("assistant", avatar="📁"):
+                    if msg["content"].startswith("path:"):
+                        with open(msg["content"].replace("path:",""), "rb") as f:
+                            file_data = f.read()
+                        with st.container(horizontal=True):
+                            st.write(f"**{msg['filename']}**")
+                            st.download_button(
+                                label="📥 Download",
+                                data=file_data,
+                                file_name=msg["filename"],
+                                key=f"download_{msg['filename']}_{random.randint(1000, 9999)}"
+                            )
+                    else:
+                        with st.container(horizontal=True):
+                            st.write(f"**{msg['filename']}**")
+                            st.download_button(
+                                label="📥 Download",
+                                data=msg["content"],
+                                file_name=msg["filename"],
+                                key=f"download_{msg['filename']}_{random.randint(1000, 9999)}"
+                            )
+                        show_scrollable(msg["content"], msg["filename"], height=200)
 
 def show_scrollable(content, file_name, height=200):
+    content = content[:10000]  # 限制内容长度，防止过大
+    
     if file_name.endswith(".md"):
         component = st.write
     elif file_name.endswith(".txt"):
@@ -203,34 +231,42 @@ def show_scrollable(content, file_name, height=200):
         
     with st.container(height=height):
         component(content)
-def show_file_in_msg(file_path):
+        
+        
+        
+def frontend_add_file_msg(file_path, config: Optional[Config] = None, file_status="added"):
     
     filename = os.path.basename(file_path)
-    try:
-        file_content = open(file_path, "r").read()
-    except:
-        file_content = "Read file failed"
-    with st.chat_message("assistant", avatar="📁"):
-        st.write(f"**{filename}**")
-        show_scrollable(file_content, filename, height=200)
-@st.fragment
-def show_file_in_dialog(rel_file_path):
-    filename = os.path.basename(rel_file_path)
-    print(filename)
-    if st.button(rel_file_path, key=f"btn_{rel_file_path}"):
-        print("!!!!!!!!!!")
-        # @st.dialog(f"View File: {filename}", on_dismiss="ignore")
-        # def view_file(text: str):
-        #     show_scrollable(text, filename, height=800)
+    # 判断是否为二进制文件（如PDF）
+    if filename.endswith(".pdf") or filename.endswith(".png") or filename.endswith(".jpg") or filename.endswith(".jpeg") or filename.endswith(".gif") or filename.endswith(".svg"):
+        # 对于二进制文件，保存文件路径而不是文件内容
+        file_content = f"path:{file_path}"
+    else:
+        # 对于文本文件，读取文件内容
+        try:
+            file_content = open(file_path, "r").read()
+        except:
+            file_content = "Read file failed"
+    
+    
+    # 如果提供了配置，则保存消息到缓存
+    if config:
+        message_data = {
+            "timestamp": datetime.now().isoformat(),
+            "type": f"file_content_{file_status}",
+            "filename": filename,
+            "content": file_content,
+            "file_path": file_path
+        }
+        _save_message(config, message_data)
         
-        # file_content = open(os.path.join(self.workspace_path, rel_file_path), "r").read()
-        # view_file(file_content)
 
 
 class WorkspaceMonitor(Thread):
-    def __init__(self, save_path, sidebar_container):
+    def __init__(self, config: Config, sidebar_container):
         super().__init__()
-        self.save_path = save_path
+        self.save_path = config.save_path
+        self.config = config
         self.sidebar_container = sidebar_container
         self.daemon = True  # 设置为守护线程，确保主程序结束时线程也结束
         self._stop_event = False
@@ -257,6 +293,11 @@ class WorkspaceMonitor(Thread):
                         current_files.add(rel_path)
                         current_fils_hash[rel_path] = hashlib.md5(open(f, 'rb').read()).hexdigest()
             
+            extra_files = ["overall_graph_image.png"]
+            for extra_f in extra_files:
+                if os.path.exists(os.path.join(self.workspace_path, extra_f)):
+                    current_files.add(extra_f)
+                    current_fils_hash[extra_f] = hashlib.md5(open(os.path.join(self.workspace_path, extra_f), 'rb').read()).hexdigest()
             
             new_files = current_files - self.previous_files
             update_files = [f for f in current_files if ((f in self.previous_files) and (current_fils_hash[f] != self.previous_files_hash[f]))]
@@ -273,14 +314,12 @@ class WorkspaceMonitor(Thread):
                 for file in new_files:
                     if file.endswith(".pyc"):
                         continue
-                    st.success(f"File added: {file}")
-                    show_file_in_msg(os.path.join(self.workspace_path, file))
+                    frontend_add_file_msg(os.path.join(self.workspace_path, file), self.config, "added")
                 
                 for file in update_files:
                     if file.endswith(".pyc"):
                         continue
-                    st.success(f"File updated: {file}")
-                    show_file_in_msg(os.path.join(self.workspace_path, file))
+                    frontend_add_file_msg(os.path.join(self.workspace_path, file), self.config, "updated")
 
                 with self.sidebar_container.container():
                     # 显示文件列表
@@ -294,8 +333,7 @@ class WorkspaceMonitor(Thread):
 
                 self.previous_files = current_files
                 self.previous_files_hash = current_fils_hash
-    
-    
+
     def run(self):
         """在子线程中监控 workspace 目录并显示文件列表"""
         self.previous_files = set()

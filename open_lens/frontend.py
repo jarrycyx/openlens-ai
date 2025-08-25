@@ -173,7 +173,7 @@ def start_new_session(sidebar_container_empty, base_url, api_key, model, code_mo
                 st.session_state.monitor_thread.stop()
 
             # 启动新的监控线程
-            monitor_thread = WorkspaceMonitor(config.save_path, sidebar_container_empty)
+            monitor_thread = WorkspaceMonitor(config, sidebar_container_empty)
             add_script_run_ctx(monitor_thread, get_script_run_ctx())
             monitor_thread.start()
             st.session_state.monitor_thread = monitor_thread
@@ -203,7 +203,6 @@ def resume_session(sidebar_container_empty):
     if len(email_filter) > 5:
         # 加载已保存的会话，根据邮箱过滤
         saved_sessions = load_saved_sessions(email_filter)
-        
         if not saved_sessions:
             st.info("No saved sessions found. Start a new session first.")
         else:
@@ -255,7 +254,7 @@ def resume_session(sidebar_container_empty):
                         st.session_state.monitor_thread.stop()
 
                     # 启动新的监控线程
-                    monitor_thread = WorkspaceMonitor(config.save_path, sidebar_container_empty)
+                    monitor_thread = WorkspaceMonitor(config, sidebar_container_empty)
                     add_script_run_ctx(monitor_thread, get_script_run_ctx())
                     monitor_thread.start()
                     st.session_state.monitor_thread = monitor_thread

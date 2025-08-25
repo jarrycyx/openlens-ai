@@ -11,7 +11,8 @@ Act as an automated quality assurance reviewer. Carefully analyze the programmin
 
 5) **Experimental Results**: Summarize all experimental results that are worth reporting from the workflow and their relevance to the experimental plan.
 
-Generate a structured report with file name "subtask_n_report.md", where n is the subtask number. Includes:
+Generate a structured report with file name "subtask_XX_report.md" (where XX 
+is the subtask number, e.g., sutask_01_report.md, subtask_02_report.md). Includes:
 - List of detected issues (with file/module references)
 - Summary of compliance with the plan 
 - Report of all experimental results that are relevant to the plan and worth reporting

@@ -13,7 +13,7 @@ class ProcessManager:
     """
     管理OpenLens AI进程的类
     """
-    MAX_PROCESSES = 1
+    MAX_PROCESSES = 5
 
     def __init__(self):
         """初始化进程管理器"""

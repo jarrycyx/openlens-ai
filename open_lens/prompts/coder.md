@@ -5,7 +5,7 @@ Experiment Plan:
 
 Program Requirement: 
 This program must take no arguments and should handle the execution of the entire workflow for the group. Include neccesary explanation assiciated with the plan in the script comment. Make sure to write codes, scripts, and save results in /workspace/subtask_XX (where XX 
-is the subtask number) directory to avoid confusion between different subtasks.
+is the subtask number, e.g., sutask_01, subtask_02) directory to avoid confusion between different subtasks.
 
 Reminders: 
 - DO NOT mock or simulate results. Always generate real results using an actual workflow setup (e.g., scripts that can directly run with experimental/control group inputs to produce dependent variables).

@@ -114,7 +114,7 @@ def vector_search(messages: list, query: str, token_cnt: int = 10000):
 
 
 def chatbot_with_context_manager(
-    config: Config, llm: BaseChatModel, prompt: str, context_manage: Literal["token_cnt", "token_cnt_large", "last_message", "last_tool_message", "vector_search"] = "vector_search"
+    config: Config, llm: BaseChatModel, prompt: str, context_manage: Literal["token_cnt", "token_cnt_large", "last_message", "last_tool_message", "vector_search"] = "vector_search", only_last_human_message: bool = True,
 ):
     def detect_error_message(state: State):
         if ("messages" in state) and (len(state["messages"]) > 0):
@@ -269,6 +269,13 @@ def chatbot_with_context_manager(
             if not isinstance(llm, CompiledStateGraph):
                 frontend_add_message(state["messages"][-1], config)
             logger.info(f"Prompt: {this_prompt}")
+            
+        if only_last_human_message:
+            if isinstance(message_to_llm[-1], HumanMessage):
+                last_human_message = message_to_llm[-1]
+                message_no_human = [msg for msg in message_to_llm if not isinstance(msg, HumanMessage)]
+                message_to_llm = message_no_human + [last_human_message]
+                logger.info("Only keep the last human message")
         
         logger.info(f"Message count to LLM: {len(message_to_llm)}, token count: {count_tokens_approximately(message_to_llm)}")
 

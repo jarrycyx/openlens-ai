@@ -2,6 +2,7 @@ import os
 import json
 import dotenv
 from IPython.display import Image, display
+import shutil
 
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
@@ -87,6 +88,8 @@ def build_coder(config: Config) -> StateGraph:
         return state
 
     def subtask_return_node(state: State):
+        current_subtask_i = state["current_subtask_index"]
+        shutil.rmtree(os.path.join(config.save_path, "workspace", "subtask_{current_subtask_i:02d}"))
         return state
 
     concluder_tools_node = BasicToolNode(concluder_tools, config)
