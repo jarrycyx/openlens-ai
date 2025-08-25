@@ -293,17 +293,19 @@ class WorkspaceMonitor(Thread):
                         current_files.add(rel_path)
                         current_fils_hash[rel_path] = hashlib.md5(open(f, 'rb').read()).hexdigest()
             
+            # extra files是workspace外面的可能需要展示的文件，所以是相对于save_path的路径
             extra_files = ["overall_graph_image.png"]
             for extra_f in extra_files:
-                if os.path.exists(os.path.join(self.workspace_path, extra_f)):
+                if os.path.exists(os.path.join(self.save_path, extra_f)):
                     current_files.add(extra_f)
-                    current_fils_hash[extra_f] = hashlib.md5(open(os.path.join(self.workspace_path, extra_f), 'rb').read()).hexdigest()
+                    current_fils_hash[extra_f] = hashlib.md5(open(os.path.join(self.save_path, extra_f), 'rb').read()).hexdigest()
             
             new_files = current_files - self.previous_files
             update_files = [f for f in current_files if ((f in self.previous_files) and (current_fils_hash[f] != self.previous_files_hash[f]))]
             # 显示新文件通知，如果删除了文件也刷新
-            new_files = list(new_files)[:3]
-            update_files = update_files[:3]
+            new_files = list(new_files)[:1]
+            update_files = update_files[:1]
+            
             if new_files or update_files or (self.previous_files - current_files):
                 # logger.debug(f"Checking workspace directory: " + str(current_files))
                 logger.debug(f"New files found: {new_files}")
@@ -351,5 +353,5 @@ class WorkspaceMonitor(Thread):
                 logger.warning(f"Error in file watcher: {e}")
                 logger.warning(traceback.format_exc())
                 time.sleep(5)
-                continue
+                st.error(f"Error occured in file watcher, please refresh the page. Error: {e}")
 

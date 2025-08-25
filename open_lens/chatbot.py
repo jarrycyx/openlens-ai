@@ -31,7 +31,19 @@ dotenv.load_dotenv()
 
 
 def react_pre_model_wrapper(vector_search_question: str):
+    """
+    创建一个预处理模型的包装器，用于在将消息传递给模型之前进行处理
+    
+    Args:
+        vector_search_question: 用于向量搜索的问题
+        
+    Returns:
+        一个预处理函数，用于处理状态中的消息
+    """
     def react_pre_model_hook(state):
+        """
+        在模型调用前处理状态中的消息，特别是处理过长的工具消息
+        """
         logger.info(f"React pre model hook called with llm input message len {len(state['messages'])}")
         # 如果工具返回信息太多，用向量搜索
         max_tool_token_cnt = int(os.environ.get("MAX_TOOL_TOKEN_CNT", 2000))
@@ -50,6 +62,17 @@ def react_pre_model_wrapper(vector_search_question: str):
 
 
 def vector_search_match_type(message: str, query: str, token_cnt: int = 10000):
+    """
+    根据消息类型执行向量搜索并保持消息类型一致
+    
+    Args:
+        message: 原始消息
+        query: 查询语句
+        token_cnt: 最大token数量
+        
+    Returns:
+        处理后的消息，保持原始消息类型
+    """
     message_type = type(message)
     short_messages = vector_search([message], query, token_cnt=token_cnt)
     # 合并
@@ -61,6 +84,17 @@ def vector_search_match_type(message: str, query: str, token_cnt: int = 10000):
     
 
 def vector_search(messages: list, query: str, token_cnt: int = 10000):
+    """
+    使用向量搜索对长消息进行摘要，保留最相关的内容
+    
+    Args:
+        messages: 消息列表
+        query: 查询语句，用于确定相关内容
+        token_cnt: 最大token数量限制
+        
+    Returns:
+        经过向量搜索处理后的消息列表
+    """
 
     if count_tokens_approximately(messages) < token_cnt:
         logger.info(f"No need to use vector search, because token count is less than {token_cnt}")
@@ -116,7 +150,30 @@ def vector_search(messages: list, query: str, token_cnt: int = 10000):
 def chatbot_with_context_manager(
     config: Config, llm: BaseChatModel, prompt: str, context_manage: Literal["token_cnt", "token_cnt_large", "last_message", "last_tool_message", "vector_search"] = "vector_search", only_last_human_message: bool = True,
 ):
+    """
+    创建一个带上下文管理功能的聊天机器人
+    
+    Args:
+        config: 配置对象
+        llm: 语言模型
+        prompt: 提示词
+        context_manage: 上下文管理策略
+        only_last_human_message: 是否只保留最后一条人类消息
+        
+    Returns:
+        聊天机器人函数
+    """
+    
     def detect_error_message(state: State):
+        """
+        检测状态中是否有错误消息
+        
+        Args:
+            state: 当前状态
+            
+        Returns:
+            如果有错误消息则返回该消息，否则返回False
+        """
         if ("messages" in state) and (len(state["messages"]) > 0):
             last_message = state["messages"][-1]
             if isinstance(last_message, ToolMessage):
@@ -125,6 +182,16 @@ def chatbot_with_context_manager(
         return False
 
     def clamp_token_cnt(messages: list[dict], max_token_cnt: int):
+        """
+        根据最大token数量限制消息列表
+        
+        Args:
+            messages: 消息列表
+            max_token_cnt: 最大token数量
+            
+        Returns:
+            裁剪后的消息列表
+        """
         token_cnt = 0
         context_messages = []
         for message in messages[::-1]:
@@ -135,6 +202,16 @@ def chatbot_with_context_manager(
         return context_messages
 
     def call_react(state: State, message_to_llm: list):
+        """
+        调用React LLM处理消息
+        
+        Args:
+            state: 当前状态
+            message_to_llm: 发送给LLM的消息列表
+            
+        Returns:
+            更新后的状态
+        """
         # max_react_tool_call = int(os.environ.get("REACT_MAX_TOOL_CALL", 10))
         tool_call_interval = 5
         for _ in range(5):
@@ -178,6 +255,15 @@ def chatbot_with_context_manager(
 
     
     def format_prompt(state: State):
+        """
+        格式化提示词，替换其中的占位符
+        
+        Args:
+            state: 当前状态
+            
+        Returns:
+            格式化后的提示词
+        """
         data_show = state["data_show"] if "data_show" in state else ""
         plan = state["plan"] if "plan" in state else ""
         question = state["question"] if "question" in state else ""
@@ -226,7 +312,17 @@ def chatbot_with_context_manager(
             logger.warning(traceback.format_exc())
         
         return this_prompt
+        
     def chatbot(state: State):
+        """
+        聊天机器人主函数，处理不同类型的消息和上下文管理策略
+        
+        Args:
+            state: 当前状态
+            
+        Returns:
+            更新后的状态
+        """
         this_prompt = format_prompt(state)
 
         logger.info(f"Context management: {context_manage}")
@@ -269,7 +365,8 @@ def chatbot_with_context_manager(
             if not isinstance(llm, CompiledStateGraph):
                 frontend_add_message(state["messages"][-1], config)
             logger.info(f"Prompt: {this_prompt}")
-            
+        
+        # 只保留最后一条HumanMessage
         if only_last_human_message:
             if isinstance(message_to_llm[-1], HumanMessage):
                 last_human_message = message_to_llm[-1]

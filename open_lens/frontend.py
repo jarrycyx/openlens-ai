@@ -1,4 +1,4 @@
-import os
+import os, sys
 
 os.environ["STREAMLIT_RUNNING"] = "True"
 
@@ -12,6 +12,7 @@ import json
 import glob
 import subprocess
 import time
+logger.configure(handlers=[{"sink": sys.stderr, "level": "INFO"}])
 
 from .build_graph import build_graph, run_graph
 from .utils.file_utils import prepare_file_config
@@ -208,7 +209,7 @@ def resume_session(sidebar_container_empty):
         else:
             # 创建一个映射从显示文本到会话数据
             session_options = {
-                f"{s.thread_id[:80]}{'...' if len(s.thread_id) > 80 else ''}": s 
+                s.thread_id: s 
                 for s in saved_sessions
             }
             

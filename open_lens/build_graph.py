@@ -94,8 +94,8 @@ def build_graph(config: Config, checkpointer: InMemorySaver | SqliteSaver):
                 f.write(graph_image.data)
             with open(os.path.join(config.save_path, "graph_mermaid.txt"), "w") as f:
                 f.write(graph.get_graph(xray=True).draw_mermaid())
-            with open(os.path.join(config.save_path, "workspace", "graph_mermaid.txt"), "w") as f:
-                f.write(graph.get_graph(xray=True).draw_mermaid())
+            # with open(os.path.join(config.save_path, "workspace", "graph_mermaid.txt"), "w") as f:
+            #     f.write(graph.get_graph(xray=True).draw_mermaid())
         except Exception as e:
             error_info = traceback.format_exc()
             frontend_add_message(AIMessage(content=f"Error: {e}\n{error_info}"), config)

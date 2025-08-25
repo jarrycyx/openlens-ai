@@ -10,6 +10,7 @@ base_url="{base_url}"
 
 [sandbox]
 user_id = 1000
+timeout = 300
 
 [mcp]
 stdio_servers = [

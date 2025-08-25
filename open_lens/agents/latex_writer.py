@@ -29,6 +29,9 @@ with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_method
 with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_experiments.md")) as f:
     exp_conclusion_prompt = f.read()
 
+with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_validator.md")) as f:
+    validator_prompt = f.read()
+
 
 def build_latex_writer(config: Config) -> StateGraph:
     llm = init_chat_model(
@@ -95,6 +98,17 @@ def build_latex_writer(config: Config) -> StateGraph:
             )
         ]
         return state
+    def validator_node(state: State):
+        this_prompt = validator_prompt
+        results = code_tool.invoke({"prompts": [this_prompt]})
+        state["messages"] = [
+            ToolMessage(
+                content=results,
+                name="openhands_tool",
+                tool_call_id="openhands_tool",
+            )
+        ]
+        return state
        
     tools_node = BasicToolNode(tools, config)
 
@@ -105,13 +119,15 @@ def build_latex_writer(config: Config) -> StateGraph:
     graph_builder.add_node("write_related_node", write_related_node)
     graph_builder.add_node("write_methods_node", write_methods_node)
     graph_builder.add_node("write_experiments_node", write_experiments_node)
+    graph_builder.add_node("validator_node", validator_node)
 
     graph_builder.add_edge(START, "clear_state")
     graph_builder.add_edge("clear_state", "write_introduction")
     graph_builder.add_edge("write_introduction", "write_related_node")
     graph_builder.add_edge("write_related_node", "write_methods_node")
     graph_builder.add_edge("write_methods_node", "write_experiments_node")
-    graph_builder.add_edge("write_experiments_node", END)
+    graph_builder.add_edge("write_experiments_node", "validator_node")
+    graph_builder.add_edge("validator_node", END)
 
     graph = graph_builder.compile()
 
