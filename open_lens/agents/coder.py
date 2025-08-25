@@ -3,6 +3,7 @@ import json
 import dotenv
 from IPython.display import Image, display
 import shutil
+from loguru import logger
 
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
@@ -89,7 +90,8 @@ def build_coder(config: Config) -> StateGraph:
 
     def subtask_return_node(state: State):
         current_subtask_i = state["current_subtask_index"]
-        shutil.rmtree(os.path.join(config.save_path, "workspace", "subtask_{current_subtask_i:02d}"))
+        shutil.rmtree(os.path.join(config.save_path, "workspace", f"subtask_{current_subtask_i:02d}"))
+        logger.info(f"Removed dir subtask_{current_subtask_i:02d} for re-doing the subtask.")
         return state
 
     concluder_tools_node = BasicToolNode(concluder_tools, config)

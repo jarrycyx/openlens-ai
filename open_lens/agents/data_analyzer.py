@@ -90,7 +90,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
         
         state["data_show"] = data_show
         this_prompt = data_report_prompt.format(question=state["question"], data_show=data_show)
-        this_chatbot = chatbot_with_context_manager(config, llm_with_tools, data_report_prompt)
+        this_chatbot = chatbot_with_context_manager(config, llm_with_tools, this_prompt)
         state = this_chatbot(state)
         return state
 

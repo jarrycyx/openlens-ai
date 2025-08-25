@@ -1,12 +1,12 @@
 
-Verify if the manuscript is structured in the following order and meets page limits:  
+Verify if the manuscript is structured in the following order and meets length limits:  
 
-**1. Abstract (≤ 0.5 page)**  
+**1. Abstract (≤ 300 words)**  
 - **Content:** Research gap (1 sentence), Methodology (1 sentence), Key quantitative results, Significance (1 sentence)  
 - **Format:** Impersonal passive voice, no citations  
 - **Data Source:** Exact values from `/workspace/results/`
 
-**2. Introduction (1–2 pages)**  
+**2. Introduction (600-1200 words)**  
 - **Structure:**  
   a. Hook (domain significance)  
   b. Literature gap (cite 3+ papers with `\cite`)  
@@ -15,7 +15,7 @@ Verify if the manuscript is structured in the following order and meets page lim
   e. Experimental approach overview  
 - **Requirement:** Include 1 key quantitative result as inline math from `/workspace/results/`
 
-**3. Related Works (0.5–1 page)**  
+**3. Related Works (300-600 words)**  
 - **Structure (in one subsection):**  
   a. Foundational studies (3+ seminal papers)  
   b. Methodological evolution (4+ citations, chronological)  
@@ -23,7 +23,7 @@ Verify if the manuscript is structured in the following order and meets page lim
   d. Positioning statement (how current work advances the field)  
 - **Format:** Continuous text; all citations from `/workspace/literature_review.md`
 
-**4. Methods (1–1.5 pages)**  
+**4. Methods (1000-2000 words)**  
 - **Structure:**  
   a. Experimental Design (with `\ref` to figures)  
   b. Materials/Subjects (exact sample numbers)  
@@ -33,19 +33,22 @@ Verify if the manuscript is structured in the following order and meets page lim
 - **Requirements:**  
   - 3+ cross-references to figures/tables  
   - Equations in `equation` environment with `\label`  
-- **Appendices (≤5 pages):** Additional parameters/methods
+- **Appendices (≤5 words):** Additional parameters/methods
 
-**5. Experiments (2–3 pages)**  
+**5. Experiments (1000-2000 words)**  
 - **Main Text:**  
   - Methodology (materials, procedure, statistical methods)  
   - Results (quantitative findings, tables/figures, comparisons)  
-- **Appendices (≤3 pages):**  
+- **Appendices (1000-10000 words):**  
   - Experimental setup (equipment, environment, software, variables)  
 - **Data Rules:** All metrics must match `/workspace/results/*.csv`
 
-**6. Conclusion (≤0.4 page)**  
+**6. Conclusion (300 words)**  
 - **Structure:**  
   a. Summary of findings (hypothesis, key results, p-values)  
   b. Implications (theoretical/practical impact, limitations)  
   c. Future work (specific extensions)  
 - **Format:** Cautious language; no new data
+
+
+**If issues are found**, rewrite and fix any underlying issues, then re-compile the manuscript.
