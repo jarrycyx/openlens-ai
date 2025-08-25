@@ -50,5 +50,12 @@ Verify if the manuscript is structured in the following order and meets length l
   c. Future work (specific extensions)  
 - **Format:** Cautious language; no new data
 
+**7. References (10+ citations)**
+- **Source:** All citations from `/workspace/literature_review.md` using BibTeX
+- **Format:** BibTeX entries in `/workspace/manuscript/ref.bib`
+- Consistent citation style throughout
+
+**8. Appendix**
+- **Content:** Any additional material that may be helpful for the reader, such as supplementary data, code, or figures
 
 **If issues are found**, rewrite and fix any underlying issues, then re-compile the manuscript.

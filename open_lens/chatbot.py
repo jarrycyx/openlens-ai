@@ -119,12 +119,13 @@ def vector_search(messages: list, query: str, token_cnt: int = 10000):
         "query": query,
         "documents": all_docs_str
     }
-    api_key = os.environ.get("OPENAI_API_KEY", "")
+    api_key = os.environ.get("RERANK_API_KEY", "")
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}"
     }
-    url = os.environ.get("BASE_URL", "") + "rerank"
+    url = os.environ.get("RERANK_BASE_URL", "") + "rerank"
+    # url = "https://cloud.infini-ai.com/maas/v1/rerank"
     while True:
         response = requests.post(url, json=payload, headers=headers)
         relevant_messages = []
@@ -139,6 +140,7 @@ def vector_search(messages: list, query: str, token_cnt: int = 10000):
             logger.warning(f"Get rerank result error: {e}")
             logger.warning(traceback.format_exc())
             logger.warning("Retrying...")
+            logger.warning(response.json())
             time.sleep(10)
             continue
         
@@ -291,10 +293,11 @@ def chatbot_with_context_manager(
             logger.warning(traceback.format_exc())
             
         try:
-            if len(plan) > 4000*4:
+            plan_str = json.dumps(plan)
+            if len(plan_str) > 4000*4:
                 logger.warning("Plan is too long, clamping with vector search")
-                plan = vector_search(plan, prompt, token_cnt=4000)
-            this_prompt = this_prompt.replace("{plan}", plan)
+                plan_str = vector_search(plan_str, prompt, token_cnt=4000)
+            this_prompt = this_prompt.replace("{plan}", plan_str)
         except Exception as e:
             logger.warning("Error occurred when formatting plan", str(e))
             logger.warning(traceback.format_exc())

@@ -290,15 +290,16 @@ class WorkspaceMonitor(Thread):
                 if os.path.isfile(f):  # 只保留文件，排除目录
                     rel_path = os.path.relpath(f, self.workspace_path)
                     if not os.path.basename(rel_path).startswith("."):
-                        current_files.add(rel_path)
-                        current_fils_hash[rel_path] = hashlib.md5(open(f, 'rb').read()).hexdigest()
+                        current_files.add(f)
+                        current_fils_hash[f] = hashlib.md5(open(f, 'rb').read()).hexdigest()
             
             # extra files是workspace外面的可能需要展示的文件，所以是相对于save_path的路径
             extra_files = ["overall_graph_image.png"]
             for extra_f in extra_files:
                 if os.path.exists(os.path.join(self.save_path, extra_f)):
-                    current_files.add(extra_f)
-                    current_fils_hash[extra_f] = hashlib.md5(open(os.path.join(self.save_path, extra_f), 'rb').read()).hexdigest()
+                    fp = os.path.join(self.save_path, extra_f)
+                    current_files.add(fp)
+                    current_fils_hash[fp] = hashlib.md5(open(fp, 'rb').read()).hexdigest()
             
             new_files = current_files - self.previous_files
             update_files = [f for f in current_files if ((f in self.previous_files) and (current_fils_hash[f] != self.previous_files_hash[f]))]
@@ -316,12 +317,12 @@ class WorkspaceMonitor(Thread):
                 for file in new_files:
                     if file.endswith(".pyc"):
                         continue
-                    frontend_add_file_msg(os.path.join(self.workspace_path, file), self.config, "added")
+                    frontend_add_file_msg(file, self.config, "added")
                 
                 for file in update_files:
                     if file.endswith(".pyc"):
                         continue
-                    frontend_add_file_msg(os.path.join(self.workspace_path, file), self.config, "updated")
+                    frontend_add_file_msg(file, self.config, "updated")
 
                 with self.sidebar_container.container():
                     # 显示文件列表

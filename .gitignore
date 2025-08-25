@@ -29,5 +29,5 @@ downloads
 .langgraph_api
 exp/docker
 **/.env
-
+llm_router/model_list.yaml
 debug

@@ -140,9 +140,10 @@ def build_latex_writer(config: Config) -> StateGraph:
     graph_builder.add_edge("write_related_node", "write_methods_node")
     graph_builder.add_edge("write_methods_node", "write_experiments_node")
     graph_builder.add_edge("write_experiments_node", "validator_node")
+    # graph_builder.add_edge(START, "validator_node")
     graph_builder.add_edge("validator_node", "conclude_chatbot")
-    graph_builder.add_conditional_edges("conclude_chatbot", write_plan_router, {"RETURN_TO_LLM": "conclude_chatbot", END: "concluder_tools_node"})
-    graph_builder.add_edge("concluder_tools_node", "router_chatbot")
+    graph_builder.add_edge("conclude_chatbot", "concluder_tools_node")
+    graph_builder.add_conditional_edges("concluder_tools_node", write_plan_router, {"RETURN_TO_LLM": "conclude_chatbot", END: "router_chatbot"})
     graph_builder.add_conditional_edges(
         "router_chatbot",
         keywords_router,
@@ -160,7 +161,7 @@ def build_latex_writer(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/OL_20250823132617_What_is_the_pre_istorical_data__dzdzzd_126_com_1276")
+    config, state, last_subgraph = load_state("outputs/OL_20250823132617_What_is_the_pre_istorical_data__dzdzzd_126_com_1276_resume_20250825153632")
     graph = build_latex_writer(config)
 
     graph.invoke(state)
