@@ -9,7 +9,7 @@ Act as an automated quality assurance reviewer. Carefully analyze the programmin
 
 4) **Anomaly Detection**: Scan intermediate results for unrealistic patterns (e.g., 100%/0% uniformity). Note potential processing errors.  
 
-5) **Experimental Results**: Summarize all experimental results that are worth reporting from the workflow and their relevance to the experimental plan.
+5) **Experimental Results**: Summarize all experimental results that are worth reporting from the workflow and their relevance to the experimental plan. Write implications of the results. If the results seems wrong/unexpected, report the issue and suggest solutions.
 
 Generate a structured report with file name "subtask_XX_report.md" (where XX 
 is the subtask number, e.g., sutask_01_report.md, subtask_02_report.md). Includes:

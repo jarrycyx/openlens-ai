@@ -58,30 +58,41 @@ def build_data_analyzer(config: Config) -> StateGraph:
     def openhands_node(state: State):
         # 检查dataset_path中所有markdown文件的总长度
         
-        all_doc = ""
-        if config.dataset_path and os.path.exists(config.dataset_path):
-            for file_path in glob.glob(os.path.join(config.dataset_path, "**", "*.md"), recursive=True):
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        all_doc += f"\n\n--- {file_path} ---\n\n" + f.read()
-                except Exception as e:
-                    logger.warning(f"Error reading file {file_path}: {e}")
+        # all_doc = ""
+        # if config.dataset_path and os.path.exists(config.dataset_path):
+        #     for file_path in glob.glob(os.path.join(config.dataset_path, "**", "*.md"), recursive=True):
+        #         try:
+        #             with open(file_path, 'r', encoding='utf-8') as f:
+        #                 all_doc += f"\n\n--- {file_path} ---\n\n" + f.read()
+        #         except Exception as e:
+        #             logger.warning(f"Error reading file {file_path}: {e}")
         
-        # 如果总长度小于4000，则运行OpenHands
-        if len(all_doc) < 4000:
-            this_prompt = data_analyzer_prompt.format(question=state["question"])
-            results = code_tool.invoke({"prompts": [this_prompt, execute_check_prompt.format(plan=this_prompt)]})
-            state["messages"] = [
-                ToolMessage(
-                    content=results,
-                    name="openhands_tool",
-                    tool_call_id="openhands_tool",
-                )
-            ]
-        else:
-            os.makedirs(os.path.join(state["save_path"], "workspace", "data_analyze"), exist_ok=True)
-            with open(os.path.join(state["save_path"], "workspace", "data_analyze", "data_show.md"), "w") as f:
-                f.write(all_doc)
+        # # 如果总长度小于4000，则运行OpenHands
+        # if len(all_doc) < 4000:
+        #     this_prompt = data_analyzer_prompt.format(question=state["question"])
+        #     results = code_tool.invoke({"prompts": [this_prompt, execute_check_prompt.format(plan=this_prompt)]})
+        #     state["messages"] = [
+        #         ToolMessage(
+        #             content=results,
+        #             name="openhands_tool",
+        #             tool_call_id="openhands_tool",
+        #         )
+        #     ]
+        # else:
+        #     os.makedirs(os.path.join(state["save_path"], "workspace", "data_analyze"), exist_ok=True)
+        #     with open(os.path.join(state["save_path"], "workspace", "data_analyze", "data_show.md"), "w") as f:
+        #         f.write(all_doc)
+        # return state
+        
+        this_prompt = data_analyzer_prompt.format(question=state["question"])
+        results = code_tool.invoke({"prompts": [this_prompt, execute_check_prompt.format(plan=this_prompt)]})
+        state["messages"] = [
+            ToolMessage(
+                content=results,
+                name="openhands_tool",
+                tool_call_id="openhands_tool",
+            )
+        ]
         return state
 
     def chatbot(state: State):

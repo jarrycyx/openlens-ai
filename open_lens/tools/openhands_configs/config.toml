@@ -13,6 +13,7 @@ user_id = 1000
 timeout = 300
 
 [mcp]
-stdio_servers = [
-    {name="fetch", command="uvx", args=["mcp-server-fetch"]},
+shttp_servers = [
+    # Streamable HTTP server with API key authentication
+    {url="https://mcp.tavily.com/mcp/?tavilyApiKey={tavily_key}", api_key="your-api-key"}
 ]

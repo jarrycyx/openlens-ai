@@ -1,33 +1,51 @@
+# 日志文件
 logs
-# config.toml
-curie/venv
-code_logging
-curie/config.toml
+*.log
+
+# 编译和构建产物
 *.pyc
-baselines/openhands/session_cache
-baselines/openhands/workspace
+dist/
+tmp*
+*.txt
+
+# Python相关
+curie/venv
+curie.egg-info/
+curie_ai.egg-info/
+
+# 配置文件
+# config.toml
+curie/config.toml
+baselines/openhands/config.toml
+**/.env
+llm_router/model_list.yaml
+llm_router/extra_model_list.yaml
+
+# 凭据和敏感信息
 .aws_creds
 baselines/autobuild/.OAI_CONFIG_LIST
 curie/setup/env.sh
+
+# 缓存和临时文件
+code_logging
+baselines/openhands/session_cache
+baselines/openhands/workspace
 workspace/*
-curie.egg-info/
 benchmark/*txt
-*.log
-baselines/openhands/config.toml
-curie/tests/test_claude.py
-curie/setup/*
 *.DS_Store
 *.vscode/
-dist/
-curie_ai.egg-info/
-tmp*
-*.txt
+
+# 测试相关
+curie/tests/test_claude.py
+
+# 数据和输出目录
 datasets
 outputs
 exp/saved_exp
 downloads
 .langgraph_api
 exp/docker
-**/.env
-llm_router/model_list.yaml
+
+# 其他
 debug
+curie/setup/*

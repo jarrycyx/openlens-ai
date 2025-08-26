@@ -158,7 +158,7 @@ def main():
     parser.add_argument(
         "--model-names", 
         nargs="+", 
-        default=["zai-org/GLM-4.5", "zai-org/GLM-4.5-Air", "Qwen/Qwen3-235B-A22B-Instruct-2507", "BAAI/bge-reranker-v2-m3"],
+        default=["zai-org/GLM-4.5", "zai-org/GLM-4.5-Air", "Qwen/Qwen3-235B-A22B-Instruct-2507"],
         help="Model names to use"
     )
     parser.add_argument(

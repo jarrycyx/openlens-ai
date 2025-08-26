@@ -13,6 +13,7 @@ def prepare_file_config(thread_id: str, question: str, dataset_path: str, email:
     oh_config = oh_config_template.replace("{api_key}", os.getenv("OPENAI_API_KEY"))
     oh_config = oh_config.replace("{base_url}", os.getenv("BASE_URL"))
     oh_config = oh_config.replace("{code_model}", os.getenv("CODE_MODEL"))
+    oh_config = oh_config.replace("{tavily_key}", os.getenv("TAVILY_API_KEY", ""))
     this_config_path = os.path.join(save_path, "openhands_config.toml")
     with open(this_config_path, "w") as f:
         f.write(oh_config)

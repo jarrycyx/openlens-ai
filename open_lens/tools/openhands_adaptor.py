@@ -18,6 +18,8 @@ from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 from ..state import State
 from ..utils.frontend_utils import frontend_add_message, frontend_add_tool_call
 from ..utils.config import Config
+from ..tools.file_search_keyword import FileSearchTool
+from ..chatbot import chatbot_with_context_manager
 
 postfix = """
 Reminders: DO NOT mock or simulate results. Only write python files to generate the code and bash shell scripts to execute them.
@@ -238,6 +240,12 @@ class OpenHandsTool(BaseTool):
         logger.info(f"Starting OpenHands with prompt: {prompts}")
         # return ""
         return run_openhands_prompt(prompts, self.config)
+
+
+
+
+def collect_info_and_run_openhands(prompt: str, config: Config, state: State):
+    pass
 
 
 if __name__ == "__main__":

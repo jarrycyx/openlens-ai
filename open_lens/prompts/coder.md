@@ -10,6 +10,7 @@ is the subtask number, e.g., sutask_01, subtask_02) directory to avoid confusion
 Reminders: 
 - DO NOT mock or simulate results. Always generate real results using an actual workflow setup (e.g., scripts that can directly run with experimental/control group inputs to produce dependent variables).
 - DO NOT execute commands like "ls -R", as it may cause you to exceed context length.
+- CHECK THE DATA ANALYSIS REPORT in /workspace/data_report.md before you try to prepare the data loading/processing procedures.
 - Ensure the intermediate results are not demo/tiny versions or placeholders.
 - If you are facing an issue and have tried to resolve it for over 10 times, please start the subtask all over again from scratch.
 - You should ONLY interact with the tool provided to you AND NEVER ASK FOR HUMAN HELP.
