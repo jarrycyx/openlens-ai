@@ -329,7 +329,11 @@ class WorkspaceMonitor(Thread):
                     if current_files:
                         # 创建一个按钮，点击后设置要查看的文件
                         for file in sorted(current_files):
-                            st.write(f"- {file}")
+                            try:
+                                rel_path = os.path.relpath(file, self.workspace_path)
+                                st.write(f"- {file}")
+                            except:
+                                pass
                             # show_file_in_dialog(file)
                     else:
                         st.info("No files in workspace yet.")

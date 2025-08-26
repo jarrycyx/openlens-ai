@@ -12,6 +12,7 @@ import requests
 from typing import List, Dict, Any, Tuple
 from multiprocessing import Pool, cpu_count
 from functools import partial
+import numpy as np
 
 
 
@@ -100,6 +101,7 @@ def create_model_list(api_key_files: List[str],
     
     # Read all API keys from all files
     all_api_keys = []
+    np.random.shuffle(api_key_files)
     for file_path in api_key_files:
         keys = read_api_keys(file_path)
         all_api_keys.extend(keys)
@@ -196,6 +198,14 @@ def main():
             args.min_balance,
             args.processes
         )
+        
+        config["router_settings"] = {
+            "routing_strategy": "simple-shuffle",
+        }
+        config["litellm_settings"] = {
+            "num_retries": 3,
+            "set_verbose": True,
+        }
         
         # Write to YAML file
         with open(args.output, 'w', encoding='utf-8') as f:

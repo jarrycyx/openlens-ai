@@ -10,11 +10,11 @@ from langchain.chat_models import init_chat_model
 from langchain_tavily import TavilySearch
 from langchain.load.dump import dumps
 from langgraph.checkpoint.memory import InMemorySaver
-from langchain_core.messages import ToolMessage, HumanMessage
+from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 from langchain_openai import ChatOpenAI
 
 from ..chatbot import vector_search
-from ..tools.tool_utils import BasicToolNode, route_tools, route_by_tool_call, route_by_file_existence
+from ..tools.tool_utils import BasicToolNode, route_tools, route_by_tool_call, route_by_file_existence, route_by_keywords
 from ..tools.openhands_adaptor import OpenHandsTool
 from ..tools.reports import ReportReaderTool, ReportWriterTool
 from ..state import State
@@ -30,6 +30,8 @@ with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "data_analyze
     data_analyzer_prompt = f.read()
 with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "data_report.md")) as f:
     data_report_prompt = f.read()
+with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "data_router.md")) as f:
+    data_router_prompt = f.read()
 
 
 execute_check_prompt = """
@@ -49,6 +51,10 @@ def build_data_analyzer(config: Config) -> StateGraph:
                           base_url=os.environ.get("BASE_URL", ""), 
                           model_provider="openai",
                           extra_body={"chat_template_kwargs": {"enable_thinking": False}})
+    router_llm = init_chat_model(os.environ.get("MODEL", "deepseek-chat"),
+                                 base_url=os.environ.get("BASE_URL", ""),
+                                 model_provider="openai",
+                                 extra_body={"chat_template_kwargs": {"enable_thinking": True}})
     search_tool = TavilySearch(max_results=5, search_depth="advanced")
     code_tool = OpenHandsTool(config)
     report_writer_tool = ReportWriterTool(config, file_name="data_report.md")
@@ -56,43 +62,25 @@ def build_data_analyzer(config: Config) -> StateGraph:
     llm_with_tools = llm.bind_tools(tools)
 
     def openhands_node(state: State):
-        # 检查dataset_path中所有markdown文件的总长度
-        
-        # all_doc = ""
-        # if config.dataset_path and os.path.exists(config.dataset_path):
-        #     for file_path in glob.glob(os.path.join(config.dataset_path, "**", "*.md"), recursive=True):
-        #         try:
-        #             with open(file_path, 'r', encoding='utf-8') as f:
-        #                 all_doc += f"\n\n--- {file_path} ---\n\n" + f.read()
-        #         except Exception as e:
-        #             logger.warning(f"Error reading file {file_path}: {e}")
-        
-        # # 如果总长度小于4000，则运行OpenHands
-        # if len(all_doc) < 4000:
-        #     this_prompt = data_analyzer_prompt.format(question=state["question"])
-        #     results = code_tool.invoke({"prompts": [this_prompt, execute_check_prompt.format(plan=this_prompt)]})
-        #     state["messages"] = [
-        #         ToolMessage(
-        #             content=results,
-        #             name="openhands_tool",
-        #             tool_call_id="openhands_tool",
-        #         )
-        #     ]
-        # else:
-        #     os.makedirs(os.path.join(state["save_path"], "workspace", "data_analyze"), exist_ok=True)
-        #     with open(os.path.join(state["save_path"], "workspace", "data_analyze", "data_show.md"), "w") as f:
-        #         f.write(all_doc)
-        # return state
-        
         this_prompt = data_analyzer_prompt.format(question=state["question"])
+        
+        router_messages = [m for m in state["messages"] if isinstance(m, AIMessage)]
+        if router_messages:
+            last_router_message = router_messages[-1]
+            if "DECISION" in last_router_message.content:
+                logger.info("Found previous router decision, adding to prompt. " + last_router_message.content)
+                this_prompt += "\n\nPrevious coding results:\n" + last_router_message.content
+                results = code_tool.invoke({"prompts": [this_prompt]})
+            state["messages"] = [
+                ToolMessage(
+                    content=results,
+                    name="openhands_tool",
+                    tool_call_id="openhands_tool",
+                )
+            ]
+            return state
+        
         results = code_tool.invoke({"prompts": [this_prompt, execute_check_prompt.format(plan=this_prompt)]})
-        state["messages"] = [
-            ToolMessage(
-                content=results,
-                name="openhands_tool",
-                tool_call_id="openhands_tool",
-            )
-        ]
         return state
 
     def chatbot(state: State):
@@ -105,20 +93,28 @@ def build_data_analyzer(config: Config) -> StateGraph:
         state = this_chatbot(state)
         return state
 
+    def router_node(state: State):
+        router_chatbot = chatbot_with_context_manager(config, router_llm, data_router_prompt, context_manage="last_tool_message")
+        state = router_chatbot(state)
+        return state
+
     graph_builder = StateGraph(State)
     
     router_by_write_reports = route_by_tool_call("report_writer_tool")
     route_by_data_show = route_by_file_existence(os.path.join(config.save_path, "workspace", "data_analyze", "data_show.md"))
+    keywords_router = route_by_keywords(["DECISION: CONTINUE", "DECISION: RETURN"])
 
     tool_node = BasicToolNode(tools, config)
     graph_builder.add_node("data_chatbot", chatbot)
     graph_builder.add_node("data_openhands_node", openhands_node)
     graph_builder.add_node("data_tools", tool_node)
+    graph_builder.add_node("data_router", router_node)
 
     graph_builder.add_edge(START, "data_openhands_node")
     graph_builder.add_conditional_edges("data_openhands_node", route_by_data_show, {"FILE_NOT_FOUND": "data_openhands_node", "FILE_EXISTS": "data_chatbot"})
     graph_builder.add_edge("data_chatbot", "data_tools")
-    graph_builder.add_conditional_edges("data_tools", router_by_write_reports, {"RETURN_TO_LLM": "data_chatbot", END: END})
+    graph_builder.add_conditional_edges("data_tools", router_by_write_reports, {"RETURN_TO_LLM": "data_chatbot", "report_writer_tool": "data_router"})
+    graph_builder.add_conditional_edges("data_router", keywords_router, {"DECISION: CONTINUE": END, "DECISION: RETURN": "data_openhands_node"})
 
     graph = graph_builder.compile()
 
