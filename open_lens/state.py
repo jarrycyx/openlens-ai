@@ -61,6 +61,7 @@ def load_state(save_dir: str) -> tuple[Config, State]:
     state_dir = os.path.join(save_dir, "states")
     # 遍历里面的文件，格式是step_i.json，找最大的
     file_names = os.listdir(state_dir)
+    last_subgraph = None
     if file_names:
         file_indices = [int(file_name.split("_")[1]) for file_name in file_names if file_name.endswith(".json")]
         max_index = max(file_indices)

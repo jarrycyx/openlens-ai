@@ -113,8 +113,8 @@ def build_data_analyzer(config: Config) -> StateGraph:
     graph_builder.add_edge(START, "data_openhands_node")
     graph_builder.add_conditional_edges("data_openhands_node", route_by_data_show, {"FILE_NOT_FOUND": "data_openhands_node", "FILE_EXISTS": "data_chatbot"})
     graph_builder.add_edge("data_chatbot", "data_tools")
-    graph_builder.add_conditional_edges("data_tools", router_by_write_reports, {"RETURN_TO_LLM": "data_chatbot", "report_writer_tool": "data_router"})
-    graph_builder.add_conditional_edges("data_router", keywords_router, {"DECISION: CONTINUE": END, "DECISION: RETURN": "data_openhands_node"})
+    graph_builder.add_conditional_edges("data_tools", router_by_write_reports, {"RETURN_TO_LLM": "data_chatbot", END: "data_router"})
+    graph_builder.add_conditional_edges("data_router", keywords_router, {"DECISION: CONTINUE": END, "DECISION: RETURN": "data_openhands_node", "NONE": "data_router"})
 
     graph = graph_builder.compile()
 
@@ -123,7 +123,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/OL_20250822171516_What_is_the_pre_istorical_data__dzdzzd_126_com_2090")
+    config, state, last_subgraph = load_state("outputs/OL_20250826153038_What_is_the_pre_istorical_data__dzdzzd_126_com_8810")
     graph = build_data_analyzer(config)
 
     graph.invoke(state)

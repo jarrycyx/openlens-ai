@@ -332,7 +332,7 @@ class WorkspaceMonitor(Thread):
                         for file in sorted(current_files):
                             try:
                                 rel_path = os.path.relpath(file, self.workspace_path)
-                                st.write(f"- {file}")
+                                st.write(f"- {rel_path}")
                             except:
                                 pass
                             # show_file_in_dialog(file)

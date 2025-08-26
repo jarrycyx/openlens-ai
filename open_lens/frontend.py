@@ -120,9 +120,6 @@ def start_new_session(sidebar_container_empty, base_url, api_key, model, code_mo
             "_" + email.replace("@", "_").replace(".", "_") + "_" + \
             str(random.randint(1000, 9999))
 
-    # 显示当前进程数量
-    process_count = process_manager.get_process_count()
-
     btn1, btn2 = st.columns(2)
     btn1 = btn1.button("Run Agent", type="secondary")
     # btn2 = btn2.container(horizontal_alignment="right").button("Abort", type="primary")

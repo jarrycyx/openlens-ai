@@ -6,7 +6,8 @@ import traceback
 import argparse  # 新增argparse模块
 from datetime import datetime
 import threading
-import time
+import re
+import random
 from IPython.display import Image, display
 
 dotenv.load_dotenv()
@@ -240,12 +241,15 @@ if __name__ == "__main__":
 
     if not args.question or not args.dataset_path or not args.thread_id:
         # 使用默认值
-        question = "What is the prediction precision of AKI in ICU patients when "\
-            "dynamically predicting each day based on the past two days of historical data?"
-        dataset_path = "datasets/mimic"
-        email = "openlens@yeah.net"
+        question = "What is the prediction precision of AKI in ICU patients when dynamically predicting each day based on the past two days of historical data?"
+        dataset_path = "datasets/eicu"
+        email = "dzdzzd@126.com"
         # 使用当前日期    
-        thread_id = "OL_test_" + datetime.now().strftime("%Y%m%d%H%M%S") + f"_{question.strip()[:10].replace(' ', '_')}" + f"_{question.strip()[-10:].replace(' ', '_')}"
+        question_show = re.sub(r'[^\w]', '_', question.strip())
+        thread_id = "OL_" + datetime.now().strftime("%Y%m%d%H%M%S") + \
+            f"_{question_show[:15]}" + f"_{question_show[-15:]}" + \
+                "_" + email.replace("@", "_").replace(".", "_") + "_" + \
+                str(random.randint(1000, 9999))
     else:
         question = args.question
         dataset_path = args.dataset_path

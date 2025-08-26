@@ -101,10 +101,10 @@ def create_model_list(api_key_files: List[str],
     
     # Read all API keys from all files
     all_api_keys = []
-    np.random.shuffle(api_key_files)
     for file_path in api_key_files:
         keys = read_api_keys(file_path)
         all_api_keys.extend(keys)
+    np.random.shuffle(all_api_keys)
     
     # Filter keys by balance using multiprocessing
     valid_keys = []
@@ -120,7 +120,9 @@ def create_model_list(api_key_files: List[str],
             results = pool.map(check_balance, all_api_keys)
         
         # Process results
+        all_balance = 0
         for api_key, is_valid, balance in results:
+            all_balance += balance
             if is_valid and balance >= min_balance:
                 valid_keys.append((api_key, balance))
                 print(f"Key {api_key[:8]}... has balance {balance} (≥ {min_balance}), including")
@@ -128,6 +130,7 @@ def create_model_list(api_key_files: List[str],
                 print(f"Key {api_key[:8]}... has balance {balance} (< {min_balance}), excluding")
             else:
                 print(f"Key {api_key[:8]}... is invalid or failed balance check, excluding")
+        print(f"Total keys: {len(valid_keys)} with combined balance: {all_balance}")
     
     # Create model entries for each combination of key, model_name, and api_base
     entry_index = 1

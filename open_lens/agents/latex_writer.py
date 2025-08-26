@@ -33,6 +33,11 @@ with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_conclu
 with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_router.md")) as f:
     latex_router_prompt = f.read()
 
+rigor_prompt = """
+Make sure each paragraph of the manuscript corresponds to a file or several lines in a file in workspace, 
+record the file name and corresponding line number in /workspace/manuscript/paper_rigor_report.md
+"""
+
 def build_latex_writer(config: Config) -> StateGraph:
     concluder_llm = init_chat_model(
         os.environ.get("MODEL", "deepseek-chat"),
@@ -106,13 +111,14 @@ def build_latex_writer(config: Config) -> StateGraph:
         return state
     def validator_node(state: State):
         this_prompt = validator_prompt
-        results = code_tool.invoke({"prompts": [this_prompt]})
+        results = code_tool.invoke({"prompts": [this_prompt, rigor_prompt]})
+        
         state["messages"] = [
             ToolMessage(
                 content=results,
                 name="openhands_tool",
                 tool_call_id="openhands_tool",
-            )
+            ),
         ]
         return state
        

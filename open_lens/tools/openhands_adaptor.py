@@ -52,6 +52,7 @@ def run_docker_container(cmd: str, config: Config):
             "-v", f"{workspace_dir}:/workspace",
             "-v", f"{dataset_path}:/workspace/datasets:ro",
             "-v", f"{latex_template_path}:/workspace/latex_template:ro",
+            "--network", "host",  # 使用主机网络
             "agent-med-gpu",
             "bash",
             "-c",
@@ -67,6 +68,7 @@ def run_docker_container(cmd: str, config: Config):
             "-v", "./open_lens:/helper/open_lens",
             "-v", f"{workspace_dir}:/workspace",
             "-v", f"{latex_template_path}:/workspace/latex_template:ro",
+            "--network", "host",  # 使用主机网络
             "agent-med-gpu",
             "bash",
             "-c",
@@ -195,13 +197,13 @@ def run_openhands_prompt(prompts, config: Config):
         # 移除ANSI转义序列（颜色代码等）
         results = re.sub(r"\033\[[\d;]*m", "", results)
         results = split_and_clean_log(results)
+        results = results[-10000:]
 
         # 将当前提示的结果添加到总结果中
         all_results += "=" * 20 + f"Prompt: {prompt[:20]}..." + "=" * 20
         all_results += "\n" + results
 
     # 限制结果长度为最后3000个字符
-    all_results = all_results[-10000:]
     return all_results
 
 
