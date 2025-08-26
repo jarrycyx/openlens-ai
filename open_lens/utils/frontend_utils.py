@@ -193,6 +193,7 @@ def display_messages_from_file(config: Config):
                 elif "updated" in msg["type"]:
                     st.success(f"File updated: {msg['filename']}")
                 with st.chat_message("assistant", avatar="📁"):
+                    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
                     if msg["content"].startswith("path:"):
                         with open(msg["content"].replace("path:",""), "rb") as f:
                             file_data = f.read()
@@ -202,7 +203,7 @@ def display_messages_from_file(config: Config):
                                 label="📥 Download",
                                 data=file_data,
                                 file_name=msg["filename"],
-                                key=f"download_{msg['filename']}_{random.randint(1000, 9999)}"
+                                key=f"download_{msg['filename']}_{timestamp}_{random.randint(1000, 9999)}"
                             )
                     else:
                         with st.container(horizontal=True):
@@ -211,7 +212,7 @@ def display_messages_from_file(config: Config):
                                 label="📥 Download",
                                 data=msg["content"],
                                 file_name=msg["filename"],
-                                key=f"download_{msg['filename']}_{random.randint(1000, 9999)}"
+                                key=f"download_{msg['filename']}_{timestamp}_{random.randint(1000, 9999)}"
                             )
                         show_scrollable(msg["content"], msg["filename"], height=200)
 

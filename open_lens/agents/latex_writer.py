@@ -161,7 +161,7 @@ def build_latex_writer(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/OL_20250823132617_What_is_the_pre_istorical_data__dzdzzd_126_com_1276")
+    config, state, last_subgraph = load_state("outputs/OL_20250823132617_What_is_the_pre_istorical_data__dzdzzd_126_com_1276_resume_20250826102901")
     graph = build_latex_writer(config)
 
     graph.invoke(state)

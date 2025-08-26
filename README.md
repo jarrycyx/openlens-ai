@@ -19,6 +19,7 @@
 - ✅ **Interactive UI**: Streamlit-based interface for monitoring and interacting with the research process
 - ✅ **Context Management**: Automated management of contextual information for agents via vector search
 - ⬜ **Vision-Language Feedback**: Integrate with VLM for visualization and feedback
+- ⬜ **Powerpoint-Based Figures**: Automated generation of Powerpoint-based figures for demonstrations for better visual quality (to replace the current graphviz-based figures)
 
 ## 🚀 Quick Start
 
