@@ -72,7 +72,7 @@ RUN cd /helper/OpenHands && git init && make build
 RUN mkdir -p /workspace
 
 # Set bashrc
-COPY open_lens/tools/openhands_configs/openhands_env.sh ~/.bashrc
+COPY openlens_ai/tools/openhands_configs/openhands_env.sh ~/.bashrc
 
 # setup pip
 RUN cd /helper

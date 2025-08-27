@@ -41,14 +41,14 @@ def run_docker_container(cmd: str, config: Config):
     this_openhands_config_path = os.path.join(pwd, config.save_path, "openhands_config.toml")
     if config.dataset_path:
         dataset_path = os.path.join(pwd, config.dataset_path)
-        latex_template_path = os.path.join(pwd, "open_lens/tools/latex_template/neurips")
+        latex_template_path = os.path.join(pwd, "openlens_ai/tools/latex_template/neurips")
         docker_cmd = [
             "docker",
             "run",
             "-t",
             "--gpus", "all",
             "-v", f"{this_openhands_config_path}:/helper/config.toml",
-            "-v", "./open_lens:/helper/open_lens",
+            "-v", "./openlens_ai:/helper/openlens_ai",
             "-v", f"{workspace_dir}:/workspace",
             "-v", f"{dataset_path}:/workspace/datasets:ro",
             "-v", f"{latex_template_path}:/workspace/latex_template:ro",
@@ -59,13 +59,13 @@ def run_docker_container(cmd: str, config: Config):
             cmd,
         ]
     else:
-        latex_template_path = os.path.join(pwd, "open_lens/tools/latex_template/neurips")
+        latex_template_path = os.path.join(pwd, "openlens_ai/tools/latex_template/neurips")
         docker_cmd = [
             "docker",
             "run",
             "-t",
             "--gpus", "all",
-            "-v", "./open_lens:/helper/open_lens",
+            "-v", "./openlens_ai:/helper/openlens_ai",
             "-v", f"{workspace_dir}:/workspace",
             "-v", f"{latex_template_path}:/workspace/latex_template:ro",
             "--network", "host",  # 使用主机网络
@@ -188,7 +188,7 @@ def run_openhands_prompt(prompts, config: Config):
         # 构建在Docker容器中执行的命令
         cmd = (
             f"cp /helper/config.toml /helper/OpenHands/ && "
-            f"source /helper/open_lens/tools/openhands_configs/openhands_env.sh && "
+            f"source /helper/openlens_ai/tools/openhands_configs/openhands_env.sh && "
             f"cd /helper/OpenHands && "
             f"mkdir -p /workspace/manuscript/ && chmod -R 777 /workspace/manuscript/ && cp /workspace/latex_template/*.sty /workspace/manuscript/ &&"
             f'poetry run python -m openhands.core.main -t "{prompt}" -i {max_iter}'

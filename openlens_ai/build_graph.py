@@ -8,7 +8,6 @@ from datetime import datetime
 import threading
 import re
 import random
-from IPython.display import Image, display
 
 dotenv.load_dotenv()
 
@@ -18,7 +17,6 @@ from langchain.chat_models import init_chat_model
 from langchain_tavily import TavilySearch
 from langchain.load.dump import dumps
 from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.checkpoint.sqlite import SqliteSaver
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 
 # pip install langgraph-checkpoint-sqlite pysqlite3
@@ -56,7 +54,7 @@ def send_periodic_emails(config: Config):
         except Exception as e:
             logger.error(f"Error sending periodic email: {e}")
 
-def build_graph(config: Config, checkpointer: InMemorySaver | SqliteSaver):
+def build_graph(config: Config, checkpointer: InMemorySaver):
     try:
         graph_builder = StateGraph(State)
 
@@ -222,7 +220,7 @@ def parse_args():
 
     return parser.parse_args()
 
-if __name__ == "__main__":
+def cli_main():
     args = parse_args()
 
     # Set environment variables if provided
@@ -258,3 +256,8 @@ if __name__ == "__main__":
 
     # main(question, dataset_path, thread_id)
     main(question, dataset_path, thread_id, email)
+    
+    
+
+if __name__ == "__main__":
+    cli_main()

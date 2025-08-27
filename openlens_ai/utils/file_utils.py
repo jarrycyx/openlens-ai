@@ -3,7 +3,7 @@ import json
 from loguru import logger
 from .config import Config
 
-with open("open_lens/tools/openhands_configs/config.toml", "r") as f:
+with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
     oh_config_template = f.read()
 
 def prepare_file_config(thread_id: str, question: str, dataset_path: str, email: str) -> tuple[dict, Config, str]:

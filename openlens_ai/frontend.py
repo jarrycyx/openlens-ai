@@ -136,7 +136,7 @@ def start_new_session(sidebar_container_empty, base_url, api_key, model, code_mo
             if not process_manager.is_full():
                 # 启动新进程运行任务
                 process = subprocess.Popen([
-                    "python", "-m", "open_lens.build_graph",
+                    "python", "-m", "openlens_ai.build_graph",
                     "--question", question,
                     "--dataset-path", dataset_path,
                     "--thread-id", thread_id,

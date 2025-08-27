@@ -3,7 +3,7 @@ import sys, os
 from datetime import datetime
 
 
-from open_lens.build_graph import main, graph
+from openlens_ai.build_graph import main, graph
 
 
 # 使用默认值

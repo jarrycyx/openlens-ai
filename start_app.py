@@ -1,3 +1,3 @@
-from open_lens.frontend import main
+from openlens_ai.frontend import main
 
 main()

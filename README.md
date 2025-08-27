@@ -84,12 +84,12 @@ EMAIL_PASSWORD=<YOUR EMAIL SMTP PASSWORD>
 #### Option 1: Command Line Interface
 
 ```bash
-python -m open_lens.build_graph --question "Your research question" --dataset-path "path/to/dataset"
+python -m openlens_ai.build_graph --question "Your research question" --dataset-path "path/to/dataset"
 ```
 
 Example:
 ```bash
-python -m open_lens.build_graph --question "What is the prediction precision of AKI based on historical 2 day data?" --dataset-path "datasets/mimic"
+python -m openlens_ai.build_graph --question "What is the prediction precision of AKI based on historical 2 day data?" --dataset-path "datasets/mimic"
 ```
 
 #### Option 2: Interactive Web Interface
@@ -127,7 +127,7 @@ Agents communicate through a shared state and can call various tools including:
 ## 📁 Project Structure
 
 ```
-open_lens/
+openlens_ai/
 ├── agents/              # Agent implementations
 │   ├── coder.py
 │   ├── data_analyzer.py
@@ -147,13 +147,13 @@ open_lens/
 
 ### Adding New Agents
 
-1. Create a new agent in [open_lens/agents/](open_lens/agents/)
-2. Follow the pattern in existing agents like [coder.py](open_lens/agents/coder.py)
-3. Register the agent in [build_graph.py](open_lens/build_graph.py)
+1. Create a new agent in [openlens_ai/agents/](openlens_ai/agents/)
+2. Follow the pattern in existing agents like [coder.py](openlens_ai/agents/coder.py)
+3. Register the agent in [build_graph.py](openlens_ai/build_graph.py)
 
 ### Adding New Tools
 
-1. Add tool implementation in [open_lens/tools/](open_lens/tools/)
+1. Add tool implementation in [openlens_ai/tools/](openlens_ai/tools/)
 2. Register the tool in the appropriate agent
 3. Update prompts if needed
 

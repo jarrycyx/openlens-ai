@@ -1,7 +1,6 @@
 import os
 import json
 import dotenv
-from IPython.display import Image, display
 import shutil
 from loguru import logger
 

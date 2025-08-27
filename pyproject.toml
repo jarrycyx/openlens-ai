@@ -1,14 +1,35 @@
 [project]
-name = "open_lens"
+name = "openlens_ai"
 version = "0.0.1"
-description = "Starter template for making a new agent LangGraph."
+description = "Fully Autonomous Research Agent for Health Infomatics"
 authors = [
-    { name = "Yuxiao Cheng", email = "dzdzzd@126.com" },
+    { name = "Yuxiao Cheng", email = "cyx22@mails.tsinghua.edu.cn" },
 ]
+readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "langgraph>=0.2.6",
     "python-dotenv>=1.0.1",
+    "streamlit",
+    "numpy",
+    "vllm",
+    "litellm",
+    "loguru",
+    "modelscope",
+    "langchain",
+    "typing_extensions",
+    "numpy",
+    "beautifulsoup4",
+    "PyPDF2",
+    "feedparser",
+    "httpx",
+    "mcp",
+    "pydantic",
+    "markdown",
+    "langchain_tavily",
+    "streamlit_scrollable_textbox",
+    "langchain_openai",
+    "langchain_mcp_adapters"
 ]
 
 
@@ -18,45 +39,12 @@ dependencies = [
 requires = ["setuptools>=73.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project.scripts]
+openlens-cli = "openlens_ai.build_graph:cli_main"
+openlens-ui = "openlens_ai.frontend:main"
+
 [tool.setuptools]
-packages = ["langgraph.templates.agent", "agent"]
-[tool.setuptools.package-dir]
-"langgraph.templates.agent" = "open_lens"
-"agent" = "open_lens"
-
-
-[tool.setuptools.package-data]
-"*" = ["py.typed"]
-
-[tool.ruff]
-lint.select = [
-    "E",    # pycodestyle
-    "F",    # pyflakes
-    "I",    # isort
-    "D",    # pydocstyle
-    "D401", # First line should be in imperative mood
-    "T201",
-    "UP",
-]
-lint.ignore = [
-    "UP006",
-    "UP007",
-    # We actually do want to import from typing_extensions
-    "UP035",
-    # Relax the convention by _not_ requiring documentation for every function parameter.
-    "D417",
-    "E501",
-]
-[tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D", "UP"]
-[tool.ruff.lint.pydocstyle]
-convention = "google"
-
-[dependency-groups]
-dev = [
-    "anyio>=4.7.0",
-    "langgraph-cli[inmem]>=0.2.8",
-    "mypy>=1.13.0",
-    "pytest>=8.3.5",
-    "ruff>=0.8.2",
-]
+py-modules = ["openlens_ai"]
+packages = ["openlens_ai", "openlens_ai.utils", "openlens_ai.tools", "openlens_ai.agents"]
+package-data = {"openlens_ai" = ["openlens_ai/prompts/*", "openlens_ai/tools/latex_template/neurips/*", "openlens_ai/tools/openhands_configs/*", ]}
+include-package-data = true

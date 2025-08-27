@@ -3,7 +3,6 @@ import json
 from typing import Annotated
 from typing_extensions import TypedDict
 import dotenv
-from IPython.display import Image, display
 
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model

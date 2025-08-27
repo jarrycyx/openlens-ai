@@ -34,6 +34,8 @@ workspace/*
 benchmark/*txt
 *.DS_Store
 *.vscode/
+*.egg-info
+build
 
 # 测试相关
 curie/tests/test_claude.py
