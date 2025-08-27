@@ -91,14 +91,14 @@ def build_graph(config: Config, checkpointer: InMemorySaver):
                 f.write(graph.get_graph(xray=True).draw_mermaid())
                 
             try:
-                graph_image = Image(graph.get_graph(xray=True).draw_mermaid_png())
+                graph_image = graph.get_graph(xray=True).draw_mermaid_png()
             except Exception as e:
                 error_info = traceback.format_exc()
                 logger.info(f'Failed to build mermaid graph: {e}')
-                graph_image = Image(graph.get_graph(xray=True).draw_png())
+                graph_image = graph.get_graph(xray=True).draw_png()
             # 保存
             with open(os.path.join(config.save_path, "overall_graph_image.png"), "wb") as f:
-                f.write(graph_image.data)
+                f.write(graph_image)
             # with open(os.path.join(config.save_path, "workspace", "graph_mermaid.txt"), "w") as f:
             #     f.write(graph.get_graph(xray=True).draw_mermaid())
         except Exception as e:
