@@ -29,7 +29,8 @@ dependencies = [
     "langchain_tavily",
     "streamlit_scrollable_textbox",
     "langchain_openai",
-    "langchain_mcp_adapters"
+    "langchain_mcp_adapters",
+    "graphviz"
 ]
 
 

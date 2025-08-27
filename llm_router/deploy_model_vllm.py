@@ -8,11 +8,14 @@ def start_vllm_process(model_path, port="8000", gpu="0", quant4bit=False, memory
     gpu_per_process = len(gpu.split(","))
     cmd = [
         "vllm", "serve", model_path, 
-        "--max-model-len", "32768", 
+        "--max-model-len", "128000", 
         "--tensor-parallel-size", f"{gpu_per_process}", 
         "--port", port,
         "--enforce-eager",
-        "--gpu-memory-utilization", str(memory_utilization)
+        "--gpu-memory-utilization", str(memory_utilization),
+        "--enable-auto-tool-choice",
+        "--tool-call-parser", "hermes",
+        "--served-model-name", "llm"
     ]
     
     if "AWQ" not in model_path:
