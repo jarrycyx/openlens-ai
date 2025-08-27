@@ -36,7 +36,7 @@ def build_supervisor(config: Config) -> StateGraph:
     def plan_reader_node(state: State):
         plan = plan_reader_tool.invoke({})
         state["plan"] = plan
-        state["current_subtask_index"] = 0
+        state["current_subtask_index"] = 1
         return state
 
     llm = init_chat_model(
@@ -79,7 +79,7 @@ def build_supervisor(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/OL_20250822143511_What_is_the_pre_istorical_data__dzdzzd_126_com_2125_2")
+    config, state, last_subgraph = load_state("outputs/OL_20250826181001_What_is_the_pre_istorical_data__dzdzzd_126_com_6373")
     graph = build_supervisor(config)
 
     graph.invoke(state)

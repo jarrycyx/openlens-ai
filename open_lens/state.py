@@ -30,8 +30,8 @@ class State(TypedDict):
 
 def get_subplan(state: State) -> str:
     try:
-        current_subplan_index = state["current_subtask_index"] if "current_subtask_index" in state else 0
-        subplan_text = state["plan"]["sub_tasks"][current_subplan_index]
+        current_subplan_index = state["current_subtask_index"] if "current_subtask_index" in state else 1
+        subplan_text = state["plan"]["sub_tasks"][current_subplan_index-1] # current_subplan_index从1开始，但是列表是从0开始
         subplan = f"\n\n# SUBTASK{current_subplan_index+1:02d}\n {subplan_text}\n"
     except:
         subplan = ""

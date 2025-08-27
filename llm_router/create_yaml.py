@@ -13,7 +13,8 @@ from typing import List, Dict, Any, Tuple
 from multiprocessing import Pool, cpu_count
 from functools import partial
 import numpy as np
-
+from dotenv import load_dotenv
+load_dotenv()
 
 
 forward_names = {
@@ -208,6 +209,13 @@ def main():
         config["litellm_settings"] = {
             "num_retries": 3,
             "set_verbose": True,
+            "success_callback": ["langsmith"],
+            
+        }
+        config["environment_variables"] = {
+            "LANGSMITH_API_KEY": os.environ.get("LANGSMITH_API_KEY", ""),
+            "LANGSMITH_PROJECT": "litellm",
+            # "LANGSMITH_BASE_URL": os.environ.get("LANGSMITH_BASE_URL", ""),
         }
         
         # Write to YAML file

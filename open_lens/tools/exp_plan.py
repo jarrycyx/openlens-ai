@@ -97,6 +97,6 @@ def subtask_route_tools(
     """
     """
     
-    if state["current_subtask_index"] < len(state["plan"]["sub_tasks"]):
+    if state["current_subtask_index"] <= len(state["plan"]["sub_tasks"]):
         return "NEXT_TASK"
     return END

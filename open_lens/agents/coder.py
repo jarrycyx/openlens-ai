@@ -81,16 +81,24 @@ def build_coder(config: Config) -> StateGraph:
     def plan_reader_node(state: State):
         plan = plan_reader_tool.invoke({})
         state["plan"] = plan
-        state["current_subtask_index"] = 0
+        state["current_subtask_index"] = 1
         return state
 
     def subtask_continue_node(state: State):
-        state["current_subtask_index"] = state.get("current_subtask_index", -1) + 1
+        state["current_subtask_index"] = state.get("current_subtask_index", 0) + 1
         return state
 
     def subtask_return_node(state: State):
         current_subtask_i = state["current_subtask_index"]
-        shutil.rmtree(os.path.join(config.save_path, "workspace", f"subtask_{current_subtask_i:02d}"))
+        try:
+            subtask_dir = os.path.join(config.save_path, "workspace", f"subtask_{current_subtask_i:02d}")
+            if os.path.exists(subtask_dir):
+                logger.info(f"Removing dir {subtask_dir}")
+                shutil.rmtree(subtask_dir)
+            else:
+                logger.info(f"Dir {subtask_dir} does not exist.")
+        except Exception as e:
+            logger.warning(f"Failed to remove dir {subtask_dir}: {e}")
         logger.info(f"Removed dir subtask_{current_subtask_i:02d} for re-doing the subtask.")
         return state
 
@@ -136,7 +144,7 @@ def build_coder(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/OL_20250822143511_What_is_the_pre_istorical_data__dzdzzd_126_com_2125_2_resume_20250822154505")
+    config, state, last_subgraph = load_state("outputs/OL_20250827101831_What_is_the_pre_istorical_data__dzdzzd_126_com_3564")
     graph = build_coder(config)
 
     graph.invoke(state, {"recursion_limit": 100})
