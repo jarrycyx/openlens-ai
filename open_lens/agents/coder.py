@@ -53,6 +53,7 @@ def build_coder(config: Config) -> StateGraph:
     concluder_llm_with_tools = concluder_llm.bind_tools(concluder_tools)
 
     def openhands_coding_node(state: State):
+        print(state["current_subtask_index"])
         subplan = get_subplan(state)
         this_prompt = prompt.format(question=state["question"], subplan=subplan)
         results = code_tool.invoke({"prompts": [this_prompt]})
@@ -144,7 +145,7 @@ def build_coder(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/OL_20250827101831_What_is_the_pre_istorical_data__dzdzzd_126_com_3564")
+    config, state, last_subgraph = load_state("outputs/OL_20250827144944_What_is_the_pre_istorical_data__dzdzzd_126_com_3211")
     graph = build_coder(config)
 
     graph.invoke(state, {"recursion_limit": 100})
