@@ -1,5 +1,6 @@
 import os, sys
 import json
+import random
 from loguru import logger
 from .config import Config
 
@@ -8,6 +9,9 @@ with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
 
 def prepare_file_config(thread_id: str, question: str, dataset_path: str, email: str) -> tuple[dict, Config, str]:
     save_path = os.path.join("./outputs", thread_id)
+    if os.path.exists(save_path):
+        thread_id = thread_id + "_" + str(random.randint(1000, 9999))
+        save_path = os.path.join("./outputs", thread_id)
     os.makedirs(save_path, exist_ok=True)
     
     oh_config = oh_config_template.replace("{api_key}", os.getenv("OPENAI_API_KEY"))

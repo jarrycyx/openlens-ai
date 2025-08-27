@@ -41,6 +41,7 @@ def run_docker_container(cmd: str, config: Config):
     this_openhands_config_path = os.path.join(pwd, config.save_path, "openhands_config.toml")
     if config.dataset_path:
         dataset_path = os.path.join(pwd, config.dataset_path)
+        assert os.path.exists(dataset_path), f"Dataset path {dataset_path} does not exist."
         latex_template_path = os.path.join(pwd, "openlens_ai/tools/latex_template/neurips")
         docker_cmd = [
             "docker",

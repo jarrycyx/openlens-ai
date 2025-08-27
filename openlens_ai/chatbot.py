@@ -83,7 +83,7 @@ def vector_search_match_type(message: str, query: str, token_cnt: int = 10000):
         return message_type("\n".join(all_content))
     
 
-def vector_search(messages: list, query: str, token_cnt: int = 10000):
+def vector_search(messages: Union[list, str], query: str, token_cnt: int = 10000):
     """
     使用向量搜索对长消息进行摘要，保留最相关的内容
     
@@ -95,6 +95,9 @@ def vector_search(messages: list, query: str, token_cnt: int = 10000):
     Returns:
         经过向量搜索处理后的消息列表
     """
+    
+    if isinstance(messages, str):
+        messages = [HumanMessage(content=messages)]
 
     if count_tokens_approximately(messages) < token_cnt:
         logger.info(f"No need to use vector search, because token count is less than {token_cnt}")
@@ -274,45 +277,50 @@ def chatbot_with_context_manager(
 
         this_prompt = prompt
         
-        try:
-            if len(data_show) > 32000*4:
-                logger.warning("data_show is too long, clamping with vector search")
-                data_show = vector_search(data_show, prompt, token_cnt=4000)
-            this_prompt = this_prompt.replace("{data_show}", data_show)
-        except Exception as e:
-            logger.warning("Error occurred when formatting data show", str(e))
-            logger.warning(traceback.format_exc())
+        if "{data_show}" in this_prompt:
+            try:
+                if len(data_show) > 32000*4:
+                    logger.warning("data_show is too long, clamping with vector search")
+                    data_show = vector_search(data_show, prompt, token_cnt=4000)
+                this_prompt = this_prompt.replace("{data_show}", data_show)
+            except Exception as e:
+                logger.warning("Error occurred when formatting data show", str(e))
+                logger.warning(traceback.format_exc())
             
-        try:
-            if len(literature_report) > 4000*4:
-                logger.warning("Literature report is too long, clamping with vector search")
-                literature_report = vector_search(literature_report, prompt, token_cnt=4000)
-            this_prompt = this_prompt.replace("{literature_report}", literature_report)
-        except Exception as e:
-            logger.warning("Error occurred when formatting literature report", str(e))
-            logger.warning(traceback.format_exc())
+        if "{literature_report}" in this_prompt:
+            try:
+                if len(literature_report) > 4000*4:
+                    logger.warning("Literature report is too long, clamping with vector search")
+                    literature_report = vector_search(literature_report, prompt, token_cnt=4000)
+                this_prompt = this_prompt.replace("{literature_report}", literature_report)
+            except Exception as e:
+                logger.warning("Error occurred when formatting literature report", str(e))
+                logger.warning(traceback.format_exc())
+          
+        if "{plan}" in this_prompt:  
+            try:
+                plan_str = json.dumps(plan)
+                if len(plan_str) > 4000*4:
+                    logger.warning("Plan is too long, clamping with vector search")
+                    plan_str = vector_search(plan_str, prompt, token_cnt=4000)
+                this_prompt = this_prompt.replace("{plan}", plan_str)
+            except Exception as e:
+                logger.warning("Error occurred when formatting plan", str(e))
+                logger.warning(traceback.format_exc())
             
-        try:
-            plan_str = json.dumps(plan)
-            if len(plan_str) > 4000*4:
-                logger.warning("Plan is too long, clamping with vector search")
-                plan_str = vector_search(plan_str, prompt, token_cnt=4000)
-            this_prompt = this_prompt.replace("{plan}", plan_str)
-        except Exception as e:
-            logger.warning("Error occurred when formatting plan", str(e))
-            logger.warning(traceback.format_exc())
+        if "{question}" in this_prompt:
+            try:
+                this_prompt = this_prompt.replace("{question}", question)
+            except Exception as e:
+                logger.warning("Error occurred when formatting question", str(e))
+                logger.warning(traceback.format_exc())
             
-        try:
-            this_prompt = this_prompt.replace("{question}", question)
-        except Exception as e:
-            logger.warning("Error occurred when formatting question", str(e))
-            logger.warning(traceback.format_exc())
-            
-        try:
-            this_prompt = this_prompt.replace("{subplan}", subplan)
-        except Exception as e:
-            logger.warning("Error occurred when formatting subplan", str(e))
-            logger.warning(traceback.format_exc())
+        if "{subplan}" in this_prompt:
+            try:
+                this_prompt = this_prompt.replace("{subplan}", subplan)
+            except Exception as e:
+                logger.warning("Error occurred when formatting subplan", str(e))
+                logger.warning(traceback.format_exc())
         
         return this_prompt
         

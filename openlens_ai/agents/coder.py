@@ -52,9 +52,17 @@ def build_coder(config: Config) -> StateGraph:
     concluder_llm_with_tools = concluder_llm.bind_tools(concluder_tools)
 
     def openhands_coding_node(state: State):
-        print(state["current_subtask_index"])
         subplan = get_subplan(state)
         this_prompt = prompt.format(question=state["question"], subplan=subplan)
+        
+        tool_message = [m for m in state["messages"] if isinstance(m, ToolMessage)]
+        if len(tool_message) > 0 and "REASON:" in tool_message[-1].content:
+            logger.info("Detected REASON in the last tool message, add to the prompt.")
+            reason = tool_message[-1].content
+            this_prompt = this_prompt + "\n\n Last Failure Reasons: " + reason
+        else:
+            reason = ""
+            
         results = code_tool.invoke({"prompts": [this_prompt]})
         state["messages"] = [
             ToolMessage(
@@ -88,7 +96,8 @@ def build_coder(config: Config) -> StateGraph:
         state["current_subtask_index"] = state.get("current_subtask_index", 0) + 1
         return state
 
-    def subtask_return_node(state: State):
+    def subtask_restart_node(state: State):
+        state["return_subtask_counter"] = state.get("return_subtask_counter", 0) + 1
         current_subtask_i = state["current_subtask_index"]
         try:
             subtask_dir = os.path.join(config.save_path, "workspace", f"subtask_{current_subtask_i:02d}")
@@ -100,6 +109,11 @@ def build_coder(config: Config) -> StateGraph:
         except Exception as e:
             logger.warning(f"Failed to remove dir {subtask_dir}: {e}")
         logger.info(f"Removed dir subtask_{current_subtask_i:02d} for re-doing the subtask.")
+        return state
+    
+    def subtask_fix_node(state: State):
+        state["return_subtask_counter"] = state.get("return_subtask_counter", 0) + 1
+        # Just keep the current_subtask_index unchanged
         return state
 
     concluder_tools_node = BasicToolNode(concluder_tools, config)
@@ -115,7 +129,8 @@ def build_coder(config: Config) -> StateGraph:
     graph_builder.add_node("conclude_openhands_chatbot", conclude_openhands_chatbot)
     graph_builder.add_node("route_chatbot", route_chatbot)
     graph_builder.add_node("subtask_continue", subtask_continue_node)
-    graph_builder.add_node("subtask_return", subtask_return_node)
+    graph_builder.add_node("subtask_restart", subtask_restart_node)
+    graph_builder.add_node("subtask_fix", subtask_fix_node)
     graph_builder.add_node("read_plan", plan_reader_node)
     graph_builder.add_node("concluder_tool_node", concluder_tools_node)
 
@@ -130,13 +145,15 @@ def build_coder(config: Config) -> StateGraph:
         keywords_router,
         {
             "DECISION: CONTINUE_NEXT_SUBTASK": "subtask_continue",
-            "DECISION: RETURN_TO_LAST_SUBTASK": "subtask_return",
+            "DECISION: REDO_LAST_SUBTASK": "subtask_restart",
+            "DECISION: FIX_LAST_SUBTASK": "subtask_fix",
             "DECISION: ALTER_PLAN": END,
             "NONE": "route_chatbot",
         },
     )
     graph_builder.add_conditional_edges("subtask_continue", subtask_route_tools, {"NEXT_TASK": "coder_openhands", END: END})
-    graph_builder.add_edge("subtask_return", "coder_openhands")
+    graph_builder.add_edge("subtask_restart", "coder_openhands")
+    graph_builder.add_edge("subtask_fix", "coder_openhands")
 
     graph = graph_builder.compile()
 
@@ -144,7 +161,7 @@ def build_coder(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/OL_20250827144944_What_is_the_pre_istorical_data__dzdzzd_126_com_3211")
+    config, state, last_subgraph = load_state("outputs/OL_20250827160249_What_is_the_pre_istorical_data__dzdzzd_126_com_2943")
     graph = build_coder(config)
 
     graph.invoke(state, {"recursion_limit": 100})
