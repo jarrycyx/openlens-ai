@@ -1,6 +1,7 @@
 import os, sys
 import json
 import random
+from datetime import datetime
 from loguru import logger
 from .config import Config
 
@@ -10,7 +11,7 @@ with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
 def prepare_file_config(thread_id: str, question: str, dataset_path: str, email: str) -> tuple[dict, Config, str]:
     save_path = os.path.join("./outputs", thread_id)
     if os.path.exists(save_path):
-        thread_id = thread_id + "_" + str(random.randint(1000, 9999))
+        thread_id = thread_id + "_" + datetime.now().strftime("%Y%m%d%H%M%S")
         save_path = os.path.join("./outputs", thread_id)
     os.makedirs(save_path, exist_ok=True)
     

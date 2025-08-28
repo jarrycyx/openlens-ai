@@ -120,7 +120,11 @@ def build_coder(config: Config) -> StateGraph:
     conclude_openhands_chatbot = chatbot_with_context_manager(config, concluder_llm_with_tools, coder_concluder_prompt, context_manage="last_tool_message")
     route_chatbot = chatbot_with_context_manager(config, router_llm, coder_router_prompt, context_manage="last_tool_message")
     write_plan_router = route_by_tool_call("report_writer_tool")
-    keywords_router = route_by_keywords(["DECISION: CONTINUE_NEXT_SUBTASK", "DECISION: RETURN_TO_LAST_SUBTASK", "DECISION: ALTER_PLAN"])
+    keywords_router = route_by_keywords([
+        "DECISION: CONTINUE_NEXT_SUBTASK", 
+        "DECISION: REDO_LAST_SUBTASK", 
+        "DECISION: FIX_LAST_SUBTASK",
+        "DECISION: ALTER_PLAN"])
 
     graph_builder = StateGraph(State)
 

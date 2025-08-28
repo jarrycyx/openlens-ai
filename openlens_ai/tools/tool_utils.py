@@ -195,11 +195,12 @@ class BasicToolNode:
             logger.warning(f"Error running tool: {e}")
             logger.warning(traceback.format_exc())
             # traceback.print_exc()
+            error_str = str(e).replace("\"", "").replace("\\", "").replace("[", "").replace("]", "").replace("{", "").replace("}", "")
             state["messages"] += [
                     ToolMessage(
-                        content=str(e),
+                        content=error_str,
                         name=tool_call["name"],
-                        tool_call_id="",
+                        tool_call_id=tool_call["id"],
                         status="error"
                     )
                 ]

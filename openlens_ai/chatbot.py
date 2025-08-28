@@ -129,7 +129,7 @@ def vector_search(messages: Union[list, str], query: str, token_cnt: int = 10000
     }
     url = os.environ.get("RERANK_BASE_URL", "") + "rerank"
     # url = "https://cloud.infini-ai.com/maas/v1/rerank"
-    while True:
+    for try_i in range(10):
         response = requests.post(url, json=payload, headers=headers)
         relevant_messages = []
         try:
@@ -145,7 +145,8 @@ def vector_search(messages: Union[list, str], query: str, token_cnt: int = 10000
             logger.warning("Retrying...")
             logger.warning(response.json())
             time.sleep(10)
-            continue
+            
+        raise ValueError("Cannot get rerank result")
         
     logger.info(f"Message number: {len(messages)}, split number: {len(all_docs)}, "
                 f"Relevant message number: {len(relevant_messages)}")
@@ -402,7 +403,7 @@ def chatbot_with_context_manager(
             assert "pre_model_hook" in llm.nodes, "React LLM graph must have a pre_model_hook node"
             state = call_react(state, message_to_llm)
         else:
-            while True:
+            for try_i in range(10):
                 try:
                     state["messages"].append(llm.invoke(message_to_llm))
                     frontend_add_message(state["messages"][-1], config)
@@ -412,7 +413,7 @@ def chatbot_with_context_manager(
                     logger.warning(traceback.format_exc())
                     logger.warning("Retrying...")
                     time.sleep(5)
-                    continue
+                raise ValueError("Cannot call llm successfully")
 
         with open(save_path, "w") as f:
             f.write(dumps(message_to_llm + [state["messages"][-1]], indent=4))
