@@ -18,3 +18,5 @@ Reminders:
 - When loading/extracting datasets, make sure to load as much data as possible, NEVER create demo/tiny versions or placeholders and NEVER use maximum data limits (e.g. max_rows=1000, max-patients=10).
 - You should ONLY interact with the tool provided to you AND NEVER ASK FOR HUMAN HELP.
 - Make sure each request to the tool is simple and specific. If the request is too complex, split it into multiple requests. When the tool responds, you can then generate the next request.
+- Data prepreration and model training may take a long time, DO NOT set a short timeout for the execution, also DO NOT force kill the process unless you are sure it is stuck.
+- When writing any scripts related to data loading/processing, DO NOT try to load all data into memory at once, use batch processing or data streaming techniques to handle large datasets efficiently.

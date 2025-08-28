@@ -51,3 +51,5 @@ exp/docker
 # 其他
 debug
 curie/setup/*
+modules/OpenHands/docs
+modules/OpenHands/evaluation

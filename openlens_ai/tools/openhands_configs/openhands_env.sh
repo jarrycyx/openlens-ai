@@ -2,6 +2,7 @@
 
 export RUNTIME=local
 export SANBOX_USER_ID=1000
+export SANDBOX_TIMEOUT=600
 export LOG_ALL_EVENTS=true
 export DISABLE_COLOR=true
 alias python="python3"

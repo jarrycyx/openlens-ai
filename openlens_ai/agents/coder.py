@@ -165,7 +165,7 @@ def build_coder(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/OL_20250827160249_What_is_the_pre_istorical_data__dzdzzd_126_com_2943")
+    config, state, last_subgraph = load_state("outputs/pred_aki_dy_mimic_20250828141008_copy")
     graph = build_coder(config)
 
     graph.invoke(state, {"recursion_limit": 100})

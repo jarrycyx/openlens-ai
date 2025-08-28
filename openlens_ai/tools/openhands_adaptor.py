@@ -198,7 +198,7 @@ def run_openhands_prompt(prompts, config: Config):
         # 移除ANSI转义序列（颜色代码等）
         results = re.sub(r"\033\[[\d;]*m", "", results)
         results = split_and_clean_log(results)
-        results = results[-10000:]
+        results = results[-40000:]
 
         # 将当前提示的结果添加到总结果中
         all_results += "=" * 20 + f"Prompt: {prompt[:20]}..." + "=" * 20

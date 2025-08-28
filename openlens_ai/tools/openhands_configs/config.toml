@@ -11,7 +11,7 @@ base_url="{base_url}"
 
 [sandbox]
 user_id = 1000
-timeout = 300
+timeout = 600
 
 [mcp]
 # shttp_servers = [
