@@ -3,6 +3,7 @@ workspace_base="/workspace"
 runtime = "local"
 disable_color = true
 search_api_key = "{tavily_key}"
+save_trajectory_path = "/workspace/openhands_logs"
 
 [llm]
 model="openai/{code_model}" # openai means openai-compatible endpoint, not OpenAI models
@@ -12,6 +13,8 @@ base_url="{base_url}"
 [sandbox]
 user_id = 1000
 timeout = 600
+input_cost_per_token = 1
+output_cost_per_token = 1
 
 [mcp]
 # shttp_servers = [

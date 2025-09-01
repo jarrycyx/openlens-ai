@@ -43,6 +43,7 @@ def run_docker_container(cmd: str, config: Config):
         dataset_path = os.path.join(pwd, config.dataset_path)
         assert os.path.exists(dataset_path), f"Dataset path {dataset_path} does not exist."
         latex_template_path = os.path.join(pwd, "openlens_ai/tools/latex_template/neurips")
+        dot_openhands_path = os.path.join(pwd, "openlens_ai/tools/openhands_configs/dot_openhands")
         docker_cmd = [
             "docker",
             "run",
@@ -53,6 +54,7 @@ def run_docker_container(cmd: str, config: Config):
             "-v", f"{workspace_dir}:/workspace",
             "-v", f"{dataset_path}:/workspace/datasets:ro",
             "-v", f"{latex_template_path}:/workspace/latex_template:ro",
+            "-v", f"{dot_openhands_path}:/workspace/.openhands:ro",
             "--network", "host",  # 使用主机网络
             "agent-med-gpu",
             "bash",
