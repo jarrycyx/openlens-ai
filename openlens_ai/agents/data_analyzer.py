@@ -122,7 +122,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/OL_20250826153038_What_is_the_pre_istorical_data__dzdzzd_126_com_8810")
+    config, state, last_subgraph = load_state("outputs/pred_aki_dy_mimic")
     graph = build_data_analyzer(config)
 
     graph.invoke(state)

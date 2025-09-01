@@ -162,6 +162,11 @@ def main():
         help="Paths to txt files containing API keys (one key per line)"
     )
     parser.add_argument(
+        "--extra", 
+        default="llm_router/extra_model_list.yaml",
+        help="Paths to txt files containing API keys (one key per line)"
+    )
+    parser.add_argument(
         "--model-names", 
         nargs="+", 
         default=["zai-org/GLM-4.5", "zai-org/GLM-4.5-Air", "Qwen/Qwen3-235B-A22B-Instruct-2507", "Qwen/Qwen3-Coder-30B-A3B-Instruct", "Qwen/Qwen3-Coder-480B-A35B-Instruct"],
@@ -203,6 +208,8 @@ def main():
             args.processes
         )
         
+        extra_model_list = yaml.safe_load(open(args.extra, "r"))["model_list"]
+        
         config["router_settings"] = {
             "routing_strategy": "simple-shuffle",
         }
@@ -217,6 +224,7 @@ def main():
             "LANGSMITH_PROJECT": "litellm",
             # "LANGSMITH_BASE_URL": os.environ.get("LANGSMITH_BASE_URL", ""),
         }
+        config["model_list"].extend(extra_model_list)
         
         # Write to YAML file
         with open(args.output, 'w', encoding='utf-8') as f:

@@ -8,7 +8,7 @@ def start_vllm_process(model_path, port="8000", gpu="0", quant4bit=False, memory
     gpu_per_process = len(gpu.split(","))
     cmd = [
         "vllm", "serve", model_path, 
-        "--max-model-len", "128000", 
+        "--max-model-len", "64000", 
         "--tensor-parallel-size", f"{gpu_per_process}", 
         "--port", port,
         "--enforce-eager",
