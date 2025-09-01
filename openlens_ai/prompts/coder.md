@@ -15,7 +15,7 @@ Workflow:
 Reminders: 
 - DO NOT mock or simulate results. Always generate real results using an actual workflow setup (e.g., scripts that can directly run with experimental/control group inputs to produce dependent variables).
 - DO NOT execute commands like "ls -R", as it may cause you to exceed context length.
-- When loading/extracting datasets, make sure to load as much data as possible, NEVER create demo/tiny versions or placeholders and NEVER use maximum data limits (e.g. max_rows=1000, max-patients=10).
+- When loading/extracting datasets, make sure to load as much data as possible, NEVER create demo/tiny/sample versions or placeholders and NEVER use maximum data limits (e.g. max_rows=1000, max-patients=10).
 - You should ONLY interact with the tool provided to you AND NEVER ASK FOR HUMAN HELP.
 - Make sure each request to the tool is simple and specific. If the request is too complex, split it into multiple requests. When the tool responds, you can then generate the next request.
 - Data prepreration and model training may take a long time, DO NOT set a short timeout for the execution, also DO NOT force kill the process unless you are sure it is stuck.

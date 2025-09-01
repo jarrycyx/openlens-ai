@@ -21,6 +21,8 @@ forward_names = {
     "zai-org/GLM-4.5": "glm-4.5",
     "zai-org/GLM-4.5-Air": "glm-4.5-air",
     "Qwen/Qwen3-235B-A22B-Instruct-2507": "qwen3-235b-a22b-instruct-2507",
+    "Qwen/Qwen3-Coder-30B-A3B-Instruct": "qwen3-coder-30b-a3b-instruct",
+    "Qwen/Qwen3-Coder-480B-A35B-Instruct": "qwen3-coder-480b-a35b-instruct",
     "BAAI/bge-reranker-v2-m3": "bge-reranker-v2-m3"
 }
 
@@ -225,6 +227,7 @@ def main():
             # "LANGSMITH_BASE_URL": os.environ.get("LANGSMITH_BASE_URL", ""),
         }
         config["model_list"].extend(extra_model_list)
+        print(f"Adding extra model list: {extra_model_list}")
         
         # Write to YAML file
         with open(args.output, 'w', encoding='utf-8') as f:

@@ -9,7 +9,7 @@ from langchain.chat_models import init_chat_model
 from langchain_tavily import TavilySearch
 from langchain.load.dump import dumps
 from langgraph.checkpoint.memory import InMemorySaver
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import ToolMessage, AIMessage
 
 from ..tools.tool_utils import BasicToolNode, route_tools, route_by_keywords, route_by_tool_call
 from ..tools.openhands_adaptor import OpenHandsTool
@@ -55,12 +55,13 @@ def build_coder(config: Config) -> StateGraph:
         subplan = get_subplan(state)
         this_prompt = prompt.format(question=state["question"], subplan=subplan)
         
-        tool_message = [m for m in state["messages"] if isinstance(m, ToolMessage)]
-        if len(tool_message) > 0 and "REASON:" in tool_message[-1].content:
+        ai_message = [m for m in state["messages"] if isinstance(m, AIMessage)]
+        if len(ai_message) > 0 and "REASON:" in ai_message[-1].content:
             logger.info("Detected REASON in the last tool message, add to the prompt.")
-            reason = tool_message[-1].content
+            reason = ai_message[-1].content
             this_prompt = this_prompt + "\n\n Last Failure Reasons: " + reason
         else:
+            logger.info("No REASON in the AI tool message, use the default prompt.")
             reason = ""
             
         results = code_tool.invoke({"prompts": [this_prompt]})
@@ -165,7 +166,7 @@ def build_coder(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/pred_aki_dy_mimic_20250828141008_copy")
+    config, state, last_subgraph = load_state("outputs/pred_aki_dy_mimic_20250901115517")
     graph = build_coder(config)
 
     graph.invoke(state, {"recursion_limit": 100})

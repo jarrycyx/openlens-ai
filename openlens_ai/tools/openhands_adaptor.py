@@ -194,6 +194,7 @@ def run_openhands_prompt(prompts, config: Config):
             f"source /helper/openlens_ai/tools/openhands_configs/openhands_env.sh && "
             f"cd /helper/OpenHands && "
             f"mkdir -p /workspace/manuscript/ && chmod -R 777 /workspace/manuscript/ && cp /workspace/latex_template/*.sty /workspace/manuscript/ &&"
+            f"mkdir -p /workspace/openhands_logs/ && chmod -R 777 /workspace/openhands_logs/ &&"
             f'poetry run python -m openhands.core.main -t "{prompt}" -i {max_iter}'
         )
         results = run_docker_container(cmd, config)
