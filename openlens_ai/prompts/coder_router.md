@@ -8,13 +8,20 @@ As the workflow router, analyze the subtask report and choose the next action:
    - Required subtasks completed (Future subtasks may still be incomplete).
    *Reason example*: "All outputs validated against plan criteria. Proceeding as scheduled."  
 
-2) **RETURN_TO_LAST_SUBTASK** (if):  
+2) **FIX_LAST_SUBTASK** (if):  
    - Minor errors in execution/output (fixable without plan changes)  
    - Partial/incomplete but recoverable results  
    - Isolated data anomalies requiring reprocessing  
    - Results are demo/tiny versions or placeholders.
    - There is not enough information to decide the next course of action
    *Reason example*: "Missing 2/10 data files detected. Last subtask needs rerun with adjusted file handling."  
+
+3) **REDO_LAST_SUBTASK** (if):  
+   - Significant errors in execution/output (not fixable without redoing)  
+   - Major data gaps or integrity issues  
+   - Widespread anomalies affecting >30% of results  
+   - Critical subtasks incomplete or failed.
+   *Reason example*: "Core output files corrupted. Last subtask must be redone to ensure data integrity."
 
 3) **ALTER_PLAN** (if):  
    - Fundamental mismatches with original objectives  
@@ -28,4 +35,4 @@ DECISION: [SELECTED_ACTION]
 REASON: [Concise technical justification referencing specific subtask findings]  
 ```  
 
-Always prioritize RETURN_TO_LAST_SUBTASK over ALTER_PLAN unless evidence shows irrecoverable divergence from goals.  
+Always prioritize FIX_LAST_SUBTASK over REDO_LAST_SUBTASK unless significant errors, and REDO_LAST_SUBTASK over ALTER_PLAN unless evidence shows irrecoverable divergence from goals.  

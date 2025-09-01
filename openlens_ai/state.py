@@ -26,6 +26,7 @@ class State(TypedDict):
     literature_report: str
     data_show: str
     manuscript_polish_round: int
+    return_subtask_counter: int
 
 
 def get_subplan(state: State) -> str:

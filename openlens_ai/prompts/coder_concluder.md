@@ -5,7 +5,7 @@ Act as an automated quality assurance reviewer. Carefully analyze the programmin
 
 2) **Completion Audit**: Verify all planned experiments are fully executed by reviewing logs. Identify incomplete runs or missing data versus the plan.  
 
-3) **Data Validation**: Detect any synthetic/placeholder data not explicitly permitted in the experimental setup. Report unauthorized simulations.  
+3) **Data Validation**: Detect and report any synthetic/placeholder/minified/demon data.
 
 4) **Anomaly Detection**: Scan intermediate results for unrealistic patterns (e.g., 100%/0% uniformity). Note potential processing errors.  
 

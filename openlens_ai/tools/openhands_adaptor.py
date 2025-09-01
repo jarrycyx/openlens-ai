@@ -41,7 +41,9 @@ def run_docker_container(cmd: str, config: Config):
     this_openhands_config_path = os.path.join(pwd, config.save_path, "openhands_config.toml")
     if config.dataset_path:
         dataset_path = os.path.join(pwd, config.dataset_path)
+        assert os.path.exists(dataset_path), f"Dataset path {dataset_path} does not exist."
         latex_template_path = os.path.join(pwd, "openlens_ai/tools/latex_template/neurips")
+        dot_openhands_path = os.path.join(pwd, "openlens_ai/tools/openhands_configs/dot_openhands")
         docker_cmd = [
             "docker",
             "run",
@@ -52,6 +54,7 @@ def run_docker_container(cmd: str, config: Config):
             "-v", f"{workspace_dir}:/workspace",
             "-v", f"{dataset_path}:/workspace/datasets:ro",
             "-v", f"{latex_template_path}:/workspace/latex_template:ro",
+            "-v", f"{dot_openhands_path}:/workspace/.openhands:ro",
             "--network", "host",  # 使用主机网络
             "agent-med-gpu",
             "bash",
@@ -197,7 +200,7 @@ def run_openhands_prompt(prompts, config: Config):
         # 移除ANSI转义序列（颜色代码等）
         results = re.sub(r"\033\[[\d;]*m", "", results)
         results = split_and_clean_log(results)
-        results = results[-10000:]
+        results = results[-40000:]
 
         # 将当前提示的结果添加到总结果中
         all_results += "=" * 20 + f"Prompt: {prompt[:20]}..." + "=" * 20
