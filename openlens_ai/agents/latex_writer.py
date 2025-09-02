@@ -3,6 +3,7 @@ import glob
 import dotenv
 from typing import List
 from loguru import logger
+import traceback
 
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
@@ -15,6 +16,7 @@ from ..tools.reports import ReportReaderTool, ReportWriterTool
 from ..state import State, load_state
 from ..utils.config import Config
 from ..chatbot import chatbot_with_context_manager
+from ..utils.vision_feedback import collect_fig_files, get_fig_base64, get_vision_feedback, get_vision_classification
 
 dotenv.load_dotenv()
 
@@ -95,20 +97,30 @@ def build_latex_writer(config: Config) -> StateGraph:
         return state
     
     def collect_result_files(state: State):
-        results_file_list = []
+        
+        ## Check for generated images using vision-language model
+        fig_file_list = collect_fig_files(config)
+        fig_base64_list = get_fig_base64(fig_file_list)
         workspace_dir = os.path.join(config.save_path, "workspace")
-        for ext in results_files_extensions:
-            results_file_list.extend(glob.glob(os.path.join(workspace_dir, "**", f"*{ext}"), recursive=True))
-        logger.info(f"Found {len(results_file_list)} results files: {results_file_list}")
-        # Copy figures/tables from /workspace/ to /workspace/manuscript/
-        figure_dir = os.path.join(workspace_dir, "manuscript", "figures")
-        os.makedirs(figure_dir, exist_ok=True)
-        for file in results_file_list:
-            logger.info(f"Copying figure file {file} to {figure_dir}")
+        all_feedback = ""
+        figure_target_path = os.path.join(workspace_dir, "manuscript", "figures")
+        os.makedirs(figure_target_path, exist_ok=True)
+        for fig, base64str in fig_base64_list:
+            fig_rel_path = os.path.relpath(fig, workspace_dir)
             try:
-                os.system(f"cp {file} {figure_dir}")
+                vlm_response = get_vision_classification(base64str, config)
+                if "DECISION: ACCEPT" in vlm_response:
+                    logger.info(f"Image {fig_rel_path} is accepted by VLM.")
+                    os.system(f"cp {fig} {figure_target_path}")
+                    continue
+                elif "DECISION: REJECT" in vlm_response:
+                    all_feedback += f"Image {fig_rel_path} feedback: {vlm_response}\n"
+                    logger.info(f"Image {fig_rel_path} is rejected by VLM, will not include it.")
+                
             except Exception as e:
-                logger.warning(f"Failed to copy {file} to {figure_dir}: {e}")
+                logger.warning(f"Failed to evaluate image: {e}")
+                logger.warning(traceback.format_exc())
+                
         return state
         
     
@@ -136,16 +148,41 @@ def build_latex_writer(config: Config) -> StateGraph:
         ]
         return state
     def validator_node(state: State):
-        this_prompt = validator_prompt
-        results = code_tool.invoke({"prompts": [this_prompt, rigor_prompt]})
+        # this_prompt = validator_prompt
+        # results = code_tool.invoke({"prompts": [this_prompt, rigor_prompt]})
         
-        state["messages"] = [
-            ToolMessage(
-                content=results,
-                name="openhands_tool",
-                tool_call_id="openhands_tool",
-            ),
-        ]
+        # state["messages"] = [
+        #     ToolMessage(
+        #         content=results,
+        #         name="openhands_tool",
+        #         tool_call_id="openhands_tool",
+        #     ),
+        # ]
+        
+        
+        ## Check for generated images using vision-language model
+        workspace_dir = os.path.join(config.save_path, "workspace")
+        fig_file_list = os.path.join(workspace_dir, "manuscript", "main.pdf")
+        fig_base64_list = get_fig_base64(fig_file_list)
+        all_feedback = ""
+        for fig, base64str in fig_base64_list:
+            fig_rel_path = os.path.relpath(fig, workspace_dir)
+            try:
+                vlm_response = get_vision_feedback(base64str, config)
+                if "DECISION: ACCEPT" in vlm_response:
+                    logger.info(f"Image {fig_rel_path} is accepted by VLM.")
+                    continue
+                elif "DECISION: IMPROVE" in vlm_response:
+                    all_feedback += f"Image {fig_rel_path} feedback: {vlm_response}\n"
+                    logger.info(f"Image {fig_rel_path} is rejected by VLM, will try to improve it.")
+                
+            except Exception as e:
+                logger.warning(f"Failed to evaluate image: {e}")
+                logger.warning(traceback.format_exc())
+                
+        this_prompt = f"Based on the following vision feedback, please modify the latex code to improve the pdf quality. " + \
+            f"Vision feedback: " + all_feedback
+        code_tool.invoke({"prompts": [this_prompt]})
         return state
        
     concluder_tools_node = BasicToolNode(tools, config)

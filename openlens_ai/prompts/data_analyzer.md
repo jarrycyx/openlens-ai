@@ -12,6 +12,7 @@ Explore and analyze all accessible data files in the /workspace/datasets directo
       - decompress the file start the analysis again if it is a compressed file; 
       - copy the file content as is to "data_show.md" if it is a document file;
     - Saves the results in "data_show.md".
+    - Plot the data statistics to figures if possible to better illustrate the data characteristics.
 4. Final Checking:
     - Make sure that the data files are accessible and readable.
     - Make sure no errors occur during the analysis.

@@ -1,7 +1,8 @@
 import os
 import json
 import dotenv
-import shutil
+import traceback
+import time
 from loguru import logger
 import glob
 import base64
@@ -14,10 +15,14 @@ from ..utils.config import Config
 
 dotenv.load_dotenv()
 
-fig_files_extensions = [".png", ".jpg", ".jpeg", ".pdf", ".svg"]
+
 
 with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_feedback.md")) as f:
     vision_feedback_prompt = f.read()
+
+
+with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_classify.md")) as f:
+    vision_classify_prompt = f.read()
     
     
 vlm = init_chat_model(
@@ -26,11 +31,12 @@ vlm = init_chat_model(
     model_provider="openai",
     extra_body={"chat_template_kwargs": {"enable_thinking": True}},
 )
-def collect_fig_files(config: Config):
+def collect_fig_files(config: Config, fig_files_extensions: list = [".png", ".jpg", ".jpeg", ".pdf", ".svg"], base_dir=None):
     fig_file_list = []
-    workspace_dir = os.path.join(config.save_path, "workspace")
+    if base_dir is None:
+        base_dir = os.path.join(config.save_path, "workspace")
     for ext in fig_files_extensions:
-        fig_file_list.extend(glob.glob(os.path.join(workspace_dir, "**", f"*{ext}"), recursive=True))
+        fig_file_list.extend(glob.glob(os.path.join(base_dir, "**", f"*{ext}"), recursive=True))
     logger.info(f"Found {len(fig_file_list)} results files: {fig_file_list}")
     return fig_file_list
 
@@ -74,21 +80,53 @@ def get_fig_base64(fig_file_list):
 
 
 def get_vision_feedback(image_base64: str, config: Config) -> str:
-    # Call VLM to evaluate the image
-    image_feedback_message = HumanMessage(content=[
-        {
-            "type": "text",
-            "text": vision_feedback_prompt
-        },
-        {
-            "type": "image",
-            "source_type": "base64",
-            "data": image_base64,
-            "mime_type": "image/jpeg",
-        },
-    ])
-    
-    vlm_response = vlm.invoke([image_feedback_message])
-    logger.info(f"Vision feedback: {vlm_response.content}")
-    return vlm_response.content
-    
+    for try_i in range(10):
+        try:
+            # Call VLM to evaluate the image
+            image_feedback_message = HumanMessage(content=[
+                {
+                    "type": "text",
+                    "text": vision_feedback_prompt
+                },
+                {
+                    "type": "image",
+                    "source_type": "base64",
+                    "data": image_base64,
+                    "mime_type": "image/jpeg",
+                },
+            ])
+            
+            vlm_response = vlm.invoke([image_feedback_message])
+            logger.info(f"Vision feedback: {vlm_response.content}")
+            return vlm_response.content
+        except Exception as e:
+            logger.warning(f"Error when calling llm: {e}")
+            logger.warning(traceback.format_exc())
+            logger.warning("Retrying...")
+            time.sleep(5)
+
+
+def get_vision_classification(image_base64: str, config: Config) -> str:
+    # Call VLM to classify the image
+    for try_i in range(10):
+        try:
+            image_classification_message = HumanMessage(content=[
+                {
+                    "type": "text",
+                    "text": vision_classify_prompt
+                },
+                {
+                    "type": "image",
+                    "source_type": "base64",
+                    "data": image_base64,
+                    "mime_type": "image/jpeg",
+                }
+            ])
+            vlm_response = vlm.invoke([image_classification_message])
+            logger.info(f"Vision classification: {vlm_response.content}")
+            return vlm_response.content
+        except Exception as e:
+            logger.warning(f"Error when calling llm: {e}")
+            logger.warning(traceback.format_exc())
+            logger.warning("Retrying...")
+            time.sleep(5)

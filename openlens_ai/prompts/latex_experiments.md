@@ -23,11 +23,12 @@ Appendices (3 page max):
 Content Rules:  
 - All data description must be based on files in /workspace/data_analyze
 - Include all relevant figures/tables from /workspace/manuscript/figures/ in the main text or appendices.
+- Before describing results, performance, or statistics, first examine if the number makes sense and is helpful for the reader. If the result may be wrong due to the experimental setup, exclude them from the texts or tables.
 - Metrics must match /workspace/results/*.csv exactly.
 - Write continuous text in the main test. DO NOT use enumerated or itemized lists unless you are drawing tables.
 
 
-1. Conclusion Section (300 words max)  
+2. Conclusion Section (300 words max)  
 Structure:  
 - a. Summary of Findings  
   - Restate hypothesis and key results (1–2 sentences each).  

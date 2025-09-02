@@ -3,6 +3,7 @@ import json
 import dotenv
 import glob
 from loguru import logger
+import traceback
 
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
@@ -21,6 +22,7 @@ from ..chatbot import chatbot_with_context_manager
 from ..state import load_state
 from ..utils.file_utils import prepare_file_config
 from ..utils.config import Config
+from ..utils.vision_feedback import collect_fig_files, get_fig_base64, get_vision_feedback
 
 dotenv.load_dotenv()
 
@@ -80,6 +82,33 @@ def build_data_analyzer(config: Config) -> StateGraph:
             return state
         
         results = code_tool.invoke({"prompts": [this_prompt, execute_check_prompt.format(plan=this_prompt)]})
+        
+        
+        ## Check for generated images using vision-language model
+        
+        subtask_dir = os.path.join(config.save_path, "workspace", "data_analyze")
+        fig_file_list = collect_fig_files(config, base_dir=subtask_dir)
+        fig_base64_list = get_fig_base64(fig_file_list)
+        workspace_dir = os.path.join(config.save_path, "workspace")
+        all_feedback = ""
+        for fig, base64str in fig_base64_list:
+            fig_rel_path = os.path.relpath(fig, workspace_dir)
+            try:
+                vlm_response = get_vision_feedback(base64str, config)
+                if "DECISION: ACCEPT" in vlm_response:
+                    logger.info(f"Image {fig_rel_path} is accepted by VLM.")
+                    continue
+                elif "DECISION: IMPROVE" in vlm_response:
+                    all_feedback += f"Image {fig_rel_path} feedback: {vlm_response}\n"
+                    logger.info(f"Image {fig_rel_path} is rejected by VLM, will try to improve it.")
+                
+            except Exception as e:
+                logger.warning(f"Failed to evaluate image: {e}")
+                logger.warning(traceback.format_exc())
+                
+        this_prompt = f"Based on the following vision feedback, please modify the python code to improve the data analysis. " + \
+            f"Vision feedback: " + all_feedback
+        code_tool.invoke({"prompts": [this_prompt]})
         return state
 
     def chatbot(state: State):

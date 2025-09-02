@@ -25,6 +25,8 @@ llm_router/extra_model_list.yaml
 .aws_creds
 baselines/autobuild/.OAI_CONFIG_LIST
 curie/setup/env.sh
+.streamlit/openlens.icu.key
+.streamlit/openlens.icu.pem
 
 # 缓存和临时文件
 code_logging

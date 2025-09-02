@@ -87,29 +87,31 @@ def build_coder(config: Config) -> StateGraph:
         #     )
         # ]
         
-        
         ## Check for generated images using vision-language model
-        fig_file_list = collect_fig_files(config)
+        current_subtask_i = state["current_subtask_index"]
+        subtask_dir = os.path.join(config.save_path, "workspace", f"subtask_{current_subtask_i:02d}")
+        fig_file_list = collect_fig_files(config, base_dir=subtask_dir)
         fig_base64_list = get_fig_base64(fig_file_list)
         workspace_dir = os.path.join(config.save_path, "workspace")
+        all_feedback = ""
         for fig, base64str in fig_base64_list:
+            fig_rel_path = os.path.relpath(fig, workspace_dir)
             try:
                 vlm_response = get_vision_feedback(base64str, config)
                 if "DECISION: ACCEPT" in vlm_response:
-                    logger.info(f"Image {fig} is accepted by VLM.")
+                    logger.info(f"Image {fig_rel_path} is accepted by VLM.")
                     continue
                 elif "DECISION: IMPROVE" in vlm_response:
-                    logger.info(f"Image {fig} is rejected by VLM, will try to improve it.")
-                    relative_path = os.path.relpath(fig, workspace_dir)
-                    docker_path = os.path.join("/workspace", relative_path)
-                    this_prompt = f"Based on the following vision feedback, please modify the code to improve the image quality. " + \
-                        f"Image path: {docker_path}. Vision feedback: " + \
-                            vlm_response
-                    code_tool.invoke({"prompts": [this_prompt]})
+                    all_feedback += f"Image {fig_rel_path} feedback: {vlm_response}\n"
+                    logger.info(f"Image {fig_rel_path} is rejected by VLM, will try to improve it.")
                 
             except Exception as e:
                 logger.warning(f"Failed to evaluate image: {e}")
                 logger.warning(traceback.format_exc())
+                
+        this_prompt = f"Based on the following vision feedback, please modify the python code to improve the experiments. " + \
+            f"Vision feedback: " + all_feedback
+        code_tool.invoke({"prompts": [this_prompt]})
             
         
         return state
