@@ -14,6 +14,7 @@ Verify if the manuscript is structured in the following order and meets length l
   d. Hypothesis/Objectives  
   e. Experimental approach overview  
 - **Requirement:** Include 1 key quantitative result as inline math from `/workspace/results/`
+- **Reminder:** Make sure no figures or tables are included in introduction or the first page.
 
 **3. Related Works (300-600 words)**  
 - **Structure (in one subsection):**  
@@ -34,6 +35,7 @@ Verify if the manuscript is structured in the following order and meets length l
   - 3+ cross-references to figures/tables  
   - Equations in `equation` environment with `\label`  
 - **Appendices (≤5 words):** Additional parameters/methods
+- **Reminder:** Make sure all relevant figures/tables are included in the Methods section.
 
 **5. Experiments (1000-2000 words)**  
 - **Main Text:**  
@@ -42,6 +44,7 @@ Verify if the manuscript is structured in the following order and meets length l
 - **Appendices (1000-10000 words):**  
   - Experimental setup (equipment, environment, software, variables)  
 - **Data Rules:** All metrics must match `/workspace/results/*.csv`
+- **Reminder:** Make sure all relevant figures/tables are included in the Experiments section.
 
 **6. Conclusion (300 words)**  
 - **Structure:**  
@@ -57,5 +60,6 @@ Verify if the manuscript is structured in the following order and meets length l
 
 **8. Appendix**
 - **Content:** Any additional material that may be helpful for the reader, such as supplementary data, code, or figures
+- **Reminder:** Make sure all relevant figures/tables are included in the Appendix section.
 
 **If issues are found**, rewrite and fix any underlying issues, then re-compile the manuscript.

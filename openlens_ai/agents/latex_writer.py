@@ -2,6 +2,7 @@ import os
 import glob
 import dotenv
 from typing import List
+from loguru import logger
 
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
@@ -17,6 +18,7 @@ from ..chatbot import chatbot_with_context_manager
 
 dotenv.load_dotenv()
 
+results_files_extensions = [".png", ".jpg", ".jpeg", ".pdf", ".svg"]
 
 with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_abstract_intro.md")) as f:
     introduction_prompt = f.read()
@@ -47,6 +49,12 @@ def build_latex_writer(config: Config) -> StateGraph:
     )
     router_llm = init_chat_model(
         os.environ.get("MODEL", "deepseek-chat"),
+        base_url=os.environ.get("BASE_URL", ""),
+        model_provider="openai",
+        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
+    )
+    vlm = init_chat_model(
+        os.environ.get("VISION_MODEL", "deepseek-chat"),
         base_url=os.environ.get("BASE_URL", ""),
         model_provider="openai",
         extra_body={"chat_template_kwargs": {"enable_thinking": True}},
@@ -85,6 +93,24 @@ def build_latex_writer(config: Config) -> StateGraph:
             )
         ]
         return state
+    
+    def collect_result_files(state: State):
+        results_file_list = []
+        workspace_dir = os.path.join(config.save_path, "workspace")
+        for ext in results_files_extensions:
+            results_file_list.extend(glob.glob(os.path.join(workspace_dir, "**", f"*{ext}"), recursive=True))
+        logger.info(f"Found {len(results_file_list)} results files: {results_file_list}")
+        # Copy figures/tables from /workspace/ to /workspace/manuscript/
+        figure_dir = os.path.join(workspace_dir, "manuscript", "figures")
+        os.makedirs(figure_dir, exist_ok=True)
+        for file in results_file_list:
+            logger.info(f"Copying figure file {file} to {figure_dir}")
+            try:
+                os.system(f"cp {file} {figure_dir}")
+            except Exception as e:
+                logger.warning(f"Failed to copy {file} to {figure_dir}: {e}")
+        return state
+        
     
     def write_methods_node(state: State):
         this_prompt = methods_prompt.format(question=state["question"])
@@ -139,9 +165,11 @@ def build_latex_writer(config: Config) -> StateGraph:
     graph_builder.add_node("validator_node", validator_node)
     graph_builder.add_node("conclude_chatbot", conclude_chatbot)
     graph_builder.add_node("router_chatbot", router_chatbot)
+    graph_builder.add_node("collect_result_files", collect_result_files)
 
     graph_builder.add_edge(START, "clear_state")
-    graph_builder.add_edge("clear_state", "write_introduction")
+    graph_builder.add_edge("clear_state", "collect_result_files")
+    graph_builder.add_edge("collect_result_files", "write_introduction")
     graph_builder.add_edge("write_introduction", "write_related_node")
     graph_builder.add_edge("write_related_node", "write_methods_node")
     graph_builder.add_edge("write_methods_node", "write_experiments_node")
@@ -167,7 +195,7 @@ def build_latex_writer(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/OL_20250823132617_What_is_the_pre_istorical_data__dzdzzd_126_com_1276_resume_20250826102901")
+    config, state, last_subgraph = load_state("outputs/code_paper_success_format_wrong/pred_aki_dy_mimic_icu_csv")
     graph = build_latex_writer(config)
 
     graph.invoke(state)

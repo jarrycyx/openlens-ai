@@ -3,13 +3,11 @@ import json
 import dotenv
 import shutil
 from loguru import logger
+import traceback
 
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
-from langchain_tavily import TavilySearch
-from langchain.load.dump import dumps
-from langgraph.checkpoint.memory import InMemorySaver
-from langchain_core.messages import ToolMessage, AIMessage
+from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
 from ..tools.tool_utils import BasicToolNode, route_tools, route_by_keywords, route_by_tool_call
 from ..tools.openhands_adaptor import OpenHandsTool
@@ -18,9 +16,11 @@ from ..tools.reports import ReportReaderTool, ReportWriterTool
 from ..state import State, load_state, get_subplan
 from ..chatbot import chatbot_with_context_manager
 from ..utils.config import Config
+from ..utils.vision_feedback import collect_fig_files, get_fig_base64, get_vision_feedback
 
 dotenv.load_dotenv()
 
+fig_files_extensions = [".png", ".jpg", ".jpeg", ".pdf", ".svg"]
 
 with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "coder.md")) as f:
     prompt = f.read()
@@ -45,6 +45,7 @@ def build_coder(config: Config) -> StateGraph:
         model_provider="openai",
         extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
+    
     code_tool = OpenHandsTool(config)
     plan_reader_tool = PlanReaderTool(config)
     report_writer_tool = ReportWriterTool(config)
@@ -75,16 +76,42 @@ def build_coder(config: Config) -> StateGraph:
         return state
 
     def openhands_validation_node(state: State):
-        subplan = get_subplan(state)
-        this_prompt = validator_prompt.format(question=state["question"], subplan=subplan)
-        results = code_tool.invoke({"prompts": [this_prompt]})
-        state["messages"] = [
-            ToolMessage(
-                content=results,
-                name="openhands_tool",
-                tool_call_id="openhands_tool",
-            )
-        ]
+        # subplan = get_subplan(state)
+        # this_prompt = validator_prompt.format(question=state["question"], subplan=subplan)
+        # results = code_tool.invoke({"prompts": [this_prompt]})
+        # state["messages"] = [
+        #     ToolMessage(
+        #         content=results,
+        #         name="openhands_tool",
+        #         tool_call_id="openhands_tool",
+        #     )
+        # ]
+        
+        
+        ## Check for generated images using vision-language model
+        fig_file_list = collect_fig_files(config)
+        fig_base64_list = get_fig_base64(fig_file_list)
+        workspace_dir = os.path.join(config.save_path, "workspace")
+        for fig, base64str in fig_base64_list:
+            try:
+                vlm_response = get_vision_feedback(base64str, config)
+                if "DECISION: ACCEPT" in vlm_response:
+                    logger.info(f"Image {fig} is accepted by VLM.")
+                    continue
+                elif "DECISION: IMPROVE" in vlm_response:
+                    logger.info(f"Image {fig} is rejected by VLM, will try to improve it.")
+                    relative_path = os.path.relpath(fig, workspace_dir)
+                    docker_path = os.path.join("/workspace", relative_path)
+                    this_prompt = f"Based on the following vision feedback, please modify the code to improve the image quality. " + \
+                        f"Image path: {docker_path}. Vision feedback: " + \
+                            vlm_response
+                    code_tool.invoke({"prompts": [this_prompt]})
+                
+            except Exception as e:
+                logger.warning(f"Failed to evaluate image: {e}")
+                logger.warning(traceback.format_exc())
+            
+        
         return state
 
     def plan_reader_node(state: State):
@@ -140,8 +167,8 @@ def build_coder(config: Config) -> StateGraph:
     graph_builder.add_node("concluder_tool_node", concluder_tools_node)
 
     graph_builder.add_edge(START, "read_plan")
-    graph_builder.add_edge("read_plan", "coder_openhands")
-    graph_builder.add_edge("coder_openhands", "validation_openhands")
+    graph_builder.add_edge("read_plan", "validation_openhands")
+    # graph_builder.add_edge("coder_openhands", "validation_openhands")
     graph_builder.add_edge("validation_openhands", "conclude_openhands_chatbot")
     graph_builder.add_edge("conclude_openhands_chatbot", "concluder_tool_node")
     graph_builder.add_conditional_edges("concluder_tool_node", write_plan_router, {"RETURN_TO_LLM": "conclude_openhands_chatbot", END: "route_chatbot"})
@@ -166,7 +193,7 @@ def build_coder(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/pred_aki_dy_mimic_20250901115517")
+    config, state, last_subgraph = load_state("outputs/code_paper_success_format_wrong/pred_aki_dy_mimic_icu_csv")
     graph = build_coder(config)
 
     graph.invoke(state, {"recursion_limit": 100})

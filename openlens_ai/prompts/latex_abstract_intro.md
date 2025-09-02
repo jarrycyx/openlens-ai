@@ -20,6 +20,7 @@ Content Rules:
 - Never fabricate results - use EXACT values from generated result files
 - Technical terms from experiment plan MUST be formally defined
 - Only use enumerated or itemized lists to elaborate key findings or novelty, write continuous text otherwise.
+- Make sure NO figures or tables are included in introduction or the first page.
 
 Generation Workflow:
 1. Read former latex writing report from /workspace/manuscript/latex_quality_report.md if exists, use it to guide the writing/polishing process

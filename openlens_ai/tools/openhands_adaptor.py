@@ -32,6 +32,8 @@ Reminders: DO NOT mock or simulate results. Only write python files to generate 
 # If the code fails, fix the code and try again.
 # """
 
+with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
+    oh_config_template = f.read()
 
 def run_docker_container(cmd: str, config: Config):
     """运行Docker容器并实时输出+保存日志"""
@@ -188,6 +190,17 @@ def run_openhands_prompt(prompts, config: Config):
         prompt = prompt.replace('"', '\\"').replace("\n", "\\n").replace("`", " ")
         prompt += postfix
         max_iter = os.environ.get("OPENHANDS_MAX_ITER", 20)
+        
+        
+        oh_config = oh_config_template.replace("{api_key}", os.getenv("OPENAI_API_KEY"))
+        oh_config = oh_config.replace("{base_url}", os.getenv("BASE_URL"))
+        oh_config = oh_config.replace("{code_model}", os.getenv("CODE_MODEL"))
+        oh_config = oh_config.replace("{tavily_key}", os.getenv("TAVILY_API_KEY", ""))
+        this_config_path = os.path.join(config.save_path, "openhands_config.toml")
+        with open(this_config_path, "w") as f:
+            f.write(oh_config)
+        logger.info(f"Using OpenHands config: {oh_config}")
+        
         # 构建在Docker容器中执行的命令
         cmd = (
             f"cp /helper/config.toml /helper/OpenHands/ && "

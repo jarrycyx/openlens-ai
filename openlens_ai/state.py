@@ -51,7 +51,7 @@ def load_state(save_dir: str) -> tuple[Config, State]:
     with open(config_path, "r") as f:
         config = json.load(f)
         config = Config(**config)
-        print(f"Config save_path: {config.save_path} -> {save_dir}")
+        logger.info(f"Config save_path: {config.save_path} -> {save_dir}")
         config.save_path = save_dir
         config.thread_id = os.path.basename(save_dir)
     
@@ -73,10 +73,10 @@ def load_state(save_dir: str) -> tuple[Config, State]:
             state = loads(state_str)
             last_subgraph = list(state.keys())[0]
             state = state[last_subgraph]
-            print(f"State save_path: {state['save_path']} -> {save_dir}")
+            logger.info(f"State save_path: {state['save_path']} -> {save_dir}")
             state["save_path"] = save_dir
         
-        print(f"Loaded state from {max_file_name}, last subgraph: {last_subgraph}")
+        logger.info(f"Loaded state from {max_file_name}, last subgraph: {last_subgraph}")
     else:
         state = {"question": config.question, "messages": [], "thread_id": config.thread_id, "save_path": config.save_path}
         
