@@ -55,7 +55,6 @@ def react_pre_model_wrapper(vector_search_question: str):
                     logger.info(f"Message is too long ({token_cnt}), "
                                 f"use vector search to summarize to ({count_tokens_approximately([short_message])})")
                     state["messages"][message_i] = short_message
-
         return state
 
     return react_pre_model_hook
@@ -99,8 +98,9 @@ def vector_search(messages: Union[list, str], query: str, token_cnt: int = 10000
     if isinstance(messages, str):
         messages = [HumanMessage(content=messages)]
 
-    if count_tokens_approximately(messages) < token_cnt:
-        logger.info(f"No need to use vector search, because token count is less than {token_cnt}")
+    this_token_cnt = count_tokens_approximately(messages)
+    if this_token_cnt < token_cnt:
+        logger.info(f"No need to use vector search, because token count ({this_token_cnt}) is less than {token_cnt}")
         return messages
     
     
@@ -219,7 +219,7 @@ def chatbot_with_context_manager(
             更新后的状态
         """
         # max_react_tool_call = int(os.environ.get("REACT_MAX_TOOL_CALL", 10))
-        tool_call_interval = 5
+        tool_call_interval = 20
         for _ in range(5):
             try:
                 if "literature_tool_call_counter" not in state:

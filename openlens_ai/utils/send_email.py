@@ -70,7 +70,7 @@ def collect_files(config: Config):
         with open(latest_md_file, 'r', encoding='utf-8') as f:
             latest_md = f.read()
     
-    return zip_filepath, latest_md
+    return zip_filepath, latest_md[:10000]  # 只返回前10000字符，防止邮件过大
 
 
 def send_email(subject: str, content: str, recipients: Union[str, List[str]], attachments: Optional[Union[str, List[str]]] = None):

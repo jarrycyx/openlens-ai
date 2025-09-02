@@ -12,13 +12,12 @@ Explore and analyze all accessible data files in the /workspace/datasets directo
       - decompress the file start the analysis again if it is a compressed file; 
       - copy the file content as is to "data_show.md" if it is a document file;
     - Saves the results in "data_show.md".
-    - Plot the data statistics to figures if possible to better illustrate the data characteristics.
 4. Final Checking:
     - Make sure that the data files are accessible and readable.
     - Make sure no errors occur during the analysis.
     - Make sure that the results does support the following data analysis.
 
-IMPORTANT: You should ONLY interact with the tool provided to you AND NEVER ASK FOR HUMAN HELP. Make sure all scripts, tools, and data files are saved in /workspace/data_analyze.
+IMPORTANT: You should ONLY interact with the tool provided to you AND NEVER ASK FOR HUMAN HELP. Make sure all scripts, tools, and data files are saved in /workspace/data_analyze. Do not train models, perform experiments, or generate LaTeX files in this task. You will have separate tasks for those steps.
 
 Research Question:
 {question}

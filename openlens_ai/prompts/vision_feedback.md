@@ -19,7 +19,7 @@ Please analyze this scientific chart/graph/plot for me. Conduct a comprehensive 
 
 **Please provide a summary:** Clearly state if you spot any issues. For each potential problem identified, offer a specific suggestion for improvement or correction.
 
-At last, provide a decision on whether the chart is suitable for presentation or needs improvement (DECISION: ACCEPT or DECISION: IMPROVE).
+At last, provide a decision on whether the chart is suitable for presentation or needs improvement (``DECISION: ACCEPT`` or ``DECISION: IMPROVE`` in PLAIN TEXT).
 
 **Example of response:**
 
@@ -30,4 +30,4 @@ At last, provide a decision on whether the chart is suitable for presentation or
 *   **Suitability:** The choice of a pie chart to represent time-series data is inappropriate. A line chart would be significantly better at showing the trend over time.
 *   **Rationality Check:** The error bars for the 'Control' group in Figure B appear disproportionately large compared to the other groups. You may want to double-check the calculation or sample size for that specific group as it might indicate high variability or a potential error."
 
-DECISION: ACCEPT/IMPROVE
+``DECISION: REJECT`` or ``DECISION: IMPROVE``

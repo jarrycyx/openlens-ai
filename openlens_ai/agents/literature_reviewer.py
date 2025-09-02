@@ -80,7 +80,7 @@ def build_literature_review_subgraph(config: Config):
 
     # 使用项目中的chatbot接口
     literature_search_chatbot = chatbot_with_context_manager(
-        config, llm_react, search_prompt_template, context_manage=os.environ.get("CONTEXT_MANAGE", "token_cnt")
+        config, llm_react, search_prompt_template, context_manage="vector_search"
     )
     write_report_chatbot = chatbot_with_context_manager(
         config, llm_report_writer, report_prompt_template, context_manage="vector_search"
