@@ -124,7 +124,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/pred_aki_dy_eicu_demo_20250903111828")
+    config, state, last_subgraph = load_state("outputs/pred_aki_dy_eicu_demo_20250903143709")
     graph = build_data_analyzer(config)
 
     graph.invoke(state)

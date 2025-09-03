@@ -9,6 +9,7 @@ from datetime import datetime
 import dotenv
 import requests
 import traceback
+from copy import deepcopy
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
@@ -88,14 +89,19 @@ def perform_rerank(all_docs_str: list[str], query: str, token_cnt: int):
         query = query[:2000]
     
     all_messages_with_score = []
-    for doc_str in all_docs_str:
-        # logger.info(f"Post rerank length: {len(doc_str)}")
+    # for doc_str in all_docs_str:
+    # 如果len(all_docs_str)大于32，就分成很多个大小为32的块
+    all_docs_chunks = [all_docs_str[i:i+32] for i in range(0, len(all_docs_str), 32)]   
+    
+    for docs_chunk in all_docs_chunks:
         
         # 创建向量存储
+        input_doc_list = docs_chunk
         payload = {
             "model": os.environ.get("RERANK_MODEL", "bge-reranker-v2-m3"),
             "query": query,
-            "documents": [doc_str]
+            "documents": input_doc_list,
+            "return_raw_scores": True
         }
         api_key = os.environ.get("RERANK_API_KEY", "")
         headers = {
@@ -109,7 +115,35 @@ def perform_rerank(all_docs_str: list[str], query: str, token_cnt: int):
         for try_i in range(10):
             response = requests.post(url, json=payload, headers=headers)
             try:
-                messages_with_score = [{"score": res["relevance_score"], "text": res["document"]["text"]} for res in response.json()["results"]]
+                messages_with_score = []
+                for res in response.json()["results"]:
+                    if ("document" in res) and isinstance(res["document"], str):
+                        messages_with_score.append(
+                            {
+                                "text": res["document"],
+                                "score": res["relevance_score"]
+                            }
+                        )
+                        
+                    elif ("document" in res) and ("text" in res["document"]) and \
+                        isinstance(res["document"], dict) and isinstance(res["document"]["text"], str):
+                            
+                        messages_with_score.append(
+                            {
+                                "text": res["document"]["text"],
+                                "score": res["relevance_score"]
+                            }
+                        )
+                    elif ("index" in res):
+                        messages_with_score.append(
+                            {
+                                "text": input_doc_list[int(res["index"])],
+                                "score": res["relevance_score"]
+                            }
+                        )
+                    else:
+                        raise ValueError("Invalid document type")
+                    
                 break
             except Exception as e:
                 logger.warning(f"Get rerank result error: {e}")
@@ -121,7 +155,8 @@ def perform_rerank(all_docs_str: list[str], query: str, token_cnt: int):
                 
         if not messages_with_score:
             logger.warning("Rerank failed, setting score to 0.0")
-            messages_with_score = [{"score": 0.0, "text": doc_str}]
+            for doc_str in all_docs_str:
+                messages_with_score = [{"score": 0.0, "text": doc_str}]
         all_messages_with_score.extend(messages_with_score)
     all_messages_with_score = sorted(all_messages_with_score, key=lambda x: x["score"], reverse=True)
     logger.info(f"All rerank scores: {[m['score'] for m in all_messages_with_score]}")
@@ -246,7 +281,7 @@ def chatbot_with_context_manager(
             更新后的状态
         """
         # max_react_tool_call = int(os.environ.get("REACT_MAX_TOOL_CALL", 10))
-        tool_call_interval = 20
+        tool_call_interval = 5
         for _ in range(5):
             try:
                 if "literature_tool_call_counter" not in state:
@@ -303,7 +338,7 @@ def chatbot_with_context_manager(
         subplan = get_subplan(state)
         literature_report = state["literature_report"] if "literature_report" in state else ""
 
-        this_prompt = prompt
+        this_prompt = deepcopy(prompt)
         
         if "{data_show}" in this_prompt:
             try:
