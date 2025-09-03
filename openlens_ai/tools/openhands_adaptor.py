@@ -7,6 +7,7 @@ import time
 from typing import Optional, Type, Dict, Any, Union
 from datetime import datetime
 from loguru import logger
+import random
 
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
@@ -257,7 +258,7 @@ class OpenHandsTool(BaseTool):
     def _run(self, prompts: Union[list, str]) -> str:
         """执行OpenHands操作的主要方法"""
         logger.info(f"Starting OpenHands with prompt: {prompts}")
-        # return ""
+        return str([random.randint(1000, 9999) for _ in range(10000)])
         return run_openhands_prompt(prompts, self.config)
 
 

@@ -90,8 +90,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
             data_show = f.read()
         
         state["data_show"] = data_show
-        this_prompt = data_report_prompt.format(question=state["question"], data_show=data_show)
-        this_chatbot = chatbot_with_context_manager(config, llm_with_tools, this_prompt)
+        this_chatbot = chatbot_with_context_manager(config, llm_with_tools, data_report_prompt)
         state = this_chatbot(state)
         return state
 
@@ -125,7 +124,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/pred_aki_dy_mimic")
+    config, state, last_subgraph = load_state("outputs/pred_aki_dy_eicu_demo_20250903111828")
     graph = build_data_analyzer(config)
 
     graph.invoke(state)

@@ -82,6 +82,61 @@ def vector_search_match_type(message: str, query: str, token_cnt: int = 10000):
         return message_type("\n".join(all_content))
     
 
+def perform_rerank(all_docs_str: list[str], query: str, token_cnt: int):
+    if len(query) > 2000:
+        logger.warning("Query is too long, truncating to 2000 characters: " + query[:2000])
+        query = query[:2000]
+    
+    all_messages_with_score = []
+    for doc_str in all_docs_str:
+        # logger.info(f"Post rerank length: {len(doc_str)}")
+        
+        # 创建向量存储
+        payload = {
+            "model": os.environ.get("RERANK_MODEL", "bge-reranker-v2-m3"),
+            "query": query,
+            "documents": [doc_str]
+        }
+        api_key = os.environ.get("RERANK_API_KEY", "")
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}"
+        }
+        url = os.environ.get("RERANK_BASE_URL", "") + "rerank"
+        # url = "https://cloud.infini-ai.com/maas/v1/rerank"
+        
+        messages_with_score = []
+        for try_i in range(10):
+            response = requests.post(url, json=payload, headers=headers)
+            try:
+                messages_with_score = [{"score": res["relevance_score"], "text": res["document"]["text"]} for res in response.json()["results"]]
+                break
+            except Exception as e:
+                logger.warning(f"Get rerank result error: {e}")
+                logger.warning(traceback.format_exc())
+                logger.warning(f"Retrying... {try_i}/10")
+                logger.warning(response.json())
+                time.sleep(10)
+                continue
+                
+        if not messages_with_score:
+            logger.warning("Rerank failed, setting score to 0.0")
+            messages_with_score = [{"score": 0.0, "text": doc_str}]
+        all_messages_with_score.extend(messages_with_score)
+    all_messages_with_score = sorted(all_messages_with_score, key=lambda x: x["score"], reverse=True)
+    logger.info(f"All rerank scores: {[m['score'] for m in all_messages_with_score]}")
+    
+    all_messages = []
+    current_token_cnt = 0
+    for msg in all_messages_with_score:
+        msg_token_cnt = count_tokens_approximately([HumanMessage(content=msg["text"])])
+        if current_token_cnt + msg_token_cnt > token_cnt:
+            break
+        all_messages.append(HumanMessage(content=msg["text"]))
+        current_token_cnt += msg_token_cnt
+    return all_messages
+
+
 def vector_search(messages: Union[list, str], query: str, token_cnt: int = 10000):
     """
     使用向量搜索对长消息进行摘要，保留最相关的内容
@@ -94,6 +149,8 @@ def vector_search(messages: Union[list, str], query: str, token_cnt: int = 10000
     Returns:
         经过向量搜索处理后的消息列表
     """
+    
+    
     
     if isinstance(messages, str):
         messages = [HumanMessage(content=messages)]
@@ -113,40 +170,10 @@ def vector_search(messages: Union[list, str], query: str, token_cnt: int = 10000
         message_doc = Document(page_content=message_texts)
         all_splits = text_splitter.split_documents([message_doc])
         all_docs.extend(all_splits)
-        
+    
     all_docs_str = [doc.page_content for doc in all_docs]
-        
-    # 创建向量存储
-    payload = {
-        "model": os.environ.get("RERANK_MODEL", "bge-reranker-v2-m3"),
-        "query": query,
-        "documents": all_docs_str
-    }
-    api_key = os.environ.get("RERANK_API_KEY", "")
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-    url = os.environ.get("RERANK_BASE_URL", "") + "rerank"
-    # url = "https://cloud.infini-ai.com/maas/v1/rerank"
-    for try_i in range(10):
-        response = requests.post(url, json=payload, headers=headers)
-        relevant_messages = []
-        try:
-            for res in response.json()["results"]:
-                text = res["document"]["text"]
-                if count_tokens_approximately(relevant_messages) > token_cnt:
-                    break
-                relevant_messages.append(HumanMessage(content=text))
-            break
-        except Exception as e:
-            logger.warning(f"Get rerank result error: {e}")
-            logger.warning(traceback.format_exc())
-            logger.warning("Retrying...")
-            logger.warning(response.json())
-            time.sleep(10)
-            
-        raise ValueError("Cannot get rerank result")
+    logger.info(f"All split document length: {str([len(doc) for doc in all_docs_str])}")
+    relevant_messages = perform_rerank(all_docs_str, query, token_cnt)
         
     logger.info(f"Message number: {len(messages)}, split number: {len(all_docs)}, "
                 f"Relevant message number: {len(relevant_messages)}")
@@ -282,8 +309,8 @@ def chatbot_with_context_manager(
             try:
                 if len(data_show) > 32000*4:
                     logger.warning("data_show is too long, clamping with vector search")
-                    data_show = vector_search(data_show, prompt, token_cnt=4000)
-                this_prompt = this_prompt.replace("{data_show}", data_show)
+                    data_show = vector_search(data_show, prompt, token_cnt=32000)
+                this_prompt = this_prompt.replace("{data_show}", str(data_show))
             except Exception as e:
                 logger.warning("Error occurred when formatting data show", str(e))
                 logger.warning(traceback.format_exc())
@@ -293,7 +320,7 @@ def chatbot_with_context_manager(
                 if len(literature_report) > 4000*4:
                     logger.warning("Literature report is too long, clamping with vector search")
                     literature_report = vector_search(literature_report, prompt, token_cnt=4000)
-                this_prompt = this_prompt.replace("{literature_report}", literature_report)
+                this_prompt = this_prompt.replace("{literature_report}", str(literature_report))
             except Exception as e:
                 logger.warning("Error occurred when formatting literature report", str(e))
                 logger.warning(traceback.format_exc())
@@ -304,7 +331,7 @@ def chatbot_with_context_manager(
                 if len(plan_str) > 4000*4:
                     logger.warning("Plan is too long, clamping with vector search")
                     plan_str = vector_search(plan_str, prompt, token_cnt=4000)
-                this_prompt = this_prompt.replace("{plan}", plan_str)
+                this_prompt = this_prompt.replace("{plan}", str(plan_str))
             except Exception as e:
                 logger.warning("Error occurred when formatting plan", str(e))
                 logger.warning(traceback.format_exc())
@@ -376,7 +403,7 @@ def chatbot_with_context_manager(
             message_to_llm.append(state["messages"][-1])
             if not isinstance(llm, CompiledStateGraph):
                 frontend_add_message(state["messages"][-1], config)
-            logger.info(f"Prompt: {this_prompt}")
+            logger.info(f"Prompt: {this_prompt[:1000]}...")
         
         # 只保留最后一条HumanMessage
         if only_last_human_message:
@@ -413,7 +440,7 @@ def chatbot_with_context_manager(
                     logger.warning(traceback.format_exc())
                     logger.warning("Retrying...")
                     time.sleep(5)
-                raise ValueError("Cannot call llm successfully")
+                    continue
 
         with open(save_path, "w") as f:
             f.write(dumps(message_to_llm + [state["messages"][-1]], indent=4))

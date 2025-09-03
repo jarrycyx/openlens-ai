@@ -121,8 +121,18 @@ def send_email(subject: str, content: str, recipients: Union[str, List[str]], at
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
         server.login(EMAIL_USER, EMAIL_PASSWORD)
-        server.sendmail(EMAIL_USER, recipients, msg.as_string())
+        result = server.sendmail(EMAIL_USER, recipients, msg.as_string())
+        logger.info(f"邮件发送结果: {result}")
         server.quit()
         logger.info(f"邮件已发送至 {', '.join(recipients)}")
     except Exception as e:
         logger.warning(f"发送邮件时出错: {e}")
+        
+
+if __name__ == "__main__":
+    # 测试邮件发送功能
+    subject = "测试邮件"
+    content = "这是一封测试邮件，请忽略。"
+    recipients = ["dzdzzd@126.com"]
+    attachments = ["openlens_ai/utils/send_email.py"]
+    send_email(subject, content, recipients, attachments)
