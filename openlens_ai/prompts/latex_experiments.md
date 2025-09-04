@@ -52,6 +52,21 @@ Generation Workflow:
 4. Formatted like example in /workspace/latex_template/
 5. Write cross-references to figures/tables (figures are in /workspace/manuscript/figures/).
 
+
+Reminders:
+- When adding figure references, make sure to FIRST CHECK the current workspace for existing figures. INCLUDE ALL EXISTING FIGURES (.png, .pdf, etc) using the following format:
+```
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.x\textwidth]{figures/figure_name.png}
+\caption{Figure caption}
+\label{fig:figure_name}
+\end{figure}
+```
+and refer to them using \ref{fig:figure_name}
+- DO NOT draw new figures when writing paper unless ABSOLUTELY NECESSARY.
+
+
 Research Question:
 {question}
 

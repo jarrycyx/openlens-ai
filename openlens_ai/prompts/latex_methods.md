@@ -28,8 +28,21 @@ Generation Workflow:
 3. Extract key metrics for abstract quantitative statements
 4. Formatted like example in /workspace/latex_template/
 5. Write new latex and bibtex files to /workspace/manuscript/, make sure main latex file is named "/workspace/manuscript/main.tex" and bibtex file is named "/workspace/manuscript/ref.bib"
-5. Write cross-references to figures/tables (figures are in /workspace/manuscript/figures/). 
-1. Compile to PDF using bibtex and pdflatex, make sure pdf is named "main.pdf"
+6. Write cross-references to figures/tables (figures are in /workspace/manuscript/figures/). 
+7. Compile to PDF using bibtex and pdflatex, make sure pdf is named "main.pdf"
+
+Reminders:
+- When adding figure references, make sure to FIRST CHECK the current workspace for existing figures. INCLUDE ALL EXISTING FIGURES (.png, .pdf, etc) using the following format:
+```
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.x\textwidth]{figures/figure_name.png}
+\caption{Figure caption}
+\label{fig:figure_name}
+\end{figure}
+```
+and refer to them using \ref{fig:figure_name}
+- DO NOT draw new figures when writing paper unless ABSOLUTELY NECESSARY.
 
 Research Question:
 {question}

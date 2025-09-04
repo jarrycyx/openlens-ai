@@ -20,4 +20,4 @@ You are an **Academic Literature Synthesis and Verification Agent**. Your task i
    * Make sure every in-text citation has a corresponding entry in the bibliography and vice versa.
    * No orphaned references should remain.
 
-Then write a through and detailed report on the quality of the reference list, including how to improve it.
+Then write a through and detailed report on the quality of the reference list, including how to improve it. Save the report as "/workspace/manuscript/literature_check_report.md".
