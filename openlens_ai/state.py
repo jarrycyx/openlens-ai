@@ -103,7 +103,9 @@ def load_state(save_dir: str) -> tuple[Config, State]:
     logger.add(os.path.join(save_dir, "logs.log"), 
                format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|"+config.thread_id, 
                colorize=False, rotation="10 MB", level="DEBUG")
-        
+    
+    
+    # 先尝试在state目录下加载state，这个是每个subgraph保存一次
     state_dir = os.path.join(save_dir, "states")
     # 遍历里面的文件，格式是step_i.json，找最大的
     file_names = os.listdir(state_dir)
@@ -117,14 +119,15 @@ def load_state(save_dir: str) -> tuple[Config, State]:
             state_str = f.read()
             state = loads(state_str)
             last_subgraph = list(state.keys())[0]
-            # state = state[last_subgraph]
-            # logger.info(f"State save_path: {state['save_path']} -> {save_dir}")
-            # state["save_path"] = save_dir
+            state = state[last_subgraph]
+            logger.info(f"State save_path: {state['save_path']} -> {save_dir}")
+            state["save_path"] = save_dir
         
         logger.info(f"Loaded state from {max_file_name}, last subgraph: {last_subgraph}")
     else:
         state = {"question": config.question, "messages": [], "thread_id": config.thread_id, "save_path": config.save_path}
     
+    # 再尝试从latest_state.json加载，这个是每个node保存的
     latest_state_file_name = os.path.join(save_dir, "latest_state.json")
     if os.path.exists(latest_state_file_name):
         with open(latest_state_file_name, "r", encoding="utf-8") as f:
@@ -133,8 +136,7 @@ def load_state(save_dir: str) -> tuple[Config, State]:
         if "save_path" in state:
             logger.info(f"State save_path: {state['save_path']} -> {save_dir}")
             state["save_path"] = save_dir
-    else:
-        state = {"question": config.question, "messages": [], "thread_id": config.thread_id, "save_path": config.save_path}
+
     
     try:
         node_call_stack_path = os.path.join(save_dir, 'node_call_stack.json')

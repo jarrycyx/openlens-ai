@@ -198,14 +198,15 @@ class BasicToolNode:
             logger.warning(traceback.format_exc())
             # traceback.print_exc()
             error_str = str(e).replace("\"", "").replace("\\", "").replace("[", "").replace("]", "").replace("{", "").replace("}", "")
-            state["messages"] += [
-                    ToolMessage(
-                        content=error_str,
-                        name=tool_call["name"],
-                        tool_call_id=tool_call["id"] if "id" in tool_call else 0, 
-                        status="error"
-                    )
-                ]
+            if "id" in tool_call and "name" in tool_call:
+                state["messages"] += [
+                        ToolMessage(
+                            content=error_str,
+                            name=tool_call["name"],
+                            tool_call_id=tool_call["id"], 
+                            status="error"
+                        )
+                    ]
             self.save_tool_call(state["messages"][-1])
             state["last_tool_call"] = tool_call["name"]
             return state
