@@ -12,8 +12,10 @@ import zipfile
 from datetime import datetime
 from loguru import logger
 import markdown
+import json
 
 from .config import Config
+from .file_utils import collect_token_usage
 
 # 从环境变量读取邮件配置
 SMTP_SERVER = os.getenv('SMTP_SERVER', 'smtp.yeah.net')  # SMTP服务器地址
@@ -28,14 +30,18 @@ logger.info(f"EMAIL_PASSWORD: {EMAIL_PASSWORD}")
 def collect_files(config: Config):
     save_path = config.save_path
     
-    # 定义需要收集的文件类型
-    file_patterns = ['*.py', '*.json', '*.md', '*.txt', '*.tex', '*.bib', '*.sty', '*.log',
-                     '*.pdf', '*.png', '*.jpg', '*.jpeg', '*.svg']
+    # 定义需要收集的文件类型，这里是包含优先级的
+    file_patterns = ['*.py', '*.md', '*.tex', '*.pdf', '*.json', '*.svg', '*.txt', '*.bib', '*.sty', '*.log',
+                     '*.png', '*.jpg', '*.jpeg', '*']
+    # file_patterns = ['*.py', '*.json', '*.md', '*.txt', '*.tex', '*.bib', '*.sty', '*.log', '*.pdf', '*']
     
     # 收集所有匹配的文件
     files = []
     for pattern in file_patterns:
-        files.extend(glob.glob(os.path.join(save_path, '**', pattern), recursive=True))
+        this_pattern_files = glob.glob(os.path.join(save_path, '**', pattern), recursive=True)
+        for f in this_pattern_files:
+            if f not in files:
+                files.append(f)
     
     # 创建压缩文件夹路径
     compressed_dir = os.path.join(save_path, 'compressed')
@@ -48,28 +54,54 @@ def collect_files(config: Config):
     
     # 将文件打包成zip
     with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        total_size = 0
+        max_size = 10 * 1024 * 1024  # 10MB in bytes
+        
         for file in files:
             try:
                 # 检查有没有读取权限
                 with open(file, 'rb'):
                     pass
+                
+                # 检查添加此文件后是否会超过大小限制
+                file_size = os.path.getsize(file)
+                if total_size + file_size > max_size:
+                    # logger.info(f"警告: 添加文件 {file} 后zip文件大小将超过10MB限制，已跳过.")
+                    continue
+                    
                 # 将文件添加到zip中，保持相对路径结构
                 arcname = os.path.relpath(file, save_path)
                 zipf.write(file, arcname)
+                total_size += file_size
             except Exception as e:
                 logger.info(f"警告: 无法读取文件 {file}，已跳过. 错误: {e}")
     
-    # 按修改时间排序.md文件，返回最新的一个
-    md_files = [f for f in files if f.endswith('.md')]
-    latest_md_file = None
-    latest_md = ""
-    if md_files:
-        md_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-        latest_md_file = md_files[0]
-    if latest_md_file:
-        with open(latest_md_file, 'r', encoding='utf-8') as f:
-            latest_md = f.read()
+    # # 按修改时间排序.md文件，返回最新的一个
+    # md_files = [f for f in files if f.endswith('.md')]
+    # latest_md_file = None
+    # latest_md = ""
+    # if md_files:
+    #     md_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+    #     latest_md_file = md_files[0]
+    # if latest_md_file:
+    #     with open(latest_md_file, 'r', encoding='utf-8') as f:
+    #         latest_md = f.read()
     
+    
+    latest_md = f"## Question\n{config.question}\n\n## Dataset\n{config.dataset_path}\n\n## Job progress:\n"
+    try:
+        node_call_stack_path = os.path.join(config.save_path, 'node_call_stack.json')
+        with open(node_call_stack_path, 'r') as f:
+            node_call_stack = json.load(f)
+        latest_md += "\n- ".join(node_call_stack)
+    except Exception as e:
+        logger.warning(f"Error loading node call stack: {e}")
+        
+    try:
+        latest_md += ("\n\n" + collect_token_usage(config))
+    except Exception as e:
+        logger.warning(f"Error collecting token usage: {e}")
+        
     return zip_filepath, latest_md[:10000]  # 只返回前10000字符，防止邮件过大
 
 
@@ -99,6 +131,7 @@ def send_email(subject: str, content: str, recipients: Union[str, List[str]], at
     # 添加邮件正文
     html_content = markdown.markdown(content)
     msg.attach(MIMEText(html_content, "html"))
+    # print(html_content)
 
     # 添加附件
     if attachments:

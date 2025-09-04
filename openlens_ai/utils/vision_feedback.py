@@ -7,7 +7,9 @@ from loguru import logger
 import glob
 import base64
 import fitz
+from datetime import datetime
 
+from langchain.load.dump import dumps
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
@@ -83,6 +85,14 @@ def get_fig_base64(fig_file_list):
     return fig_base64_list
 
 
+def save_llm_call(messages: list, config: Config):
+    time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    save_path = os.path.join(config.save_path, "llm_calls", f"{time_stamp}.json")
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+    with open(save_path, "w") as f:
+        f.write(dumps(messages, indent=4))
+
 def get_vision_feedback(image_base64: str, config: Config) -> str:
     for try_i in range(10):
         try:
@@ -101,6 +111,7 @@ def get_vision_feedback(image_base64: str, config: Config) -> str:
             ])
             
             vlm_response = vlm.invoke([image_feedback_message])
+            save_llm_call([image_feedback_message, vlm_response], config)
             logger.info(f"Vision feedback: {vlm_response.content}")
             return vlm_response.content
         except Exception as e:
@@ -129,6 +140,7 @@ def get_latex_vision_feedback(image_base64: str, config: Config) -> str:
             ])
             
             vlm_response = vlm.invoke([image_feedback_message])
+            save_llm_call([image_feedback_message, vlm_response], config)
             logger.info(f"Vision feedback: {vlm_response.content}")
             return vlm_response.content
         except Exception as e:
@@ -155,6 +167,7 @@ def get_vision_classification(image_base64: str, config: Config) -> str:
                 }
             ])
             vlm_response = vlm.invoke([image_classification_message])
+            save_llm_call([image_classification_message, vlm_response], config)
             logger.info(f"Vision classification: {vlm_response.content}")
             return vlm_response.content
         except Exception as e:

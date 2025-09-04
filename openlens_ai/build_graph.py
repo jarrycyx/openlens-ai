@@ -150,14 +150,6 @@ def get_last_node(graph: CompiledStateGraph, this_node_name: str):
 
 def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_state: State):
     
-    # 发送进度邮件
-    send_email(
-        subject=f"OpenLens Job Started | {config.thread_id}",
-        content=f"## Question\n{config.question}\n\n## Dataset\n{config.dataset_path}\n\nThe job can take a while (any time from 5 minutes to several hours) to complete. Will keep you updated with the progress.",
-        recipients=config.email,
-        attachments=None,
-    )
-    
     # 启动定期发送邮件的线程
     email_thread = threading.Thread(target=send_periodic_emails, args=(config,), daemon=True)
     email_thread.start()
@@ -175,7 +167,13 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
                     f.write(json_str)
                 
                 # 发送进度邮件
-                zipfile, latest_md = collect_files(config)
+                try:
+                    zipfile, latest_md = collect_files(config)
+                except Exception as e:
+                    error_info = traceback.format_exc()
+                    logger.error(f"Failed to collect files: {e}")
+                    logger.info(error_info)
+                    zipfile, latest_md = None, ""
                 send_email(
                     subject=f"OpenLens Job Update | {config.thread_id}",
                     content=f"Subgraph {state_name} complete.\n\n{latest_md}",
@@ -209,6 +207,13 @@ def main(question=None, dataset_path=None, thread_id=None, email=None):  # 新�
     init_state, config, save_path = prepare_file_config(thread_id, question, dataset_path, email)
     global graph
     graph = build_graph(config, None)
+    # 发送进度邮件
+    send_email(
+        subject=f"OpenLens Job Started | {config.thread_id}",
+        content=f"## Question\n{config.question}\n\n## Dataset\n{config.dataset_path}\n\nThe job can take a while (any time from 30 minutes to several hours) to complete. Will keep you updated with the progress.",
+        recipients=config.email,
+        attachments=None,
+    )
     run_graph(config, graph, save_path, init_state)
     
 def main_resume(save_dir: str):
@@ -218,7 +223,21 @@ def main_resume(save_dir: str):
     if last_subgraph_index == len(all_subgraphs) - 1:
         logger.info("No more subgraphs to run.")
         return
-    else:
+    else:                
+        try:
+            zipfile, latest_md = collect_files(config)
+        except Exception as e:
+            error_info = traceback.format_exc()
+            logger.error(f"Failed to collect files: {e}")
+            logger.info(error_info)
+            zipfile, latest_md = None, ""
+        # 发送进度邮件
+        send_email(
+            subject=f"OpenLens Job Resumed | {config.thread_id}",
+            content=latest_md,
+            recipients=config.email,
+            attachments=zipfile,
+        )
         start_from = all_subgraphs[last_subgraph_index + 1]
         logger.info(f"Resuming from subgraph {start_from}")
         graph = build_graph(config, start_from)

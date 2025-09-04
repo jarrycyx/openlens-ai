@@ -157,16 +157,16 @@ def build_latex_writer(config: Config) -> StateGraph:
     
     @track_node_call("latex_writer")
     def latex_validator_node(state: State):
-        # this_prompt = validator_prompt
-        # results = code_tool.invoke({"prompts": [this_prompt, rigor_prompt]})
+        this_prompt = validator_prompt
+        results = code_tool.invoke({"prompts": [this_prompt, rigor_prompt]})
         
-        # state["messages"] += [
-        #     ToolMessage(
-        #         content=results,
-        #         name="openhands_tool",
-        #         tool_call_id="openhands_tool",
-        #     ),
-        # ]
+        state["messages"] += [
+            ToolMessage(
+                content=results,
+                name="openhands_tool",
+                tool_call_id="openhands_tool",
+            ),
+        ]
         
         
         ## Check for generated images using vision-language model

@@ -32,7 +32,7 @@ Verify if the manuscript is structured in the following order and meets length l
   d. Measurement Protocols (instrument specs)  
   e. Analysis Methods (statistical tests + software versions)  
 - **Requirements:**  
-  - 3+ cross-references to figures/tables  
+  - 3+ cross-references to figures/tables (figures are in /workspace/manuscript/figures/)
   - Equations in `equation` environment with `\label`  
 - **Appendices (≤5 words):** Additional parameters/methods
 - **Reminder:** Make sure all relevant figures/tables are included in the Methods section.
@@ -42,7 +42,9 @@ Verify if the manuscript is structured in the following order and meets length l
   - Methodology (materials, procedure, statistical methods)  
   - Results (quantitative findings, tables/figures, comparisons)  
 - **Appendices (1000-10000 words):**  
-  - Experimental setup (equipment, environment, software, variables)  
+  - Experimental setup (equipment, environment, software, variables)    
+- **Requirements:**  
+  - 3+ cross-references to figures/tables (figures are in /workspace/manuscript/figures/)
 - **Data Rules:** All metrics must match `/workspace/results/*.csv`
 - **Reminder:** Make sure all relevant figures/tables are included in the Experiments section.
 
@@ -63,3 +65,7 @@ Verify if the manuscript is structured in the following order and meets length l
 - **Reminder:** Make sure all relevant figures/tables are included in the Appendix section.
 
 **If issues are found**, rewrite and fix any underlying issues, then re-compile the manuscript.
+
+Reminders: 
+- When adding figure references, make sure to FIRST CHECK the current workspace for existing figures. REFERENCE ALL EXISTING FIGURES (.png, .pdf, etc).
+- DO NOT draw new figures when writing paper unless ABSOLUTELY NECESSARY.

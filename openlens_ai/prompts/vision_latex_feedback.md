@@ -1,4 +1,4 @@
-Please analyze this LaTeX-compiled PDF document for me. Conduct a comprehensive review focusing on the following aspects:
+Please analyze this page of LaTeX-compiled PDF document for me. Conduct a comprehensive review focusing on the following aspects:
 
 1.  **Layout & Formatting Errors:**
     *   Check for any content that extends beyond the page margins (text, figures, tables).
@@ -7,7 +7,7 @@ Please analyze this LaTeX-compiled PDF document for me. Conduct a comprehensive 
     *   Is the formatting consistent throughout (e.g., consistent font sizes for headings, body text, and captions)?
 
 2.  **Completeness & Placement:**
-    *   Do the designated "Experiments" and "Methods" sections contain an appropriate number of visual aids (e.g., charts, diagrams, plots, tables)?
+    *   If this page contains "Experiments" and "Methods" sections, does it contain an appropriate number of visual aids (e.g., charts, diagrams, plots, tables)?
     *   Are figures and tables placed close to their first mention in the text to aid readability?
     *   Are all captions (for figures and tables) present, correct, and properly associated with their corresponding element?
 
