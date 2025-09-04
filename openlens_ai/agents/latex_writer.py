@@ -75,7 +75,7 @@ def build_latex_writer(config: Config) -> StateGraph:
 
     @track_node_call("latex_writer")
     def write_introduction_node(state: State):
-        this_prompt = introduction_prompt.format(question=state["question"])
+        this_prompt = introduction_prompt.replace("{question}", state["question"])
         results = code_tool.invoke({"prompts": [this_prompt]})
         state["messages"] += [
             ToolMessage(
@@ -88,7 +88,7 @@ def build_latex_writer(config: Config) -> StateGraph:
     
     @track_node_call("latex_writer")
     def write_related_node(state: State):
-        this_prompt = related_works_prompt.format(question=state["question"])
+        this_prompt = related_works_prompt.replace("{question}", state["question"])
         results = code_tool.invoke({"prompts": [this_prompt]})
         state["messages"] += [
             ToolMessage(
@@ -107,6 +107,7 @@ def build_latex_writer(config: Config) -> StateGraph:
         fig_base64_list = get_fig_base64(fig_file_list)
         workspace_dir = os.path.join(config.save_path, "workspace")
         all_feedback = ""
+        available_fig_file_list = []
         figure_target_path = os.path.join(workspace_dir, "manuscript", "figures")
         os.makedirs(figure_target_path, exist_ok=True)
         for fig, base64str in fig_base64_list:
@@ -114,8 +115,19 @@ def build_latex_writer(config: Config) -> StateGraph:
             try:
                 vlm_response = get_vision_classification(base64str, config)
                 if "DECISION: ACCEPT" in vlm_response:
+                    # copy to manuscript/figures
                     logger.info(f"Image {fig_rel_path} is accepted by VLM.")
                     os.system(f"cp {fig} {figure_target_path}")
+                    
+                    # save to state for writing
+                    docker_current_path = os.path.join("/workspace", "manuscript", "figures", os.path.basename(fig))
+                    available_fig_file_list.append(docker_current_path)
+                    
+                    # write description for reference
+                    host_current_path = os.path.join(figure_target_path, os.path.basename(fig))
+                    current_path_ext = os.path.splitext(host_current_path)[1]
+                    with open(host_current_path.replace(current_path_ext, "_description.txt"), "w") as f:
+                        f.write(vlm_response)
                     continue
                 elif "DECISION: REJECT" in vlm_response:
                     all_feedback += f"Image {fig_rel_path} feedback: {vlm_response}\n"
@@ -124,13 +136,14 @@ def build_latex_writer(config: Config) -> StateGraph:
             except Exception as e:
                 logger.warning(f"Failed to evaluate image: {e}")
                 logger.warning(traceback.format_exc())
-                
+        state["available_figs"] = available_fig_file_list
         return state
         
     
     @track_node_call("latex_writer")
     def write_methods_node(state: State):
-        this_prompt = methods_prompt.format(question=state["question"])
+        this_prompt = methods_prompt.replace("{question}", state["question"])
+        this_prompt = this_prompt.replace("{figures}", "\n".join(state["available_figs"]))
         results = code_tool.invoke({"prompts": [this_prompt]})
         state["messages"] += [
             ToolMessage(
@@ -143,7 +156,8 @@ def build_latex_writer(config: Config) -> StateGraph:
     
     @track_node_call("latex_writer")
     def write_experiments_node(state: State):
-        this_prompt = exp_conclusion_prompt.format(question=state["question"])
+        this_prompt = exp_conclusion_prompt.replace("{question}", state["question"])
+        this_prompt = this_prompt.replace("{figures}", "\n".join(state["available_figs"]))
         results = code_tool.invoke({"prompts": [this_prompt]})
         state["messages"] += [
             ToolMessage(
@@ -157,7 +171,8 @@ def build_latex_writer(config: Config) -> StateGraph:
     
     @track_node_call("latex_writer")
     def latex_validator_node(state: State):
-        this_prompt = validator_prompt
+        this_prompt = validator_prompt.replace("{question}", state["question"])
+        this_prompt = this_prompt.replace("{figures}", "\n".join(state["available_figs"]))
         results = code_tool.invoke({"prompts": [this_prompt, rigor_prompt]})
         
         state["messages"] += [
@@ -171,27 +186,30 @@ def build_latex_writer(config: Config) -> StateGraph:
         
         ## Check for generated images using vision-language model
         workspace_dir = os.path.join(config.save_path, "workspace")
-        fig_file_list = os.path.join(workspace_dir, "manuscript", "main.pdf")
-        fig_base64_list = get_fig_base64([fig_file_list])
-        all_feedback = ""
-        for fig, base64str in fig_base64_list:
-            fig_rel_path = os.path.relpath(fig, workspace_dir)
-            try:
-                vlm_response = get_latex_vision_feedback(base64str, config)
-                if "DECISION: ACCEPT" in vlm_response:
-                    logger.info(f"Image {fig_rel_path} is accepted by VLM.")
-                    continue
-                elif "DECISION: IMPROVE" in vlm_response:
-                    all_feedback += f"Image {fig_rel_path} feedback: {vlm_response}\n"
-                    logger.info(f"Image {fig_rel_path} is rejected by VLM, will try to improve it.")
-                
-            except Exception as e:
-                logger.warning(f"Failed to evaluate image: {e}")
-                logger.warning(traceback.format_exc())
-                
-        this_prompt = f"Based on the following vision feedback, please modify the latex code to improve the pdf quality. " + \
-            f"Vision feedback: " + all_feedback
-        code_tool.invoke({"prompts": [this_prompt]})
+        fig_file_path = os.path.join(workspace_dir, "manuscript", "main.pdf")
+        if os.path.exists(fig_file_path):
+            fig_base64_list = get_fig_base64([fig_file_path])
+
+            all_feedback = ""
+            for fig, base64str in fig_base64_list:
+                fig_rel_path = os.path.relpath(fig, workspace_dir)
+                try:
+                    vlm_response = get_latex_vision_feedback(base64str, config)
+                    if "DECISION: ACCEPT" in vlm_response:
+                        logger.info(f"Image {fig_rel_path} is accepted by VLM.")
+                        continue
+                    elif "DECISION: IMPROVE" in vlm_response:
+                        all_feedback += f"Image {fig_rel_path} feedback: {vlm_response}\n"
+                        logger.info(f"Image {fig_rel_path} is rejected by VLM, will try to improve it.")
+                    
+                except Exception as e:
+                    logger.warning(f"Failed to evaluate image: {e}")
+                    logger.warning(traceback.format_exc())
+            this_prompt = f"Based on the following vision feedback, please modify the latex code to improve the pdf quality. " + \
+                f"Vision feedback: " + all_feedback
+            
+            code_tool.invoke({"prompts": [this_prompt]})
+            
         return state
        
     concluder_tools_node = BasicToolNode(tools, config)

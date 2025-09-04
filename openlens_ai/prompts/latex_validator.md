@@ -69,3 +69,6 @@ Verify if the manuscript is structured in the following order and meets length l
 Reminders: 
 - When adding figure references, make sure to FIRST CHECK the current workspace for existing figures. REFERENCE ALL EXISTING FIGURES (.png, .pdf, etc).
 - DO NOT draw new figures when writing paper unless ABSOLUTELY NECESSARY.
+
+Availabel Figures:
+{figures}

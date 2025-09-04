@@ -40,7 +40,7 @@ def collect_files(config: Config):
     for pattern in file_patterns:
         this_pattern_files = glob.glob(os.path.join(save_path, '**', pattern), recursive=True)
         for f in this_pattern_files:
-            if f not in files:
+            if f not in files and os.path.isfile(f):
                 files.append(f)
     
     # 创建压缩文件夹路径
@@ -93,7 +93,7 @@ def collect_files(config: Config):
         node_call_stack_path = os.path.join(config.save_path, 'node_call_stack.json')
         with open(node_call_stack_path, 'r') as f:
             node_call_stack = json.load(f)
-        latest_md += "\n- ".join(node_call_stack)
+        latest_md += "\n\n".join(node_call_stack)
     except Exception as e:
         logger.warning(f"Error loading node call stack: {e}")
         

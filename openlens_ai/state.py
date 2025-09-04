@@ -30,6 +30,7 @@ class State(TypedDict):
     return_subtask_counter: int
     node_call_stack: list = []
     resume_node_call_stack: list = []
+    available_figs: list = []
 
 
 def track_node_call(subgraph_name: str=""):
@@ -56,6 +57,8 @@ def track_node_call(subgraph_name: str=""):
                         # 如果没有到resume的最后一个节点，则跳过
                         return skip_func(state, **kwargs)
             
+            # 找到了resume的节点
+            state["resume_node_call_stack"] = []
             logger.info(f"Calling node: {node_name}")
             # 调用原始函数
             return func(state, **kwargs)
@@ -92,6 +95,9 @@ def load_state(save_dir: str) -> tuple[Config, State]:
     with open(config_path, "w") as f:
         json.dump(config.model_dump(), f, indent=2)
         
+    logger.add(os.path.join(save_dir, "logs.log"), 
+               format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|"+config.thread_id, 
+               colorize=False, rotation="10 MB", level="DEBUG")
         
     state_dir = os.path.join(save_dir, "states")
     # 遍历里面的文件，格式是step_i.json，找最大的
