@@ -10,6 +10,7 @@ from loguru import logger
 from datetime import datetime
 
 from langchain_core.load.load import loads
+from langchain.load.dump import dumps
 
 from .utils.config import Config
 
@@ -41,6 +42,10 @@ def track_node_call(subgraph_name: str=""):
             return state
         
         def wrapper(state: State, **kwargs):
+            latest_state_path = os.path.join(state['save_path'], "latest_state.json")
+            with open(latest_state_path, "w") as f:
+                f.write(dumps(state, ensure_ascii=False, indent=4))
+            
             
             # 如果找到state参数，则记录函数调用
             if state is not None:
@@ -112,11 +117,22 @@ def load_state(save_dir: str) -> tuple[Config, State]:
             state_str = f.read()
             state = loads(state_str)
             last_subgraph = list(state.keys())[0]
-            state = state[last_subgraph]
-            logger.info(f"State save_path: {state['save_path']} -> {save_dir}")
-            state["save_path"] = save_dir
+            # state = state[last_subgraph]
+            # logger.info(f"State save_path: {state['save_path']} -> {save_dir}")
+            # state["save_path"] = save_dir
         
         logger.info(f"Loaded state from {max_file_name}, last subgraph: {last_subgraph}")
+    else:
+        state = {"question": config.question, "messages": [], "thread_id": config.thread_id, "save_path": config.save_path}
+    
+    latest_state_file_name = os.path.join(save_dir, "latest_state.json")
+    if os.path.exists(latest_state_file_name):
+        with open(latest_state_file_name, "r", encoding="utf-8") as f:
+            state = json.load(f)
+        
+        if "save_path" in state:
+            logger.info(f"State save_path: {state['save_path']} -> {save_dir}")
+            state["save_path"] = save_dir
     else:
         state = {"question": config.question, "messages": [], "thread_id": config.thread_id, "save_path": config.save_path}
     

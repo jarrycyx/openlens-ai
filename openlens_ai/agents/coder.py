@@ -156,8 +156,8 @@ def build_coder(config: Config) -> StateGraph:
         return state
 
     concluder_tools_node = BasicToolNode(concluder_tools, config)
-    conclude_openhands_chatbot = chatbot_with_context_manager(config, concluder_llm_with_tools, coder_concluder_prompt, context_manage="last_tool_message", calling_subgraph="coder")
-    route_chatbot = chatbot_with_context_manager(config, router_llm, coder_router_prompt, context_manage="last_tool_message", calling_subgraph="coder")
+    conclude_openhands_chatbot = chatbot_with_context_manager(config, concluder_llm_with_tools, coder_concluder_prompt, context_manage="token_cnt", calling_subgraph="coder")
+    route_chatbot = chatbot_with_context_manager(config, router_llm, coder_router_prompt, context_manage="token_cnt", calling_subgraph="coder")
     write_plan_router = route_by_tool_call("report_writer_tool")
     keywords_router = route_by_keywords([
         "DECISION: CONTINUE_NEXT_SUBTASK", 

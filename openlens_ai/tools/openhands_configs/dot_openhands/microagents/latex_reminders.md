@@ -9,7 +9,17 @@ triggers:
 ---
 
 Reminders: 
-- When adding figure references, make sure to FIRST CHECK the current workspace for existing figures. REFERENCE ALL EXISTING FIGURES (.png, .pdf, etc).
+- When adding figure references, make sure to FIRST CHECK the current workspace for existing figures. INCLUDE ALL EXISTING FIGURES (.png, .pdf, etc) using the following format:
+```
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.x\textwidth]{figures/figure_name.png}
+\caption{Figure caption}
+\label{fig:figure_name}
+\end{figure}
+```
+and refer to them using \ref{fig:figure_name}
+
 - DO NOT draw new figures when writing paper unless ABSOLUTELY NECESSARY.
 - Make sure the paper is structures in the order and meets length limits:
   - 1. Abstract (≤ 300 words)  
