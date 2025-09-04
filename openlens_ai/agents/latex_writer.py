@@ -8,7 +8,7 @@ import traceback
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
 from langchain.load.dump import dumps
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import ToolMessage, AIMessage
 
 from ..tools.tool_utils import BasicToolNode, route_by_tool_call, route_by_keywords
 from ..tools.openhands_adaptor import OpenHandsTool
@@ -76,6 +76,17 @@ def build_latex_writer(config: Config) -> StateGraph:
     @track_node_call("latex_writer")
     def write_introduction_node(state: State):
         this_prompt = introduction_prompt.replace("{question}", state["question"])
+        
+        # 加入上一次的建议
+        ai_message = [m for m in state["messages"] if isinstance(m, AIMessage)]
+        if len(ai_message) > 0 and "REASON:" in ai_message[-1].content:
+            logger.info("Detected REASON in the last tool message, add to the prompt.")
+            reason = ai_message[-1].content
+            this_prompt = this_prompt + "\n\n Last Failure Reasons: " + reason
+        else:
+            logger.info("No REASON in the AI tool message, use the default prompt.")
+            reason = ""
+        
         results = code_tool.invoke({"prompts": [this_prompt]})
         state["messages"] += [
             ToolMessage(
@@ -89,6 +100,17 @@ def build_latex_writer(config: Config) -> StateGraph:
     @track_node_call("latex_writer")
     def write_related_node(state: State):
         this_prompt = related_works_prompt.replace("{question}", state["question"])
+        
+        # 加入上一次的建议
+        ai_message = [m for m in state["messages"] if isinstance(m, AIMessage)]
+        if len(ai_message) > 0 and "REASON:" in ai_message[-1].content:
+            logger.info("Detected REASON in the last tool message, add to the prompt.")
+            reason = ai_message[-1].content
+            this_prompt = this_prompt + "\n\n Last Failure Reasons: " + reason
+        else:
+            logger.info("No REASON in the AI tool message, use the default prompt.")
+            reason = ""
+        
         results = code_tool.invoke({"prompts": [this_prompt]})
         state["messages"] += [
             ToolMessage(
@@ -143,6 +165,17 @@ def build_latex_writer(config: Config) -> StateGraph:
     @track_node_call("latex_writer")
     def write_methods_node(state: State):
         this_prompt = methods_prompt.replace("{question}", state["question"])
+        
+        # 加入上一次的建议
+        ai_message = [m for m in state["messages"] if isinstance(m, AIMessage)]
+        if len(ai_message) > 0 and "REASON:" in ai_message[-1].content:
+            logger.info("Detected REASON in the last tool message, add to the prompt.")
+            reason = ai_message[-1].content
+            this_prompt = this_prompt + "\n\n Last Failure Reasons: " + reason
+        else:
+            logger.info("No REASON in the AI tool message, use the default prompt.")
+            reason = ""
+        
         this_prompt = this_prompt.replace("{figures}", "\n".join(state["available_figs"]))
         results = code_tool.invoke({"prompts": [this_prompt]})
         state["messages"] += [
@@ -158,6 +191,17 @@ def build_latex_writer(config: Config) -> StateGraph:
     def write_experiments_node(state: State):
         this_prompt = exp_conclusion_prompt.replace("{question}", state["question"])
         this_prompt = this_prompt.replace("{figures}", "\n".join(state["available_figs"]))
+        
+        # 加入上一次的建议
+        ai_message = [m for m in state["messages"] if isinstance(m, AIMessage)]
+        if len(ai_message) > 0 and "REASON:" in ai_message[-1].content:
+            logger.info("Detected REASON in the last tool message, add to the prompt.")
+            reason = ai_message[-1].content
+            this_prompt = this_prompt + "\n\n Last Failure Reasons: " + reason
+        else:
+            logger.info("No REASON in the AI tool message, use the default prompt.")
+            reason = ""
+        
         results = code_tool.invoke({"prompts": [this_prompt]})
         state["messages"] += [
             ToolMessage(
@@ -173,6 +217,17 @@ def build_latex_writer(config: Config) -> StateGraph:
     def latex_validator_node(state: State):
         this_prompt = validator_prompt.replace("{question}", state["question"])
         this_prompt = this_prompt.replace("{figures}", "\n".join(state["available_figs"]))
+        
+        # 加入上一次的建议
+        ai_message = [m for m in state["messages"] if isinstance(m, AIMessage)]
+        if len(ai_message) > 0 and "REASON:" in ai_message[-1].content:
+            logger.info("Detected REASON in the last tool message, add to the prompt.")
+            reason = ai_message[-1].content
+            this_prompt = this_prompt + "\n\n Last Failure Reasons: " + reason
+        else:
+            logger.info("No REASON in the AI tool message, use the default prompt.")
+            reason = ""
+        
         results = code_tool.invoke({"prompts": [this_prompt, latex_rigor_prompt, latex_literature_check_prompt]})
         
         state["messages"] += [

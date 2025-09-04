@@ -49,7 +49,7 @@ def track_node_call(subgraph_name: str=""):
             
             # 如果找到state参数，则记录函数调用
             if state is not None:
-                if not isinstance(state['node_call_stack'], list):
+                if ('node_call_stack' not in state) or (not isinstance(state['node_call_stack'], list)):
                     state['node_call_stack'] = []
                 state['node_call_stack'].append(node_name)
 
@@ -131,7 +131,7 @@ def load_state(save_dir: str) -> tuple[Config, State]:
     latest_state_file_name = os.path.join(save_dir, "latest_state.json")
     if os.path.exists(latest_state_file_name):
         with open(latest_state_file_name, "r", encoding="utf-8") as f:
-            state = json.load(f)
+            state = loads(f.read())
         
         if "save_path" in state:
             logger.info(f"State save_path: {state['save_path']} -> {save_dir}")
