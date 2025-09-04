@@ -36,11 +36,11 @@ with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_conclu
     latex_concluder_prompt = f.read()
 with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_router.md")) as f:
     latex_router_prompt = f.read()
+with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_rigor_prompt.md")) as f:
+    latex_rigor_prompt = f.read()
+with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_literature_check.md")) as f:
+    latex_literature_check_prompt = f.read()
 
-rigor_prompt = """
-Make sure each paragraph of the manuscript corresponds to a file or several lines in a file in workspace, 
-record the file name and corresponding line number in /workspace/manuscript/paper_rigor_report.md
-"""
 
 def build_latex_writer(config: Config) -> StateGraph:
     concluder_llm = init_chat_model(
@@ -173,7 +173,7 @@ def build_latex_writer(config: Config) -> StateGraph:
     def latex_validator_node(state: State):
         this_prompt = validator_prompt.replace("{question}", state["question"])
         this_prompt = this_prompt.replace("{figures}", "\n".join(state["available_figs"]))
-        results = code_tool.invoke({"prompts": [this_prompt, rigor_prompt]})
+        results = code_tool.invoke({"prompts": [this_prompt, latex_rigor_prompt, latex_literature_check_prompt]})
         
         state["messages"] += [
             ToolMessage(
@@ -208,6 +208,9 @@ def build_latex_writer(config: Config) -> StateGraph:
             this_prompt = f"Based on the following vision feedback, please modify the latex code to improve the pdf quality. " + \
                 f"Vision feedback: " + all_feedback
             
+            if not all_feedback:
+                logger.info("No image feedback, will skip image improvement.")
+                return state   
             code_tool.invoke({"prompts": [this_prompt]})
             
         return state
