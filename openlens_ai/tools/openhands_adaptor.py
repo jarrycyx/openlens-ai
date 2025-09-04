@@ -47,6 +47,7 @@ def run_docker_container(cmd: str, config: Config):
         assert os.path.exists(dataset_path), f"Dataset path {dataset_path} does not exist."
         latex_template_path = os.path.join(pwd, "openlens_ai/tools/latex_template/neurips")
         dot_openhands_path = os.path.join(pwd, "openlens_ai/tools/openhands_configs/dot_openhands")
+        openhands_traj_path = os.path.join(pwd, config.save_path, "openhands_traj")
         docker_cmd = [
             "docker",
             "run",
@@ -55,6 +56,7 @@ def run_docker_container(cmd: str, config: Config):
             "-v", f"{this_openhands_config_path}:/helper/config.toml",
             "-v", "./openlens_ai:/helper/openlens_ai",
             "-v", f"{workspace_dir}:/workspace",
+            "-v", f"{openhands_traj_path}:/helper/openhands_traj",
             "-v", f"{dataset_path}:/workspace/datasets:ro",
             "-v", f"{latex_template_path}:/workspace/latex_template:ro",
             "-v", f"{dot_openhands_path}:/workspace/.openhands:ro",
@@ -208,7 +210,7 @@ def run_openhands_prompt(prompts, config: Config):
             f"source /helper/openlens_ai/tools/openhands_configs/openhands_env.sh && "
             f"cd /helper/OpenHands && "
             f"mkdir -p /workspace/manuscript/ && chmod -R 777 /workspace/manuscript/ && cp /workspace/latex_template/*.sty /workspace/manuscript/ &&"
-            f"mkdir -p /workspace/openhands_logs/ && chmod -R 777 /workspace/openhands_logs/ &&"
+            f"mkdir -p /helper/openhands_traj && chmod -R 777 /helper/openhands_traj &&"
             f'poetry run python -m openhands.core.main -t "{prompt}" -i {max_iter}'
         )
         results = run_docker_container(cmd, config)

@@ -13,10 +13,10 @@ from langchain_core.messages import ToolMessage
 from ..tools.tool_utils import BasicToolNode, route_by_tool_call, route_by_keywords
 from ..tools.openhands_adaptor import OpenHandsTool
 from ..tools.reports import ReportReaderTool, ReportWriterTool
-from ..state import State, load_state
+from ..state import State, load_state, track_node_call
 from ..utils.config import Config
 from ..chatbot import chatbot_with_context_manager
-from ..utils.vision_feedback import collect_fig_files, get_fig_base64, get_vision_feedback, get_vision_classification
+from ..utils.vision_feedback import collect_fig_files, get_fig_base64, get_vision_feedback, get_vision_classification, get_latex_vision_feedback
 
 dotenv.load_dotenv()
 
@@ -68,14 +68,16 @@ def build_latex_writer(config: Config) -> StateGraph:
     tools = [report_writer_tool]
     concluder_llm_with_tools = concluder_llm.bind_tools(tools)
 
+    @track_node_call("latex_writer")
     def clear_state(state: State):
         state["messages"] = []
         return state
 
+    @track_node_call("latex_writer")
     def write_introduction_node(state: State):
         this_prompt = introduction_prompt.format(question=state["question"])
         results = code_tool.invoke({"prompts": [this_prompt]})
-        state["messages"] = [
+        state["messages"] += [
             ToolMessage(
                 content=results,
                 name="openhands_tool",
@@ -84,10 +86,11 @@ def build_latex_writer(config: Config) -> StateGraph:
         ]
         return state
     
+    @track_node_call("latex_writer")
     def write_related_node(state: State):
         this_prompt = related_works_prompt.format(question=state["question"])
         results = code_tool.invoke({"prompts": [this_prompt]})
-        state["messages"] = [
+        state["messages"] += [
             ToolMessage(
                 content=results,
                 name="openhands_tool",
@@ -96,6 +99,7 @@ def build_latex_writer(config: Config) -> StateGraph:
         ]
         return state
     
+    @track_node_call("latex_writer")
     def collect_result_files(state: State):
         
         ## Check for generated images using vision-language model
@@ -124,10 +128,11 @@ def build_latex_writer(config: Config) -> StateGraph:
         return state
         
     
+    @track_node_call("latex_writer")
     def write_methods_node(state: State):
         this_prompt = methods_prompt.format(question=state["question"])
         results = code_tool.invoke({"prompts": [this_prompt]})
-        state["messages"] = [
+        state["messages"] += [
             ToolMessage(
                 content=results,
                 name="openhands_tool",
@@ -136,10 +141,11 @@ def build_latex_writer(config: Config) -> StateGraph:
         ]
         return state
     
+    @track_node_call("latex_writer")
     def write_experiments_node(state: State):
         this_prompt = exp_conclusion_prompt.format(question=state["question"])
         results = code_tool.invoke({"prompts": [this_prompt]})
-        state["messages"] = [
+        state["messages"] += [
             ToolMessage(
                 content=results,
                 name="openhands_tool",
@@ -147,11 +153,14 @@ def build_latex_writer(config: Config) -> StateGraph:
             )
         ]
         return state
-    def validator_node(state: State):
+    
+    
+    @track_node_call("latex_writer")
+    def latex_validator_node(state: State):
         # this_prompt = validator_prompt
         # results = code_tool.invoke({"prompts": [this_prompt, rigor_prompt]})
         
-        # state["messages"] = [
+        # state["messages"] += [
         #     ToolMessage(
         #         content=results,
         #         name="openhands_tool",
@@ -163,12 +172,12 @@ def build_latex_writer(config: Config) -> StateGraph:
         ## Check for generated images using vision-language model
         workspace_dir = os.path.join(config.save_path, "workspace")
         fig_file_list = os.path.join(workspace_dir, "manuscript", "main.pdf")
-        fig_base64_list = get_fig_base64(fig_file_list)
+        fig_base64_list = get_fig_base64([fig_file_list])
         all_feedback = ""
         for fig, base64str in fig_base64_list:
             fig_rel_path = os.path.relpath(fig, workspace_dir)
             try:
-                vlm_response = get_vision_feedback(base64str, config)
+                vlm_response = get_latex_vision_feedback(base64str, config)
                 if "DECISION: ACCEPT" in vlm_response:
                     logger.info(f"Image {fig_rel_path} is accepted by VLM.")
                     continue
@@ -186,8 +195,8 @@ def build_latex_writer(config: Config) -> StateGraph:
         return state
        
     concluder_tools_node = BasicToolNode(tools, config)
-    conclude_chatbot = chatbot_with_context_manager(config, concluder_llm_with_tools, latex_concluder_prompt, context_manage="last_tool_message")
-    router_chatbot = chatbot_with_context_manager(config, router_llm, latex_router_prompt, context_manage="last_tool_message")
+    conclude_chatbot = chatbot_with_context_manager(config, concluder_llm_with_tools, latex_concluder_prompt, context_manage="last_tool_message", calling_subgraph="latex_writer")
+    router_chatbot = chatbot_with_context_manager(config, router_llm, latex_router_prompt, context_manage="last_tool_message", calling_subgraph="latex_writer")
     write_plan_router = route_by_tool_call("report_writer_tool")
     keywords_router = route_by_keywords(["DECISION: POLISH", "DECISION: END"])
 
@@ -199,7 +208,7 @@ def build_latex_writer(config: Config) -> StateGraph:
     graph_builder.add_node("write_related_node", write_related_node)
     graph_builder.add_node("write_methods_node", write_methods_node)
     graph_builder.add_node("write_experiments_node", write_experiments_node)
-    graph_builder.add_node("validator_node", validator_node)
+    graph_builder.add_node("validator_node", latex_validator_node)
     graph_builder.add_node("conclude_chatbot", conclude_chatbot)
     graph_builder.add_node("router_chatbot", router_chatbot)
     graph_builder.add_node("collect_result_files", collect_result_files)

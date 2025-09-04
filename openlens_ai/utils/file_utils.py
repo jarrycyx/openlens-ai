@@ -48,5 +48,8 @@ def prepare_file_config(thread_id: str, question: str, dataset_path: str, email:
     # 创建workdir
     os.makedirs(os.path.join(save_path, "workspace"), exist_ok=True)
     os.makedirs(os.path.join(save_path, "states"), exist_ok=True)
+    
+    os.makedirs(os.path.join(save_path, "openhands_traj"))
+    
 
     return init_state, config, save_path

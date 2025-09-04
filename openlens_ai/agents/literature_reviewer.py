@@ -14,7 +14,7 @@ from langchain_core.messages.utils import count_tokens_approximately, get_buffer
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 from langchain_tavily import TavilySearch
 
-from ..state import State
+from ..state import State, track_node_call
 from ..chatbot import chatbot_with_context_manager, react_pre_model_wrapper
 from ..tools.reports import ReportWriterTool
 
@@ -80,12 +80,13 @@ def build_literature_review_subgraph(config: Config):
 
     # 使用项目中的chatbot接口
     literature_search_chatbot = chatbot_with_context_manager(
-        config, llm_react, search_prompt_template, context_manage="vector_search"
+        config, llm_react, search_prompt_template, context_manage="vector_search", calling_subgraph="literature_review"
     )
     write_report_chatbot = chatbot_with_context_manager(
-        config, llm_report_writer, report_prompt_template, context_manage="vector_search"
+        config, llm_report_writer, report_prompt_template, context_manage="vector_search", calling_subgraph="literature_review"
     )
     
+    @track_node_call("literature_review")
     def clear_literature_state(state: State):
         state["messages"] = []
         literature_review_path = os.path.join(config.save_path, "workspace", "literature_review.md")

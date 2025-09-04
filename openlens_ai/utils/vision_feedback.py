@@ -23,6 +23,10 @@ with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_feedb
 
 with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_classify.md")) as f:
     vision_classify_prompt = f.read()
+
+
+with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_latex_feedback.md")) as f:
+    vision_latex_feedback_prompt = f.read()
     
     
 vlm = init_chat_model(
@@ -87,6 +91,34 @@ def get_vision_feedback(image_base64: str, config: Config) -> str:
                 {
                     "type": "text",
                     "text": vision_feedback_prompt
+                },
+                {
+                    "type": "image",
+                    "source_type": "base64",
+                    "data": image_base64,
+                    "mime_type": "image/jpeg",
+                },
+            ])
+            
+            vlm_response = vlm.invoke([image_feedback_message])
+            logger.info(f"Vision feedback: {vlm_response.content}")
+            return vlm_response.content
+        except Exception as e:
+            logger.warning(f"Error when calling llm: {e}")
+            logger.warning(traceback.format_exc())
+            logger.warning("Retrying...")
+            time.sleep(5)
+
+
+
+def get_latex_vision_feedback(image_base64: str, config: Config) -> str:
+    for try_i in range(10):
+        try:
+            # Call VLM to evaluate the image
+            image_feedback_message = HumanMessage(content=[
+                {
+                    "type": "text",
+                    "text": vision_latex_feedback_prompt
                 },
                 {
                     "type": "image",

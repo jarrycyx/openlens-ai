@@ -19,7 +19,7 @@ from ..tools.openhands_adaptor import OpenHandsTool
 from ..tools.reports import ReportReaderTool, ReportWriterTool
 from ..state import State
 from ..chatbot import chatbot_with_context_manager
-from ..state import load_state
+from ..state import load_state, track_node_call
 from ..utils.file_utils import prepare_file_config
 from ..utils.config import Config
 from ..utils.vision_feedback import collect_fig_files, get_fig_base64, get_vision_feedback
@@ -62,6 +62,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
     tools = [report_writer_tool]
     llm_with_tools = llm.bind_tools(tools)
 
+    @track_node_call("data_analyzer")
     def openhands_node(state: State):
         this_prompt = data_analyzer_prompt.format(question=state["question"])
         
@@ -72,7 +73,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
                 logger.info("Found previous router decision, adding to prompt. " + last_router_message.content)
                 this_prompt += "\n\nPrevious coding results:\n" + last_router_message.content
                 results = code_tool.invoke({"prompts": [this_prompt]})
-            state["messages"] = [
+            state["messages"] += [
                 ToolMessage(
                     content=results,
                     name="openhands_tool",
@@ -85,6 +86,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
         
         return state
 
+    @track_node_call("data_analyzer")
     def chatbot(state: State):
         with open(os.path.join(state["save_path"], "workspace", "data_analyze", "data_show.md"), "r") as f:
             data_show = f.read()
@@ -95,7 +97,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
         return state
 
     def router_node(state: State):
-        router_chatbot = chatbot_with_context_manager(config, router_llm, data_router_prompt, context_manage="last_tool_message")
+        router_chatbot = chatbot_with_context_manager(config, router_llm, data_router_prompt, context_manage="last_tool_message", calling_subgraph="data_analyzer")
         state = router_chatbot(state)
         return state
 

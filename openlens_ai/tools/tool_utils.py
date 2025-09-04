@@ -200,7 +200,7 @@ class BasicToolNode:
                     ToolMessage(
                         content=error_str,
                         name=tool_call["name"],
-                        tool_call_id=tool_call["id"],
+                        tool_call_id=tool_call["id"] if "id" in tool_call else "0000001", 
                         status="error"
                     )
                 ]

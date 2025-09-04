@@ -20,7 +20,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.load.dump import dumps
 from langchain.load.load import loads
 
-from .state import State, load_state, get_subplan
+from .state import State, load_state, get_subplan, track_node_call
 from .utils.frontend_utils import frontend_add_message, frontend_add_tool_call
 from .utils.config import Config
 
@@ -197,7 +197,7 @@ def vector_search(messages: Union[list, str], query: str, token_cnt: int = 10000
     
     
     # 文本切块
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=1000)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000, chunk_overlap=500)
     # 获取所有消息的文本内容
     all_docs = []
     for message in messages:
@@ -216,7 +216,7 @@ def vector_search(messages: Union[list, str], query: str, token_cnt: int = 10000
 
 
 def chatbot_with_context_manager(
-    config: Config, llm: BaseChatModel, prompt: str, context_manage: Literal["token_cnt", "token_cnt_large", "last_message", "last_tool_message", "vector_search"] = "vector_search", only_last_human_message: bool = True,
+    config: Config, llm: BaseChatModel, prompt: str, context_manage: Literal["token_cnt", "token_cnt_large", "last_message", "last_tool_message", "vector_search"] = "vector_search", only_last_human_message: bool = True, calling_subgraph: str = ""
 ):
     """
     创建一个带上下文管理功能的聊天机器人
@@ -387,6 +387,8 @@ def chatbot_with_context_manager(
         
         return this_prompt
         
+        
+    @track_node_call(calling_subgraph)
     def chatbot(state: State):
         """
         聊天机器人主函数，处理不同类型的消息和上下文管理策略

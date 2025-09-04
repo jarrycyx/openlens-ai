@@ -1,6 +1,7 @@
 import os
 import json
 import glob
+import inspect
 
 from typing import Annotated
 from typing_extensions import TypedDict
@@ -27,7 +28,40 @@ class State(TypedDict):
     data_show: str
     manuscript_polish_round: int
     return_subtask_counter: int
+    node_call_stack: list = []
+    resume_node_call_stack: list = []
 
+
+def track_node_call(subgraph_name: str=""):
+    def track_node_call_inner(func):
+        node_name = f"subgraph_{subgraph_name}.{func.__name__}"
+        def skip_func(state: State, **kwargs):
+            logger.info(f"Skiping {node_name}")
+            return state
+        
+        def wrapper(state: State, **kwargs):
+            
+            # 如果找到state参数，则记录函数调用
+            if state is not None:
+                if not isinstance(state['node_call_stack'], list):
+                    state['node_call_stack'] = []
+                state['node_call_stack'].append(node_name)
+
+                node_call_stack_path = os.path.join(state['save_path'], 'node_call_stack.json')
+                with open(node_call_stack_path, 'w') as f:
+                    f.write(json.dumps(state['node_call_stack'], indent=4))
+                
+                if ("resume_node_call_stack" in state) and state["resume_node_call_stack"]:
+                    if node_name != state["resume_node_call_stack"][-1]:
+                        # 如果没有到resume的最后一个节点，则跳过
+                        return skip_func(state, **kwargs)
+            
+            logger.info(f"Calling node: {node_name}")
+            # 调用原始函数
+            return func(state, **kwargs)
+        
+        return wrapper
+    return track_node_call_inner
 
 def get_subplan(state: State) -> str:
     try:
@@ -79,7 +113,17 @@ def load_state(save_dir: str) -> tuple[Config, State]:
         logger.info(f"Loaded state from {max_file_name}, last subgraph: {last_subgraph}")
     else:
         state = {"question": config.question, "messages": [], "thread_id": config.thread_id, "save_path": config.save_path}
-        
+    
+    try:
+        node_call_stack_path = os.path.join(save_dir, 'node_call_stack.json')
+        with open(node_call_stack_path, 'r') as f:
+            node_call_stack = json.load(f)
+            state['resume_node_call_stack'] = node_call_stack
+            state['node_call_stack'] = []
+    except Exception as e:
+        logger.warning(f"Error loading node call stack: {e}")
+        state['resume_node_call_stack'] = []
+        state['node_call_stack'] = []
         
     return config, state, last_subgraph
      

@@ -15,9 +15,8 @@
 
 3. **Check for Data Integrity:**
    * Verify that the code does not generate simulated or mocked results in place of actual experimental data.
-   * Ensure that no synthetic data, fabricated outcomes, or demo/minified versions of datasets are present unless explicitly stated in the experimental setup. Note that some datasets may contain shifted years for confidentiality reasons, this does not mean the data is fabricated.
+   * Ensure that no synthetic data, fabricated outcomes, or demo/minified versions of datasets are present unless explicitly stated in the experimental setup (make sure that actual sample/patient/row numbers used match the provided dataset). Note that some datasets may contain shifted years for confidentiality reasons, this does not mean the data is fabricated.
    * **If simulated data is found**, adjust the code to ensure only real data is used and rerun the experiment.
-   * Ensure the intermediate results are not demo/minified versions or placeholders.
 
 4. **Check for Abnormal Intermediate Results:**
 
@@ -33,3 +32,4 @@ Reminders:
 - You should ONLY interact with the tool provided to you AND NEVER ASK FOR HUMAN HELP. 
 - Data prepreration and model training may take a long time, DO NOT set a short timeout for the execution, also DO NOT force kill the process unless you are sure it is stuck.
 - When writing any scripts related to data loading/processing, DO NOT try to load all data into memory at once, use batch processing or data streaming techniques to handle large datasets efficiently.
+- When fixing issues or writing improved version, edit the original script directly, do not write new scripts, i.e. DO NOT create files such as train_improved.py, process_fixed.py because this may make the workspace messy and difficult to manage.

@@ -3,7 +3,7 @@ workspace_base="/workspace"
 runtime = "local"
 disable_color = true
 search_api_key = "{tavily_key}"
-save_trajectory_path = "/workspace/openhands_logs"
+save_trajectory_path = "/workspace/openhands_traj"
 
 [llm]
 model="openai/{code_model}" # openai means openai-compatible endpoint, not OpenAI models

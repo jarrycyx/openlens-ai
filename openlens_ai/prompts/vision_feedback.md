@@ -30,4 +30,4 @@ At last, provide a decision on whether the chart is suitable for presentation or
 *   **Suitability:** The choice of a pie chart to represent time-series data is inappropriate. A line chart would be significantly better at showing the trend over time.
 *   **Rationality Check:** The error bars for the 'Control' group in Figure B appear disproportionately large compared to the other groups. You may want to double-check the calculation or sample size for that specific group as it might indicate high variability or a potential error."
 
-``DECISION: REJECT`` or ``DECISION: IMPROVE``
+``DECISION: ACCEPT`` or ``DECISION: IMPROVE``

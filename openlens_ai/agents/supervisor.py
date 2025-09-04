@@ -11,7 +11,7 @@ from langchain_tavily import TavilySearch
 from ..tools.tool_utils import BasicToolNode, route_tools, route_by_tool_call, route_by_file_existence
 from ..tools.exp_plan import PlanWriterTool, PlanReaderTool
 from ..tools.reports import ReportReaderTool
-from ..state import State, load_state
+from ..state import State, load_state, track_node_call
 from ..chatbot import chatbot_with_context_manager
 from ..utils.config import Config
 
@@ -45,8 +45,8 @@ def build_supervisor(config: Config) -> StateGraph:
         extra_body={"chat_template_kwargs": {"enable_thinking": False}},
     )
     llm_with_tools = llm.bind_tools(tools)
-    chatbot = chatbot_with_context_manager(config, llm_with_tools, prompt)
-    alter_chatbot = chatbot_with_context_manager(config, llm_with_tools, alter_prompt)
+    chatbot = chatbot_with_context_manager(config, llm_with_tools, prompt, calling_subgraph="supervisor")
+    alter_chatbot = chatbot_with_context_manager(config, llm_with_tools, alter_prompt, calling_subgraph="supervisor")
     
     route_by_write_plan = route_by_tool_call("plan_writer_tool")
 

@@ -20,6 +20,7 @@
 - ✅ **Context Management**: Automated management of contextual information for agents via vector search
 - ✅ **Vision-Language Feedback**: Integrate with VLM for visualization and feedback
 - ⬜ **Powerpoint-Based Figures**: Automated generation of Powerpoint-based figures for demonstrations for better visual quality (to replace the current graphviz-based figures)
+- ⬜ **Context Manager via Long Context Model**: Integrate with long context model for context management (in addition to the current vector search-based approach)
 
 ## 🚀 Quick Start
 
