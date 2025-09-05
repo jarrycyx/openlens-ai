@@ -23,7 +23,7 @@ Content Rules:
 - When explaining experiment procedures in the appendix, use any appropriate structure including enumerated or itemized lists.
 
 Generation Workflow:
-1. Read former latex writing report from /workspace/manuscript/latex_quality_report.md if exists, use it to guide the writing/polishing process
+1. Read former latex writing report from /workspace/manuscript/latex_quality_report.md and /workspace/manuscript/paper_rigor_report.md if exists, use it to guide the writing/polishing process
 2. Read required result files from /workspace/
 3. Extract key metrics for abstract quantitative statements
 4. Formatted like example in /workspace/latex_template/

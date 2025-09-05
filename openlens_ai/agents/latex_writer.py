@@ -10,7 +10,7 @@ from langchain.chat_models import init_chat_model
 from langchain.load.dump import dumps
 from langchain_core.messages import ToolMessage, AIMessage
 
-from ..tools.tool_utils import BasicToolNode, route_by_tool_call, route_by_keywords
+from ..tools.tool_utils import BasicToolNode, route_by_tool_call, route_by_keywords, route_by_latex_polish_counter
 from ..tools.openhands_adaptor import OpenHandsTool
 from ..tools.reports import ReportReaderTool, ReportWriterTool
 from ..state import State, load_state, track_node_call
@@ -70,11 +70,14 @@ def build_latex_writer(config: Config) -> StateGraph:
 
     @track_node_call("latex_writer")
     def clear_state(state: State):
+        state["polish_latex_counter"] = state.get("return_subtask_counter", 0)
         state["messages"] = []
         return state
 
     @track_node_call("latex_writer")
     def write_introduction_node(state: State):
+        state["polish_latex_counter"] = state.get("return_subtask_counter", 0)
+        
         this_prompt = introduction_prompt.replace("{question}", state["question"])
         
         # 加入上一次的建议
@@ -296,8 +299,13 @@ def build_latex_writer(config: Config) -> StateGraph:
     graph_builder.add_edge("write_related_node", "write_methods_node")
     graph_builder.add_edge("write_methods_node", "write_experiments_node")
     graph_builder.add_edge("write_experiments_node", "validator_node")
-    # graph_builder.add_edge(START, "validator_node")
-    graph_builder.add_edge("validator_node", "conclude_chatbot")
+    
+    graph_builder.add_conditional_edges(
+        "validator_node",
+        route_by_latex_polish_counter,
+        {"MAX_REDO_REACHED": END, "NOT_REACHED": "conclude_chatbot"},
+    )
+    # graph_builder.add_edge("validator_node", "conclude_chatbot")
     graph_builder.add_edge("conclude_chatbot", "concluder_tools_node")
     graph_builder.add_conditional_edges("concluder_tools_node", write_plan_router, {"RETURN_TO_LLM": "conclude_chatbot", END: "router_chatbot"})
     graph_builder.add_conditional_edges(

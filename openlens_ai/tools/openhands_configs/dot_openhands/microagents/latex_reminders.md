@@ -30,3 +30,4 @@ and refer to them using \ref{fig:figure_name}
   - 6. Conclusion (300 words)  
   - 7. References (10+ citations)
   - 8. Appendix
+- When fixing issues or writing improved version, edit the original files directly, do not write new files, i.e. DO NOT create files such as main_improved.tex, main_fixed.py because this may make the workspace messy and difficult to manage.

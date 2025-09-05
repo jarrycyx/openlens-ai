@@ -9,7 +9,7 @@ from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
-from ..tools.tool_utils import BasicToolNode, route_tools, route_by_keywords, route_by_tool_call
+from ..tools.tool_utils import BasicToolNode, route_tools, route_by_keywords, route_by_tool_call, route_by_subtask_redo_counter
 from ..tools.openhands_adaptor import OpenHandsTool
 from ..tools.exp_plan import PlanReaderTool, PlanWriterTool, subtask_route_tools
 from ..tools.reports import ReportReaderTool, ReportWriterTool
@@ -78,16 +78,16 @@ def build_coder(config: Config) -> StateGraph:
 
     @track_node_call("coder")
     def openhands_validation_node(state: State):
-        # subplan = get_subplan(state)
-        # this_prompt = validator_prompt.format(question=state["question"], subplan=subplan)
-        # results = code_tool.invoke({"prompts": [this_prompt]})
-        # state["messages"] += [
-        #     ToolMessage(
-        #         content=results,
-        #         name="openhands_tool",
-        #         tool_call_id="openhands_tool",
-        #     )
-        # ]
+        subplan = get_subplan(state)
+        this_prompt = validator_prompt.format(question=state["question"], subplan=subplan)
+        results = code_tool.invoke({"prompts": [this_prompt]})
+        state["messages"] += [
+            ToolMessage(
+                content=results,
+                name="openhands_tool",
+                tool_call_id="openhands_tool",
+            )
+        ]
         
         ## Check for generated images using vision-language model
         current_subtask_i = state["current_subtask_index"]
@@ -180,7 +180,11 @@ def build_coder(config: Config) -> StateGraph:
     graph_builder.add_edge(START, "read_plan")
     graph_builder.add_edge("read_plan", "coder_openhands")
     graph_builder.add_edge("coder_openhands", "validation_openhands")
-    graph_builder.add_edge("validation_openhands", "conclude_openhands_chatbot")
+    graph_builder.add_conditional_edges(
+        "validation_openhands",
+        route_by_subtask_redo_counter,
+        {"MAX_REDO_REACHED": "subtask_continue", "NOT_REACHED": "conclude_openhands_chatbot"},
+    )
     graph_builder.add_edge("conclude_openhands_chatbot", "concluder_tool_node")
     graph_builder.add_conditional_edges("concluder_tool_node", write_plan_router, {"RETURN_TO_LLM": "conclude_openhands_chatbot", END: "route_chatbot"})
     graph_builder.add_conditional_edges(

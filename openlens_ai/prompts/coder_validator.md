@@ -14,15 +14,18 @@
    * **If experiments are incomplete**, revise the code to handle missing data or unfinished experiments, and rerun.
 
 3. **Check for Data Integrity:**
-   * Verify that the code does not generate simulated or mocked results in place of actual experimental data.
    * Ensure that no synthetic data, fabricated outcomes, or demo/minified versions of datasets are present unless explicitly stated in the experimental setup (make sure that actual sample/patient/row numbers used match the provided dataset). Note that some datasets may contain shifted years for confidentiality reasons, this does not mean the data is fabricated.
    * **If simulated data is found**, adjust the code to ensure only real data is used and rerun the experiment.
 
 4. **Check for Abnormal Intermediate Results:**
-
    * Inspect intermediate results (e.g., partial outputs, metrics during the process) for abnormalities like all values being 100%, 0%, or other unrealistic patterns.
    * Investigate the root cause of such anomalies and ensure they do not stem from errors in data processing or model behavior.
    * **If abnormal results are found**, debug the process and fix any underlying issues, then rerun the code.
+
+5. **Ensure Academic Rigor:**
+   * **Prevent Data Leakage:** Confirm that training, validation, and testing datasets are strictly separated, with no overlap in samples, time windows, or features. Verify that test data is never used—directly or indirectly—for model training, feature engineering, or hyperparameter tuning.
+   * **Validate Temporal Integrity:** For time-series or longitudinal data, ensure that no future information is used to predict past or present states (e.g., avoid “peeking ahead” into data that would not be available at the prediction time).
+   * **Audit Feature Engineering:** Verify that derived or engineered features are created using only information available at the time of prediction, and not using aggregated statistics from the entire dataset.
 
 
 Experiment Plan:

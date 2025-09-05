@@ -23,7 +23,7 @@ Content Rules:
 - Make sure NO figures or tables are included in introduction or the first page.
 
 Generation Workflow:
-1. Read former latex writing report from /workspace/manuscript/latex_quality_report.md if exists, use it to guide the writing/polishing process
+1. Read former latex writing report from /workspace/manuscript/latex_quality_report.md and /workspace/manuscript/paper_rigor_report.md if exists, use it to guide the writing/polishing process
 2. Read required result files from /workspace/, extract key metrics for abstract quantitative statements
 4. Formatted like example in /workspace/latex_template/
 5. Write new latex and bibtex files to /workspace/manuscript/, make sure main latex file is named "/workspace/manuscript/main.tex" and bibtex file is named "/workspace/manuscript/ref.bib"

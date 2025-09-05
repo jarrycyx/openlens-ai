@@ -29,6 +29,7 @@ class State(TypedDict):
     data_show: str
     manuscript_polish_round: int
     return_subtask_counter: int
+    polish_latex_counter: int
     node_call_stack: list = []
     resume_node_call_stack: list = []
     available_figs: list = []

@@ -67,11 +67,11 @@ def collect_files(config: Config, max_size: int = 10 * 1024 * 1024, compressed_d
                 
     
     # 创建以时间戳命名的zip文件
-    zip_filename = f"all_files.zip"
-    zip_filepath = os.path.join(compressed_dir, zip_filename)
+    full_zip_filename = f"all_files.zip"
+    full_zip_filepath = os.path.join(compressed_dir, full_zip_filename)
     
     # 将文件打包成zip
-    with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    with zipfile.ZipFile(full_zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
         total_size = 0
         for file in files:
             if "compressed" in file:

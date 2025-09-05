@@ -30,4 +30,4 @@ DECISION: [SELECTED_ACTION]
 REASON: [Concise technical justification referencing specific subtask findings]  
 ```  
 
-Always prioritize FIX_LAST_SUBTASK over REDO_LAST_SUBTASK unless significant errors.  
+Always prioritize FIX_LAST_SUBTASK over REDO_LAST_SUBTASK unless significant errors. Note that some datasets may contain shifted years for confidentiality reasons, this does not mean the data is fabricated.
