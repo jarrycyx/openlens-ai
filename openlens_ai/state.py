@@ -19,17 +19,16 @@ class State(TypedDict):
     messages: list
     plan: dict
     data_report: str
-    current_subtask_index: int
+    current_subtask_index: int = 0
     save_path: str
-    thread_id: str
-    subplan: str
-    literature_tool_call_counter: int
-    last_tool_call: str
-    literature_report: str
-    data_show: str
-    manuscript_polish_round: int
-    return_subtask_counter: int
-    polish_latex_counter: int
+    thread_id: str = ""
+    subplan: str = ""
+    literature_tool_call_counter: int = 0
+    last_tool_call: str = ""
+    literature_report: str = ""
+    data_show: str = ""
+    return_subtask_counter: int = 0
+    polish_latex_counter: int = 0
     node_call_stack: list = []
     resume_node_call_stack: list = []
     available_figs: list = []

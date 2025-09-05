@@ -112,6 +112,8 @@ def route_by_file_existence(file_path: str):
 
 def route_by_subtask_redo_counter(state: State):
     max_subtask_redo = os.getenv("MAX_SUBTASK_REDO", 10)
+    if "return_subtask_counter" not in state:
+        state["return_subtask_counter"] = 0
     logger.info(f"MAX_SUBTASK_REDO: {max_subtask_redo}, current redo: {state['return_subtask_counter']}")
     
     if state["return_subtask_counter"] >= int(max_subtask_redo):
@@ -122,6 +124,8 @@ def route_by_subtask_redo_counter(state: State):
     return "NOT_REACHED"
 def route_by_latex_polish_counter(state: State):
     max_latex_redo = os.getenv("MAX_LATEX_POLISH_ROUND", 10)
+    if "polish_latex_counter" not in state:
+        state["polish_latex_counter"] = 0
     logger.info(f"MAX_LATEX_POLISH_ROUND: {max_latex_redo}, current redo: {state['polish_latex_counter']}")
     
     if state["polish_latex_counter"] >= int(max_latex_redo):
