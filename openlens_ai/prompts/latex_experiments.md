@@ -50,7 +50,7 @@ Generation Workflow:
 2. Read required result files from /workspace/
 3. Extract key metrics for abstract quantitative statements
 4. Formatted like example in /workspace/latex_template/
-5. Write cross-references to figures/tables (figures are in /workspace/manuscript/figures/).
+5. Write cross-references to figures/tables (figures are in /workspace/manuscript/figures/). Description of the figures can be found in /workspace/manuscript/figures/xxx_description.txt
 
 
 Reminders:

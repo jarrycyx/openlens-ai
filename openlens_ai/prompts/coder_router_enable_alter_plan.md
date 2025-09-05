@@ -23,6 +23,11 @@ As the workflow router, analyze the subtask report and choose the next action:
    - Critical subtasks incomplete or failed.
    *Reason example*: "Core output files corrupted. Last subtask must be redone to ensure data integrity."
 
+3) **ALTER_PLAN** (if):  
+   - Fundamental mismatches with original objectives  
+   - Unfixable data corruption/integrity issues  
+   - Systemic errors affecting >30% of results  
+   *Reason example*: "Core assumptions invalidated: 75% outputs show synthetic data contamination. Plan revision required."  
 
 **Output format (strictly follow):**  
 ```  
@@ -30,4 +35,4 @@ DECISION: [SELECTED_ACTION]
 REASON: [Concise technical justification referencing specific subtask findings]  
 ```  
 
-Always prioritize FIX_LAST_SUBTASK over REDO_LAST_SUBTASK unless significant errors.  
+Always prioritize FIX_LAST_SUBTASK over REDO_LAST_SUBTASK unless significant errors, and REDO_LAST_SUBTASK over ALTER_PLAN unless evidence shows irrecoverable divergence from goals.  

@@ -67,7 +67,7 @@ Verify if the manuscript is structured in the following order and meets length l
 **If issues are found**, rewrite and fix any underlying issues, then re-compile the manuscript.
 
 Reminders: 
-- When adding figure references, make sure to FIRST CHECK the current workspace for existing figures. REFERENCE ALL EXISTING FIGURES (.png, .pdf, etc).
+- When adding figure references, make sure to FIRST CHECK the current workspace for existing figures. REFERENCE ALL EXISTING FIGURES (.png, .pdf, etc).  Description of the figures can be found in /workspace/manuscript/figures/xxx_description.txt
 - DO NOT draw new figures when writing paper unless ABSOLUTELY NECESSARY.
 
 Availabel Figures:

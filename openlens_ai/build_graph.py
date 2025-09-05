@@ -23,8 +23,8 @@ from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 
 from loguru import logger
 
-from .utils.file_utils import prepare_file_config
-from .utils.send_email import send_email, collect_files
+from .utils.file_utils import prepare_file_config, collect_files
+from .utils.send_email import send_email
 from .tools.tool_utils import BasicToolNode, route_tools, route_by_keywords
 from .tools.openhands_adaptor import OpenHandsTool
 from .agents.supervisor import build_supervisor
@@ -256,6 +256,7 @@ def parse_args():
     parser.add_argument("--chat-model", type=str, help="Chat model to use")
     parser.add_argument("--base-url", type=str, help="Base URL for the chat model")
     parser.add_argument("--code-model", type=str, help="Code model to use")
+    parser.add_argument("--vision-model", type=str, help="Vision model to use")
     
     parser.add_argument("--resume-from", type=str, help="Resume from a specific saved directory")
 
@@ -277,6 +278,9 @@ def cli_main():
     if args.code_model:
         logger.info(f"Setting CODE_MODEL environment variable to {args.code_model}")
         os.environ["CODE_MODEL"] = args.code_model
+    if args.vision_model:
+        logger.info(f"Setting VISION_MODEL environment variable to {args.vision_model}")
+        os.environ["VISION_MODEL"] = args.vision_model
 
     
     if args.resume_from:

@@ -12,10 +12,11 @@ import json
 import glob
 import subprocess
 import time
+import zipfile
+import io
 logger.configure(handlers=[{"sink": sys.stderr, "level": "INFO"}])
 
 from .build_graph import build_graph, run_graph
-from .utils.file_utils import prepare_file_config
 from .utils.frontend_utils import WorkspaceMonitor, display_messages_from_file
 from .utils.config import Config
 from .state import load_state
@@ -29,6 +30,7 @@ def load_saved_sessions(email_filter=None):
     sessions = []
     email_show = email_filter.replace("@", "_").replace(".", "_")
     pattern = os.path.join("./outputs", f"OL_*{email_show}*")
+    filter_list = glob.glob(pattern)
     for path in glob.glob(pattern):
         if os.path.isdir(path):
             config_path = os.path.join(path, "config.json")
@@ -44,10 +46,18 @@ def load_saved_sessions(email_filter=None):
                         sessions.append(config)
                 except Exception as e:
                     logger.warning(f"Failed to load config from {path}: {e}")
+    if os.path.exists(os.path.join("./outputs", email_filter)):
+        filter_list.append(os.path.join("./outputs", email_filter))
+        config_path = os.path.join("./outputs", email_filter, "config.json")
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+            config = Config(**config)
+            logger.info(f"Exact match found for {email_filter}")
+            sessions.append(config)
     return sorted(sessions, key=lambda x: x.thread_id, reverse=True)
 
 
-def start_new_session(sidebar_container_empty, base_url, api_key, model, code_model):
+def start_new_session(workspace_container, sidebar_usage_container, base_url, api_key, model, code_model, vision_model):
     """Handle the start new session mode"""
     # 输入字段
     question = st.text_area(
@@ -145,6 +155,7 @@ def start_new_session(sidebar_container_empty, base_url, api_key, model, code_mo
                     "--api-key", os.environ["OPENAI_API_KEY"] if "Default" in api_key else api_key,
                     "--base-url", os.environ["BASE_URL"] if "Default" in base_url else base_url,
                     "--code-model", code_model,
+                    "--vision-model", vision_model,
                 ])
             
                 # 将进程信息添加到进程管理器
@@ -171,7 +182,7 @@ def start_new_session(sidebar_container_empty, base_url, api_key, model, code_mo
                 st.session_state.monitor_thread.stop()
 
             # 启动新的监控线程
-            monitor_thread = WorkspaceMonitor(config, sidebar_container_empty)
+            monitor_thread = WorkspaceMonitor(config, workspace_container, sidebar_usage_container)
             add_script_run_ctx(monitor_thread, get_script_run_ctx())
             monitor_thread.start()
             st.session_state.monitor_thread = monitor_thread
@@ -193,7 +204,7 @@ def start_new_session(sidebar_container_empty, base_url, api_key, model, code_mo
                 st.error("Please enter an email.")
 
 
-def resume_session(sidebar_container_empty):
+def resume_session(workspace_container, sidebar_usage_container):
     """Handle the resume session mode"""
     # 获取邮箱输入以过滤会话
     email_filter = st.text_input("Email", st.session_state.email)
@@ -252,7 +263,7 @@ def resume_session(sidebar_container_empty):
                         st.session_state.monitor_thread.stop()
 
                     # 启动新的监控线程
-                    monitor_thread = WorkspaceMonitor(config, sidebar_container_empty)
+                    monitor_thread = WorkspaceMonitor(config, workspace_container, sidebar_usage_container)
                     add_script_run_ctx(monitor_thread, get_script_run_ctx())
                     monitor_thread.start()
                     st.session_state.monitor_thread = monitor_thread
@@ -267,7 +278,7 @@ def resume_session(sidebar_container_empty):
 
 
 def main():
-    st.set_page_config(page_title="OpenLens AI 📚🔍💡")
+    st.set_page_config(page_title="OpenLens AI 📚🔍💡", layout="wide")
     st.title("OpenLens AI 📚🔍💡")
     st.subheader("Fully Autonomous Research Agent for Health Infomatics")
     
@@ -289,17 +300,30 @@ def main():
 
     # 创建侧边栏容器
     sidebar_container = st.sidebar.container()
-    with sidebar_container:
-        st.title("LLM Configuration")
-        sidebar_container_api = st.container()
-        st.title("Workspace")
-        sidebar_container_empty = st.empty()
+    sidebar_container.title("LLM Configuration")
+    sidebar_container_api = sidebar_container.container()
+    sidebar_container.title("Token Usage")
+    sidebar_usage_container = sidebar_container.empty()
+    sidebar_container.title("Workspace")
+    workspace_container = sidebar_container.empty()
     
     with sidebar_container_api:
-        base_url = st.text_input("API Base URL", value="Default (may be extremely slow)")
-        api_key = st.text_input("API Key", value="Default (may be extremely slow)")
-        model = st.text_input("Chat Model", value=os.environ.get("MODEL", ""))
-        code_model = st.text_input("Code Model", value=os.environ.get("CODE_MODEL", ""))
+        # 使用列布局使三个模型输入框并排放置
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            base_url = st.text_input("API Base URL", value="Default (slow)")
+        with col2:
+            api_key = st.text_input("API Key", value="Default (slow)")
+            
+        # 将code_model和vision_model放在新的一行
+        col3, col4, col5 = st.columns(3)
+        with col3:
+            model = st.text_input("Chat Model", value=os.environ.get("MODEL", ""))
+        with col4:
+            code_model = st.text_input("Code Model", value=os.environ.get("CODE_MODEL", ""))
+        with col5:
+            vision_model = st.text_input("Vision Model", value=os.environ.get("VISION_MODEL", ""))
 
     # 如果有正在运行的监控线程，但 config 已更改，则停止旧线程
     if (
@@ -313,14 +337,15 @@ def main():
         st.session_state.monitor_thread.stop()
         st.session_state.monitor_thread = None
 
+
     # 如果没有运行中
     if not st.session_state.config:
-        sidebar_container_empty.info("Run an agent to start monitoring workspace files.")
+        workspace_container.info("Run an agent to start monitoring workspace files.")
 
     # 添加模式选择
     mode = st.radio("Select Mode", ["Start New", "Resume"], horizontal=True, key="mode")
     
     if mode == "Start New":
-        start_new_session(sidebar_container_empty, base_url, api_key, model, code_model)
+        start_new_session(workspace_container, sidebar_usage_container, base_url, api_key, model, code_model, vision_model)
     else:  # Resume mode
-        resume_session(sidebar_container_empty)
+        resume_session(workspace_container, sidebar_usage_container)

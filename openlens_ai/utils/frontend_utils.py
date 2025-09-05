@@ -16,6 +16,7 @@ import streamlit_scrollable_textbox as stx
 import glob
 import json
 import traceback
+from .file_utils import prepare_file_config, collect_files, collect_token_usage
 from .config import Config
 
 
@@ -203,7 +204,7 @@ def display_messages_from_file(config: Config):
                                 label="📥 Download",
                                 data=file_data,
                                 file_name=msg["filename"],
-                                key=f"download_{msg['filename']}_{timestamp}_{random.randint(1000, 9999)}"
+                                key=f"download_{msg['filename']}_{timestamp}_{random.randint(100000, 999999)}"
                             )
                     else:
                         with st.container(horizontal=True):
@@ -212,7 +213,7 @@ def display_messages_from_file(config: Config):
                                 label="📥 Download",
                                 data=msg["content"],
                                 file_name=msg["filename"],
-                                key=f"download_{msg['filename']}_{timestamp}_{random.randint(1000, 9999)}"
+                                key=f"download_{msg['filename']}_{timestamp}_{random.randint(100000, 999999)}"
                             )
                         show_scrollable(msg["content"], msg["filename"], height=200)
 
@@ -263,12 +264,53 @@ def frontend_add_file_msg(file_path, config: Optional[Config] = None, file_statu
         
 
 
+@st.fragment
+def download_workspace_button():
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    with st.spinner("Preparing workspace..."):
+        collect_files(st.session_state.config)
+        with open(os.path.join(st.session_state.config.save_path, "compressed", "all_files.zip"), "rb") as f:
+            zip_buffer = f.read()
+    st.download_button(
+        label="📥 Download Workspace",
+        data=zip_buffer,
+        file_name=f"workspace_{os.path.basename(st.session_state.config.save_path)}.zip",
+        mime="application/zip",
+        key=f"download_workspace_{timestamp}"
+    )
+    pdf_path = os.path.join(st.session_state.config.save_path, "workspace", "manuscript", "main.pdf")
+    if os.path.exists(pdf_path):
+        with st.spinner("Preparing pdf..."):
+            with open(pdf_path, "rb") as f:
+                pdf_bytes = f.read()
+        st.download_button(
+            label="📑 Download Paper",
+            data=pdf_bytes,
+            file_name=f"main.pdf",
+            key=f"download_plan_{timestamp}"
+        )
+        
+    plan_path = os.path.join(st.session_state.config.save_path, "plan.md")
+    if os.path.exists(plan_path):
+        with st.spinner("Preparing plan.md..."):
+            with open(plan_path, "r") as f:
+                plan_str = f.read()
+        st.download_button(
+            label="✍️ Download Plan",
+            data=plan_str,
+            file_name=f"plan.md",
+            key=f"download_pdf_{timestamp}"
+        )
+
+
+
 class WorkspaceMonitor(Thread):
-    def __init__(self, config: Config, sidebar_container):
+    def __init__(self, config: Config, workspace_container, usage_container):
         super().__init__()
         self.save_path = config.save_path
         self.config = config
-        self.sidebar_container = sidebar_container
+        self.workspace_container = workspace_container
+        self.usage_container = usage_container
         self.daemon = True  # 设置为守护线程，确保主程序结束时线程也结束
         self._stop_event = False
         self.workspace_path = os.path.join(self.save_path, "workspace")
@@ -277,9 +319,14 @@ class WorkspaceMonitor(Thread):
         self._stop_event = True
 
     def refresh_file(self):
+        
+        with self.usage_container:
+            usage_md, usage_table = collect_token_usage(self.config)
+            st.table(usage_table)
+        
         if not os.path.exists(self.workspace_path):
             # 使用 Streamlit 的线程上下文安全方式显示信息
-            self.sidebar_container.info("Workspace directory does not exist yet.")
+            self.workspace_container.info("Workspace directory does not exist yet.")
         else:
             # 使用 glob.glob 递归获取所有文件
             pattern = os.path.join(self.workspace_path, "**", "*")
@@ -313,7 +360,7 @@ class WorkspaceMonitor(Thread):
                 logger.debug(f"New files found: {new_files}")
                 logger.debug(f"Updated files found: {update_files}")
                 # 每次都要覆盖掉上次的文件列表
-                self.sidebar_container.empty()
+                self.workspace_container.empty()
 
                 for file in new_files:
                     if file.endswith(".pyc"):
@@ -325,7 +372,8 @@ class WorkspaceMonitor(Thread):
                         continue
                     frontend_add_file_msg(file, self.config, "updated")
 
-                with self.sidebar_container.container():
+                with self.workspace_container.container():
+                    download_workspace_button()
                     # 显示文件列表
                     if current_files:
                         # 创建一个按钮，点击后设置要查看的文件

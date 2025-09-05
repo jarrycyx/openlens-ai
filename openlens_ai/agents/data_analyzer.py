@@ -92,7 +92,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
             data_show = f.read()
         
         state["data_show"] = data_show
-        this_chatbot = chatbot_with_context_manager(config, llm_with_tools, data_report_prompt)
+        this_chatbot = chatbot_with_context_manager(config, llm_with_tools, data_report_prompt, calling_subgraph="data_analyzer")
         state = this_chatbot(state)
         return state
 

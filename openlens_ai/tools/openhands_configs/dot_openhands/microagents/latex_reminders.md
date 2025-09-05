@@ -9,7 +9,7 @@ triggers:
 ---
 
 Reminders: 
-- When adding figure references, make sure to FIRST CHECK the current workspace for existing figures. INCLUDE ALL EXISTING FIGURES (.png, .pdf, etc) using the following format:
+- When adding figure references, make sure to FIRST CHECK the current workspace for existing figures. Description of the figures can be found in /workspace/manuscript/figures/xxx_description.txt. INCLUDE ALL EXISTING FIGURES (.png, .pdf, etc) using the following format:
 ```
 \begin{figure}[htbp]
 \centering

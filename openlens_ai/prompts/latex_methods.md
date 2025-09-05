@@ -28,7 +28,7 @@ Generation Workflow:
 3. Extract key metrics for abstract quantitative statements
 4. Formatted like example in /workspace/latex_template/
 5. Write new latex and bibtex files to /workspace/manuscript/, make sure main latex file is named "/workspace/manuscript/main.tex" and bibtex file is named "/workspace/manuscript/ref.bib"
-6. Write cross-references to figures/tables (figures are in /workspace/manuscript/figures/). 
+6. Write cross-references to figures/tables (figures are in /workspace/manuscript/figures/). Description of the figures can be found in /workspace/manuscript/figures/xxx_description.txt
 7. Compile to PDF using bibtex and pdflatex, make sure pdf is named "main.pdf"
 
 Reminders:

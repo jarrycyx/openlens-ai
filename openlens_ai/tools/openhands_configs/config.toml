@@ -11,7 +11,7 @@ api_key="{api_key}"
 base_url="{base_url}"
 input_cost_per_token = 1.0
 output_cost_per_token = 1.0
-max_message_chars = 10000
+max_message_chars = 100000
 
 [sandbox]
 user_id = 1000
