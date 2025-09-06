@@ -321,8 +321,11 @@ class WorkspaceMonitor(Thread):
     def refresh_file(self):
         
         with self.usage_container:
-            usage_md, usage_table = collect_token_usage(self.config)
-            st.table(usage_table)
+            try:
+                usage_md, usage_table = collect_token_usage(self.config)
+                st.table(usage_table)
+            except Exception as e:
+                logger.warning(f"Error loading token usage: {e}")
         
         if not os.path.exists(self.workspace_path):
             # 使用 Streamlit 的线程上下文安全方式显示信息

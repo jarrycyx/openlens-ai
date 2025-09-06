@@ -45,11 +45,11 @@ def create_thread_id(question, dataset_path):
     dataset_name = Path(dataset_path).name
     # 简化问题作为标识符
     question_part = ''.join(c for c in question if c.isalnum() or c in ' _-')[:30]
-    return f"test_{dataset_name}_{question_part}"
+    return f"test_{dataset_name}_{question_part}".replace(' ', '_')
 
 def main():
     parser = argparse.ArgumentParser(description='并行测试脚本')
-    parser.add_argument('--csv-file', default='eval/openlens_eval_dataset.csv', 
+    parser.add_argument('--csv-file', default='exp/eval/openlens_eval_dataset.csv', 
                         help='包含问题的CSV文件路径')
     parser.add_argument('--email', default='dzdzzd@126.com', 
                         help='接收通知的邮箱')

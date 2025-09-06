@@ -12,6 +12,8 @@ base_url="{base_url}"
 input_cost_per_token = 1.0
 output_cost_per_token = 1.0
 max_message_chars = 100000
+native_tool_calling = true
+retry_max_wait=60
 
 [sandbox]
 user_id = 1000
@@ -26,3 +28,6 @@ timeout = 3600
 shttp_servers = []
 stdio_servers = []
 sse_servers = []
+
+[security]
+security_analyzer = "none"

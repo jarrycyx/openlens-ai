@@ -225,7 +225,8 @@ def collect_token_usage(config: Config, overall: bool = True) -> str:
     
     # Create pandas DataFrame
     df = pd.DataFrame(df_data)
-    df = df.set_index('Model')
+    if "Model" in df.columns:
+        df = df.set_index('Model')
     
     # Return both string summary and DataFrame
     return output_str, df

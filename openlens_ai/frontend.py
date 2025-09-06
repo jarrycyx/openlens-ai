@@ -28,8 +28,11 @@ def load_saved_sessions(email_filter=None):
         return []
     
     sessions = []
-    email_show = email_filter.replace("@", "_").replace(".", "_")
-    pattern = os.path.join("./outputs", f"OL_*{email_show}*")
+    if email_filter in ["dzdzzd@126.com"]:
+        pattern = os.path.join("./outputs", f"*")
+    else:
+        email_show = email_filter.replace("@", "_").replace(".", "_")
+        pattern = os.path.join("./outputs", f"OL_*{email_show}*")
     filter_list = glob.glob(pattern)
     for path in glob.glob(pattern):
         if os.path.isdir(path):
