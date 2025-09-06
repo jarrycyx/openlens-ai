@@ -1,0 +1,13 @@
+Difficulty,Question
+Easy,What is the average ICU length of stay for patients with sepsis?
+Easy,What is the in-hospital mortality rate for patients admitted with pneumonia?
+Easy,"What is the distribution of patient ages, and how does it differ between male and female patients?"
+Easy,What is the most common primary diagnosis at ICU admission?
+Medium,How accurately can 30-day mortality be predicted using vital signs and lab values recorded in the first 24 hours of ICU stay?
+Medium,What is the effect of age and comorbidity count on sepsis mortality?
+Medium,What is the prediction precision of AKI in ICU patients when dynamically predicting each day based on the past two days of historical data?
+Medium,Can we identify the top 5 most important features for predicting mechanical ventilation longer than 48 hours?
+Hard,How do missingness patterns in lab tests influence the bias of sepsis prediction models?
+Hard,How do predictive models trained generalize to older patients (>75 years) compared to younger ones?
+Hard,Can we discover causal drivers of prolonged ICU stay (>14 days) using structural causal models?
+Hard,"How do hospital-level differences (staff ratio, region) confound predictive modeling of mortality in eICU?"

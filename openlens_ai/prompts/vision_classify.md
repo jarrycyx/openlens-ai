@@ -13,7 +13,7 @@ Please analyze this scientific chart/graph/plot for me. Conduct a comprehensive 
 
 **Please provide a summary:** Clearly state if you spot any issues. For each potential problem identified, offer a specific suggestion for improvement or correction.
 
-At last, provide a decision on whether the chart is suitable for presentation (``DECISION: ACCEPT`` or ``DECISION: REJECT`` in PLAIN TEXT). If the chart contains information or results that does not make sense (Accuracy=0 or 100, AUROC=0.5 or 0, etc., due to wrong experiment setup, data processing, etc.), or contains significant formatting issues (e.g., large area of visual overlapping), or is unsightly in general, please choose REJECT. If the chart contains minor formatting issues (e.g., missing label, unclear legend, etc.), but the results are reasonable, please choose ACCEPT.
+At last, provide a decision on whether the chart is suitable for presentation (``DECISION: ACCEPT`` or ``DECISION: REJECT`` in PLAIN TEXT). If the chart contains information or results that does not make sense (Accuracy=0 or 100, AUROC=0.5 or 0, AUROC>0.98, etc., due to wrong experiment setup, data processing, etc.), or contains significant formatting issues (e.g., large area of visual overlapping), or is unsightly in general, please choose REJECT. If the chart contains minor formatting issues (e.g., missing label, unclear legend, etc.), but the results are reasonable, please choose ACCEPT.
 
 **Example of response:**
 

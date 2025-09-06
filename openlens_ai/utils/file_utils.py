@@ -238,6 +238,24 @@ def prepare_file_config(thread_id: str, question: str, dataset_path: str, email:
         save_path = os.path.join("./outputs", thread_id)
     os.makedirs(save_path, exist_ok=True)
     
+    # 创建备份文件夹并复制openlens_ai文件夹和.env文件
+    backup_path = os.path.join(save_path, "backup")
+    os.makedirs(backup_path, exist_ok=True)
+    
+    # 复制openlens_ai文件夹
+    import shutil
+    if os.path.exists("openlens_ai"):
+        shutil.copytree("openlens_ai", os.path.join(backup_path, "openlens_ai"), dirs_exist_ok=True)
+    
+    # # 复制.env文件
+    # if os.path.exists(".env"):
+    #     shutil.copy2(".env", os.path.join(backup_path, ".env"))
+    # 保存环境变量
+    with open(os.path.join(backup_path, "env.sh"), "w") as fp:
+        # json.dump(dict(os.environ), fp, indent=4)
+        for key, val in dict(os.environ).items():
+            fp.write(f"{key}=\"{val}\"\n")
+    
     oh_config = oh_config_template.replace("{api_key}", os.getenv("OPENAI_API_KEY"))
     oh_config = oh_config.replace("{base_url}", os.getenv("BASE_URL"))
     oh_config = oh_config.replace("{code_model}", os.getenv("CODE_MODEL"))

@@ -17,7 +17,7 @@ To ensure methodological rigor, explicitly define the following for **each subta
 2. **Output Specifications:**  
    - Define the **expected results** of the subtask, including:  
      - Data format (e.g., CSV, JSON).  
-     - Key metrics/artifacts (e.g., `p-values`, `ROC curves`, `cleaned_dataset_v2.csv`).  
+     - Key metrics/artifacts (e.g., `p-values`, `ROC curves`, `cleaned_dataset_v2.csv`, remind to prevent unreasonable results, e.g., AUROC<=0.5, AUROC>0.98, Accuracy>0.98, Accuracy=0).  
 
 3. **Execution Protocol:**  
    - Provide **step-by-step instructions** to run the experiment, such as:  
@@ -43,7 +43,7 @@ To ensure methodological rigor, explicitly define the following for **each subta
 > #### **Outputs:**
 > * `survival_rates_by_group.json`:
 >   * Survival rates for patients who survived up to specific time points (e.g., 30, 60, 90 days) for the 10 mg group.
-    * 95% CI for each survival rate.
+    * 95% CI for each survival rate, prevent unrealitic results such as survival rates > 0.999, survival rates = 0, etc.
 > #### **Execution:**
 > Run the python script with the following command:
 > ```bash
