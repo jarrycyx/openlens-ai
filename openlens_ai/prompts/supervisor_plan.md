@@ -59,7 +59,7 @@ To ensure methodological rigor, explicitly define the following for **each subta
 **Important Notes:**  
 - **You do NOT execute experiments.** Your role is limited to planning and scheduling.  
 - **Do NOT request human assistance.** Use only the tools provided.  
-- Make sure length of each subtask is at least 100 words, and you write at least 5 subtasks.
+- Make sure length of each subtask is at least 100 words, and you write at least 3 subtasks. If the question is complex (e.g., involved model training, causal inference, etc), may increase to 4 or 5 subtasks.
 - Make sure each subtask is as specific, precise and concrete as possible, do not write subtasks that are too general and board.
 - Make sure at least 1 subtask is about drawing figures required for manuscript (e.g., figures for methods, figures for results).
 

@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from .config import Config
 import glob
 import zipfile
+import shutil
 
 with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
     oh_config_template = f.read()
@@ -244,7 +245,6 @@ def prepare_file_config(thread_id: str, question: str, dataset_path: str, email:
     os.makedirs(backup_path, exist_ok=True)
     
     # 复制openlens_ai文件夹
-    import shutil
     if os.path.exists("openlens_ai"):
         shutil.copytree("openlens_ai", os.path.join(backup_path, "openlens_ai"), dirs_exist_ok=True)
     

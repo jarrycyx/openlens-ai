@@ -1,7 +1,7 @@
 import os
 import json
 import glob
-import inspect
+import shutil
 
 from typing import Annotated
 from typing_extensions import TypedDict
@@ -148,6 +148,23 @@ def load_state(save_dir: str) -> tuple[Config, State]:
         logger.warning(f"Error loading node call stack: {e}")
         state['resume_node_call_stack'] = []
         state['node_call_stack'] = []
+        
+    # 创建备份文件夹并复制openlens_ai文件夹和.env文件
+    backup_path = os.path.join(save_dir, "backup")
+    os.makedirs(backup_path, exist_ok=True)
+    
+    # 复制openlens_ai文件夹
+    if os.path.exists("openlens_ai"):
+        shutil.copytree("openlens_ai", os.path.join(backup_path, "openlens_ai"), dirs_exist_ok=True)
+    
+    # # 复制.env文件
+    # if os.path.exists(".env"):
+    #     shutil.copy2(".env", os.path.join(backup_path, ".env"))
+    # 保存环境变量
+    with open(os.path.join(backup_path, "env.sh"), "w") as fp:
+        # json.dump(dict(os.environ), fp, indent=4)
+        for key, val in dict(os.environ).items():
+            fp.write(f"{key}=\"{val}\"\n")
         
     return config, state, last_subgraph
      
