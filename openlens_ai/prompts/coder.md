@@ -4,7 +4,7 @@ Experiment Plan:
 {subplan}
 
 Program Requirement: 
-This program must take no arguments and should handle the execution of the entire workflow for the group. Include neccesary explanation assiciated with the plan in the script comment. Make sure to write codes, scripts, and save results in /workspace/subtask_XX (where XX 
+This program must take no arguments and should handle the execution of the entire workflow for the group. Include neccesary explanation assiciated with the plan in the script comment. Make sure to write ALL codes, scripts, and save results in /workspace/subtask_XX (where XX 
 is the subtask number, e.g., sutask_01, subtask_02) directory to avoid confusion between different subtasks.
 
 Workflow:
@@ -22,3 +22,4 @@ Reminders:
 - Data prepreration and model training may take a long time, DO NOT set a short timeout for the execution, also DO NOT force kill the process unless you are sure it is stuck.
 - When writing any scripts related to data loading/processing, DO NOT try to load all data into memory at once, use batch processing or data streaming techniques to handle large datasets efficiently.
 - When fixing issues or writing improved version, edit the original script directly, do not write new scripts, i.e. DO NOT create files such as train_improved.py, process_fixed.py because this may make the workspace messy and difficult to manage.
+- Only write code and save results in the designated directory (/workspace/subtask_XX), do not write code outside the directory.
