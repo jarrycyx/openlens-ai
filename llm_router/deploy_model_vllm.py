@@ -4,35 +4,36 @@ import time
 import psutil
 import argparse
 
-def start_vllm_process(model_path, port="8000", gpu="0", quant4bit=False, memory_utilization=0.75, log_to_file=False):
+def start_vllm_process(model_path, max_len="64000", enforce_eager=True, port="8000", gpu="0", quant4bit=False, memory_utilization=0.75, log_to_file=False):
     gpu_per_process = len(gpu.split(","))
     
     cmd = [
         "vllm", "serve", model_path, 
-        "--max-model-len", "110000", 
+        "--max-model-len", max_len, 
         "--tensor-parallel-size", f"{gpu_per_process}", 
         "--port", port,
-        "--enforce-eager",
         "--enable-expert-parallel",
         "--gpu-memory-utilization", str(memory_utilization),
         "--enable-auto-tool-choice",
         "--served-model-name", "llm"
     ]
+    if enforce_eager:
+        cmd += ["--enforce-eager"]
     
     if "glm" in model_path.lower():
         tool_parser = "glm45"
         reasoning_parser = "glm45"
-        cmd += ["--tool-parser", tool_parser, "--reasoning-parser", reasoning_parser]
+        cmd += ["--tool-call-parser", tool_parser, "--reasoning-parser", reasoning_parser]
     elif "qwen3" in model_path.lower():
         if "coder" in model_path.lower():
             tool_parser = "qwen3_coder"
-            cmd += ["--tool-parser", tool_parser]
+            cmd += ["--tool-call-parser", tool_parser]
         else:
             tool_parser = "hermes"
-            cmd += ["--tool-parser", tool_parser]
+            cmd += ["--tool-call-parser", tool_parser]
     else:
         print("Model type not recognized. Using hermes parser.")
-        cmd += ["--tool-parser", "hermes"]
+        cmd += ["--tool-call-parser", "hermes"]
     
     
     if "AWQ" not in model_path:
@@ -79,7 +80,9 @@ if __name__ == "__main__":
     parser.add_argument("-g", "--gpu", type=str, default="0", help="GPU IDs to use")
     parser.add_argument("--mem-ut", type=str, default="0.9", help="GPU memory utilization")
     parser.add_argument("-q", "--quant4bit", action="store_true", help="Enable 4-bit quantization")
+    parser.add_argument("--max-len", type=str, default="64000", help="Maximum length of input")
     parser.add_argument("--log-to-file", action="store_true", help="Log to file")
+    parser.add_argument("--enforce-eager", action="store_true", help="Enable eager mode")
     args = parser.parse_args()
     
     gpu_list = str(args.gpu).split(",")
@@ -95,6 +98,8 @@ if __name__ == "__main__":
         p = start_vllm_process(
             model_path=args.model,
             port=port,
+            enforce_eager=args.enforce_eager,
+            max_len=args.max_len,
             gpu=",".join(gpu_group),
             quant4bit=args.quant4bit,
             memory_utilization=args.mem_ut,

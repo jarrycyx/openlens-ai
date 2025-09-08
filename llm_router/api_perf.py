@@ -45,7 +45,7 @@ def test_openai_performance(api_key, model, prompt, num_requests, max_workers, b
             response = client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=50
+                max_tokens=1000
             )
             
             end_time = time.time()

@@ -31,7 +31,6 @@ dependencies = [
     "langchain_openai",
     "langchain_mcp_adapters",
     "graphviz",
-    "fitz",
     "PyMuPDF"
 ]
 

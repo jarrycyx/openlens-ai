@@ -34,14 +34,22 @@
 
 ### Installation
 
+0. Ensure Docker Installation:
+```bash
+docker --version
+```
+
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone git@github.com:jarrycyx/openlens-ai.git
 cd agent-med
 ```
 
 2. Install dependencies:
 ```bash
+conda create -n py312 python=3.12 # Or with uv / venv
+conda activate py312
+pip install --upgrade pip
 pip install -e .
 ```
 

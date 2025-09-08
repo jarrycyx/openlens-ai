@@ -62,7 +62,7 @@ def main():
     
     args = parser.parse_args()
     
-    os.system("bash llm_router/env_api_perf.sh")
+    # os.system("bash llm_router/env_api_perf.sh")
     
     
     # 加载所有问题
