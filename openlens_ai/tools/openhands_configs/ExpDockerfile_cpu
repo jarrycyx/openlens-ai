@@ -1,6 +1,7 @@
 # Base image with Python and Conda
 # FROM nvidia/cuda:12.6.2-devel-ubuntu22.04
-FROM nvidia/cuda:12.2.2-devel-ubuntu20.04
+
+FROM ubuntu
 USER root
 
 # Set environment variables to avoid interactive prompts
@@ -10,7 +11,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
 RUN apt-get install -y software-properties-common ca-certificates
 RUN add-apt-repository 'ppa:deadsnakes/ppa'
-RUN apt-get install -y \
+RUN apt-get install -y --fix-missing \
     wget \
     curl \
     gnupg \
@@ -19,7 +20,7 @@ RUN apt-get install -y \
     vim \
     make \
     nvidia-cuda-toolkit \
-    netcat \
+    netcat-traditional \
     git \
     openssl \
     zsh \
@@ -78,7 +79,7 @@ COPY openlens_ai/tools/openhands_configs/openhands_env.sh ~/.bashrc
 # setup pip
 RUN cd /helper
 RUN rm -rf /usr/bin/pip3 /usr/bin/pip
-RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py 
 RUN python get-pip.py --break-system-packages
 RUN ln -s /usr/bin/pip /usr/bin/pip3
 
