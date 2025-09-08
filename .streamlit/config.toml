@@ -1,0 +1,3 @@
+[server]
+sslCertFile = '.streamlit/openlens.icu.pem'
+sslKeyFile = '.streamlit/openlens.icu.key'

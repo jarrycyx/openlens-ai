@@ -7,6 +7,7 @@ import time
 from typing import Optional, Type, Dict, Any, Union
 from datetime import datetime
 from loguru import logger
+import random
 
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
@@ -32,6 +33,8 @@ Reminders: DO NOT mock or simulate results. Only write python files to generate 
 # If the code fails, fix the code and try again.
 # """
 
+with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
+    oh_config_template = f.read()
 
 def run_docker_container(cmd: str, config: Config):
     """运行Docker容器并实时输出+保存日志"""
@@ -44,14 +47,18 @@ def run_docker_container(cmd: str, config: Config):
         assert os.path.exists(dataset_path), f"Dataset path {dataset_path} does not exist."
         latex_template_path = os.path.join(pwd, "openlens_ai/tools/latex_template/neurips")
         dot_openhands_path = os.path.join(pwd, "openlens_ai/tools/openhands_configs/dot_openhands")
+        openhands_traj_path = os.path.join(pwd, config.save_path, "openhands_traj")
         docker_cmd = [
             "docker",
             "run",
             "-t",
             "--gpus", "all",
+            "--cpus", "2",
+            "--memory", "4g",
             "-v", f"{this_openhands_config_path}:/helper/config.toml",
             "-v", "./openlens_ai:/helper/openlens_ai",
             "-v", f"{workspace_dir}:/workspace",
+            "-v", f"{openhands_traj_path}:/helper/openhands_traj",
             "-v", f"{dataset_path}:/workspace/datasets:ro",
             "-v", f"{latex_template_path}:/workspace/latex_template:ro",
             "-v", f"{dot_openhands_path}:/workspace/.openhands:ro",
@@ -68,6 +75,8 @@ def run_docker_container(cmd: str, config: Config):
             "run",
             "-t",
             "--gpus", "all",
+            "--cpus", "2",
+            "--memory", "4g",
             "-v", "./openlens_ai:/helper/openlens_ai",
             "-v", f"{workspace_dir}:/workspace",
             "-v", f"{latex_template_path}:/workspace/latex_template:ro",
@@ -188,12 +197,24 @@ def run_openhands_prompt(prompts, config: Config):
         prompt = prompt.replace('"', '\\"').replace("\n", "\\n").replace("`", " ")
         prompt += postfix
         max_iter = os.environ.get("OPENHANDS_MAX_ITER", 20)
+        
+        
+        oh_config = oh_config_template.replace("{api_key}", os.getenv("OPENAI_API_KEY"))
+        oh_config = oh_config.replace("{base_url}", os.getenv("BASE_URL"))
+        oh_config = oh_config.replace("{code_model}", os.getenv("CODE_MODEL"))
+        oh_config = oh_config.replace("{tavily_key}", os.getenv("TAVILY_API_KEY", ""))
+        this_config_path = os.path.join(config.save_path, "openhands_config.toml")
+        with open(this_config_path, "w") as f:
+            f.write(oh_config)
+        logger.info(f"Using OpenHands config: {oh_config}")
+        
         # 构建在Docker容器中执行的命令
         cmd = (
             f"cp /helper/config.toml /helper/OpenHands/ && "
             f"source /helper/openlens_ai/tools/openhands_configs/openhands_env.sh && "
             f"cd /helper/OpenHands && "
             f"mkdir -p /workspace/manuscript/ && chmod -R 777 /workspace/manuscript/ && cp /workspace/latex_template/*.sty /workspace/manuscript/ &&"
+            f"mkdir -p /helper/openhands_traj && chmod -R 777 /helper/openhands_traj &&"
             f'poetry run python -m openhands.core.main -t "{prompt}" -i {max_iter}'
         )
         results = run_docker_container(cmd, config)
@@ -243,7 +264,7 @@ class OpenHandsTool(BaseTool):
     def _run(self, prompts: Union[list, str]) -> str:
         """执行OpenHands操作的主要方法"""
         logger.info(f"Starting OpenHands with prompt: {prompts}")
-        # return ""
+        # return str([random.randint(1000, 9999) for _ in range(10000)])
         return run_openhands_prompt(prompts, self.config)
 
 

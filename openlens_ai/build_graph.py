@@ -23,8 +23,8 @@ from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 
 from loguru import logger
 
-from .utils.file_utils import prepare_file_config
-from .utils.send_email import send_email, collect_files
+from .utils.file_utils import prepare_file_config, collect_files
+from .utils.send_email import send_email
 from .tools.tool_utils import BasicToolNode, route_tools, route_by_keywords
 from .tools.openhands_adaptor import OpenHandsTool
 from .agents.supervisor import build_supervisor
@@ -38,11 +38,13 @@ from .utils.config import Config
 
 graph = None
 stop_sending_emails = threading.Event()
+all_subgraphs = ["literature_reviewer", "data_analyzer", "supervisor", "coder", "latex_writer"]
+
 
 def send_periodic_emails(config: Config):
-    """每10分钟发送一次进度邮件"""
+    """每60分钟发送一次进度邮件"""
     logger.info("Starting to send periodic emails...")
-    while not stop_sending_emails.wait(1200):  # 600秒 = 10分钟
+    while not stop_sending_emails.wait(3600):  # 600秒 = 10分钟
         try:
             zipfile, latest_md = collect_files(config)
             send_email(
@@ -54,7 +56,7 @@ def send_periodic_emails(config: Config):
         except Exception as e:
             logger.error(f"Error sending periodic email: {e}")
 
-def build_graph(config: Config, checkpointer: InMemorySaver):
+def build_graph(config: Config, start_subgraph: str = None):
     try:
         graph_builder = StateGraph(State)
 
@@ -72,7 +74,11 @@ def build_graph(config: Config, checkpointer: InMemorySaver):
         graph_builder.add_node("literature_reviewer", literature_review_subgraph)
         graph_builder.add_node("latex_writer", latex_writer_subgraph)
 
-        graph_builder.add_edge(START, "literature_reviewer")
+        
+        if start_subgraph and (start_subgraph in all_subgraphs):
+            graph_builder.add_edge(START, start_subgraph)
+        else:
+            graph_builder.add_edge(START, "literature_reviewer")
         graph_builder.add_edge("literature_reviewer", "data_analyzer")
         # graph_builder.add_edge(START, "data_analyzer")
         graph_builder.add_edge("data_analyzer", "supervisor")
@@ -144,14 +150,6 @@ def get_last_node(graph: CompiledStateGraph, this_node_name: str):
 
 def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_state: State):
     
-    # 发送进度邮件
-    send_email(
-        subject=f"OpenLens Job Started | {config.thread_id}",
-        content=f"## Question\n{config.question}\n\n## Dataset\n{config.dataset_path}\n\nThe job can take a while (any time from 5 minutes to several hours) to complete. Will keep you updated with the progress.",
-        recipients=config.email,
-        attachments=None,
-    )
-    
     # 启动定期发送邮件的线程
     email_thread = threading.Thread(target=send_periodic_emails, args=(config,), daemon=True)
     email_thread.start()
@@ -169,7 +167,13 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
                     f.write(json_str)
                 
                 # 发送进度邮件
-                zipfile, latest_md = collect_files(config)
+                try:
+                    zipfile, latest_md = collect_files(config)
+                except Exception as e:
+                    error_info = traceback.format_exc()
+                    logger.error(f"Failed to collect files: {e}")
+                    logger.info(error_info)
+                    zipfile, latest_md = None, ""
                 send_email(
                     subject=f"OpenLens Job Update | {config.thread_id}",
                     content=f"Subgraph {state_name} complete.\n\n{latest_md}",
@@ -203,8 +207,43 @@ def main(question=None, dataset_path=None, thread_id=None, email=None):  # 新�
     init_state, config, save_path = prepare_file_config(thread_id, question, dataset_path, email)
     global graph
     graph = build_graph(config, None)
+    # 发送进度邮件
+    send_email(
+        subject=f"OpenLens Job Started | {config.thread_id}",
+        content=f"## Question\n{config.question}\n\n## Dataset\n{config.dataset_path}\n\nThe job can take a while (any time from 30 minutes to several hours) to complete. Will keep you updated with the progress.",
+        recipients=config.email,
+        attachments=None,
+    )
     run_graph(config, graph, save_path, init_state)
     
+def main_resume(save_dir: str):
+    config, state, last_subgraph = load_state(save_dir)
+    logger.info(f"Last completed subgraph: {last_subgraph}")
+    last_subgraph_index = all_subgraphs.index(last_subgraph)
+    if last_subgraph_index == len(all_subgraphs) - 1:
+        logger.info("No more subgraphs to run.")
+        return
+    else:                
+        try:
+            zipfile, latest_md = collect_files(config)
+        except Exception as e:
+            error_info = traceback.format_exc()
+            logger.error(f"Failed to collect files: {e}")
+            logger.info(error_info)
+            zipfile, latest_md = None, ""
+        # 发送进度邮件
+        send_email(
+            subject=f"OpenLens Job Resumed | {config.thread_id}",
+            content=latest_md,
+            recipients=config.email,
+            attachments=zipfile,
+        )
+        start_from = all_subgraphs[last_subgraph_index + 1]
+        logger.info(f"Resuming from subgraph {start_from}")
+        graph = build_graph(config, start_from)
+        run_graph(config, graph, save_dir, state)
+    
+
 
 
 def parse_args():
@@ -217,6 +256,9 @@ def parse_args():
     parser.add_argument("--chat-model", type=str, help="Chat model to use")
     parser.add_argument("--base-url", type=str, help="Base URL for the chat model")
     parser.add_argument("--code-model", type=str, help="Code model to use")
+    parser.add_argument("--vision-model", type=str, help="Vision model to use")
+    
+    parser.add_argument("--resume-from", type=str, help="Resume from a specific saved directory")
 
     return parser.parse_args()
 
@@ -236,26 +278,35 @@ def cli_main():
     if args.code_model:
         logger.info(f"Setting CODE_MODEL environment variable to {args.code_model}")
         os.environ["CODE_MODEL"] = args.code_model
+    if args.vision_model:
+        logger.info(f"Setting VISION_MODEL environment variable to {args.vision_model}")
+        os.environ["VISION_MODEL"] = args.vision_model
 
-    if not args.question or not args.dataset_path or not args.thread_id:
-        # 使用默认值
-        question = "What is the prediction precision of AKI in ICU patients when dynamically predicting each day based on the past two days of historical data?"
-        dataset_path = "datasets/eicu"
-        email = "dzdzzd@126.com"
-        # 使用当前日期    
-        question_show = re.sub(r'[^\w]', '_', question.strip())
-        thread_id = "OL_" + datetime.now().strftime("%Y%m%d%H%M%S") + \
-            f"_{question_show[:15]}" + f"_{question_show[-15:]}" + \
-                "_" + email.replace("@", "_").replace(".", "_") + "_" + \
-                str(random.randint(1000, 9999))
-    else:
-        question = args.question
-        dataset_path = args.dataset_path
-        thread_id = args.thread_id
-        email = args.email
+    
+    if args.resume_from:
+        logger.info(f"Resuming from {args.resume_from}")
+        main_resume(args.resume_from)
+    else: 
+        if not args.question or not args.dataset_path or not args.thread_id:
+            logger.error("Please provide a question, dataset path, and thread ID.")
+            # # 使用默认值
+            # question = "What is the prediction precision of AKI in ICU patients when dynamically predicting each day based on the past two days of historical data?"
+            # dataset_path = "datasets/eicu"
+            # email = "dzdzzd@126.com"
+            # # 使用当前日期    
+            # question_show = re.sub(r'[^\w]', '_', question.strip())
+            # thread_id = "OL_" + datetime.now().strftime("%Y%m%d%H%M%S") + \
+            #     f"_{question_show[:15]}" + f"_{question_show[-15:]}" + \
+            #         "_" + email.replace("@", "_").replace(".", "_") + "_" + \
+            #         str(random.randint(1000, 9999))
+        else:
+            question = args.question
+            dataset_path = args.dataset_path
+            thread_id = args.thread_id
+            email = args.email
 
-    # main(question, dataset_path, thread_id)
-    main(question, dataset_path, thread_id, email)
+        # main(question, dataset_path, thread_id)
+        main(question, dataset_path, thread_id, email)
     
     
 

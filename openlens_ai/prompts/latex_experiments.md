@@ -22,12 +22,13 @@ Appendices (3 page max):
 
 Content Rules:  
 - All data description must be based on files in /workspace/data_analyze
-- Copy figures/tables from /workspace/ to /workspace/manuscript/ and reference them correctly.
+- Include all relevant figures/tables from /workspace/manuscript/figures/ in the main text or appendices.
+- Before describing results, performance, or statistics, first examine if the number makes sense and is helpful for the reader. If the result may be wrong due to the experimental setup, exclude them from the texts or tables.
 - Metrics must match /workspace/results/*.csv exactly.
 - Write continuous text in the main test. DO NOT use enumerated or itemized lists unless you are drawing tables.
 
 
-1. Conclusion Section (300 words max)  
+2. Conclusion Section (300 words max)  
 Structure:  
 - a. Summary of Findings  
   - Restate hypothesis and key results (1–2 sentences each).  
@@ -45,13 +46,30 @@ Content Rules:
 - Write continuous text in the main test. DO NOT use enumerated or itemized lists unless you are drawing tables.
 
 Generation Workflow:
-1. Read former latex writing report from /workspace/manuscript/latex_quality_report.md if exists, use it to guide the writing/polishing process
+1. Read former latex writing report from /workspace/manuscript/latex_quality_report.md and /workspace/manuscript/paper_rigor_report.md if exists, use it to guide the writing/polishing process
 2. Read required result files from /workspace/
 3. Extract key metrics for abstract quantitative statements
 4. Formatted like example in /workspace/latex_template/
-5. Write new latex and bibtex files to /workspace/manuscript/, make sure main latex file is named "/workspace/manuscript/main.tex" and bibtex file is named "/workspace/manuscript/ref.bib"
-6. Reference graphs in the workspace using \ref, draw additional graphs if necessary. Make sure to save/copy all graphs to /workspace/manuscript/.
-7. Compile to PDF using bibtex and pdflatex, make sure pdf is named "main.pdf"
+5. Write cross-references to figures/tables (figures are in /workspace/manuscript/figures/). Description of the figures can be found in /workspace/manuscript/figures/xxx_description.txt
+
+
+Reminders:
+- When adding figure references, make sure to FIRST CHECK the current workspace for existing figures. INCLUDE ALL EXISTING FIGURES (.png, .pdf, etc) using the following format:
+```
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.x\textwidth]{figures/figure_name.png}
+\caption{Figure caption}
+\label{fig:figure_name}
+\end{figure}
+```
+and refer to them using \ref{fig:figure_name}
+- DO NOT draw new figures when writing paper unless ABSOLUTELY NECESSARY.
+
 
 Research Question:
 {question}
+
+
+Availabel Figures:
+{figures}

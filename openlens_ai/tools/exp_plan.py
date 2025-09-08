@@ -43,8 +43,8 @@ class PlanWriterTool(BaseTool):
             "sub_tasks": sub_tasks,
             "expected_result": expected_result
         }
-        if len(sub_tasks) < 5:
-            raise ValueError("Must have at least 5 subtasks.")
+        if len(sub_tasks) < 3:
+            raise ValueError("Must have at least 3 subtasks. If the question is complex, may increase to 4 or 5 subtasks.")
         for sub_task in sub_tasks:
             if len(sub_task) < 500:
                 raise ValueError("Please provide a more detailed sub-task description.")

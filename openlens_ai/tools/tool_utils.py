@@ -110,6 +110,32 @@ def route_by_file_existence(file_path: str):
 
 
 
+def route_by_subtask_redo_counter(state: State):
+    max_subtask_redo = os.getenv("MAX_SUBTASK_REDO", 10)
+    if "return_subtask_counter" not in state:
+        state["return_subtask_counter"] = 0
+    logger.info(f"MAX_SUBTASK_REDO: {max_subtask_redo}, current redo: {state['return_subtask_counter']}")
+    
+    if state["return_subtask_counter"] >= int(max_subtask_redo):
+        logger.info("Return: MAX_REDO_REACHED")
+        return "MAX_REDO_REACHED"
+    
+    logger.info("Return: NOT_REACHED")
+    return "NOT_REACHED"
+def route_by_latex_polish_counter(state: State):
+    max_latex_redo = os.getenv("MAX_LATEX_POLISH_ROUND", 10)
+    if "polish_latex_counter" not in state:
+        state["polish_latex_counter"] = 0
+    logger.info(f"MAX_LATEX_POLISH_ROUND: {max_latex_redo}, current redo: {state['polish_latex_counter']}")
+    
+    if state["polish_latex_counter"] >= int(max_latex_redo):
+        logger.info("Return: MAX_REDO_REACHED")
+        return "MAX_REDO_REACHED"
+    
+    logger.info("Return: NOT_REACHED")
+    return "NOT_REACHED"
+    
+
 def route_by_keywords(keywords: list):
     """
     Creates a conditional edge function that checks if any of the specified keywords are present in the last message.
@@ -167,6 +193,8 @@ class BasicToolNode:
                 raise ValueError("No message found in input")
             outputs = []
             for tool_call in message.tool_calls:
+                if "name" not in tool_call or "args" not in tool_call:
+                    raise ValueError(f"Invalid tool call: {tool_call}")
                 this_tool = self.tools_by_name[tool_call["name"]]
                 frontend_add_tool_call(tool_call["name"], tool_call["args"], self.config)
                 # 如果是异步函数，那就阻塞执行
@@ -196,14 +224,15 @@ class BasicToolNode:
             logger.warning(traceback.format_exc())
             # traceback.print_exc()
             error_str = str(e).replace("\"", "").replace("\\", "").replace("[", "").replace("]", "").replace("{", "").replace("}", "")
-            state["messages"] += [
-                    ToolMessage(
-                        content=error_str,
-                        name=tool_call["name"],
-                        tool_call_id=tool_call["id"],
-                        status="error"
-                    )
-                ]
+            if "id" in tool_call and "name" in tool_call:
+                state["messages"] += [
+                        ToolMessage(
+                            content=error_str,
+                            name=tool_call["name"],
+                            tool_call_id=tool_call["id"], 
+                            status="error"
+                        )
+                    ]
             self.save_tool_call(state["messages"][-1])
             state["last_tool_call"] = tool_call["name"]
             return state

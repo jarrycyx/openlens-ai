@@ -3,18 +3,22 @@ workspace_base="/workspace"
 runtime = "local"
 disable_color = true
 search_api_key = "{tavily_key}"
-save_trajectory_path = "/workspace/openhands_logs"
+save_trajectory_path = "/helper/openhands_traj"
 
 [llm]
 model="openai/{code_model}" # openai means openai-compatible endpoint, not OpenAI models
 api_key="{api_key}"
 base_url="{base_url}"
+input_cost_per_token = 1.0
+output_cost_per_token = 1.0
+max_message_chars = 100000
+native_tool_calling = true
+retry_max_wait=60
 
 [sandbox]
 user_id = 1000
-timeout = 600
-input_cost_per_token = 1
-output_cost_per_token = 1
+timeout = 3600
+
 
 [mcp]
 # shttp_servers = [
@@ -24,3 +28,6 @@ output_cost_per_token = 1
 shttp_servers = []
 stdio_servers = []
 sse_servers = []
+
+[security]
+security_analyzer = "none"

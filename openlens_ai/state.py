@@ -1,6 +1,7 @@
 import os
 import json
 import glob
+import shutil
 
 from typing import Annotated
 from typing_extensions import TypedDict
@@ -9,6 +10,7 @@ from loguru import logger
 from datetime import datetime
 
 from langchain_core.load.load import loads
+from langchain.load.dump import dumps
 
 from .utils.config import Config
 
@@ -17,17 +19,57 @@ class State(TypedDict):
     messages: list
     plan: dict
     data_report: str
-    current_subtask_index: int
+    current_subtask_index: int = 0
     save_path: str
-    thread_id: str
-    subplan: str
-    literature_tool_call_counter: int
-    last_tool_call: str
-    literature_report: str
-    data_show: str
-    manuscript_polish_round: int
-    return_subtask_counter: int
+    thread_id: str = ""
+    subplan: str = ""
+    literature_tool_call_counter: int = 0
+    last_tool_call: str = ""
+    literature_report: str = ""
+    data_show: str = ""
+    return_subtask_counter: int = 0
+    polish_latex_counter: int = 0
+    node_call_stack: list = []
+    resume_node_call_stack: list = []
+    available_figs: list = []
 
+
+def track_node_call(subgraph_name: str=""):
+    def track_node_call_inner(func):
+        node_name = f"subgraph_{subgraph_name}.{func.__name__}"
+        def skip_func(state: State, **kwargs):
+            logger.info(f"Skiping {node_name}")
+            return state
+        
+        def wrapper(state: State, **kwargs):
+            latest_state_path = os.path.join(state['save_path'], "latest_state.json")
+            with open(latest_state_path, "w") as f:
+                f.write(dumps(state, ensure_ascii=False, indent=4))
+            
+            
+            # 如果找到state参数，则记录函数调用
+            if state is not None:
+                if ('node_call_stack' not in state) or (not isinstance(state['node_call_stack'], list)):
+                    state['node_call_stack'] = []
+                state['node_call_stack'].append(node_name)
+
+                node_call_stack_path = os.path.join(state['save_path'], 'node_call_stack.json')
+                with open(node_call_stack_path, 'w') as f:
+                    f.write(json.dumps(state['node_call_stack'], indent=4))
+                
+                if ("resume_node_call_stack" in state) and state["resume_node_call_stack"]:
+                    if node_name != state["resume_node_call_stack"][-1]:
+                        # 如果没有到resume的最后一个节点，则跳过
+                        return skip_func(state, **kwargs)
+            
+            # 找到了resume的节点
+            state["resume_node_call_stack"] = []
+            logger.info(f"Calling node: {node_name}")
+            # 调用原始函数
+            return func(state, **kwargs)
+        
+        return wrapper
+    return track_node_call_inner
 
 def get_subplan(state: State) -> str:
     try:
@@ -51,14 +93,19 @@ def load_state(save_dir: str) -> tuple[Config, State]:
     with open(config_path, "r") as f:
         config = json.load(f)
         config = Config(**config)
-        print(f"Config save_path: {config.save_path} -> {save_dir}")
+        logger.info(f"Config save_path: {config.save_path} -> {save_dir}")
         config.save_path = save_dir
         config.thread_id = os.path.basename(save_dir)
     
     with open(config_path, "w") as f:
         json.dump(config.model_dump(), f, indent=2)
         
-        
+    logger.add(os.path.join(save_dir, "logs.log"), 
+               format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|"+config.thread_id, 
+               colorize=False, rotation="10 MB", level="DEBUG")
+    
+    
+    # 先尝试在state目录下加载state，这个是每个subgraph保存一次
     state_dir = os.path.join(save_dir, "states")
     # 遍历里面的文件，格式是step_i.json，找最大的
     file_names = os.listdir(state_dir)
@@ -73,13 +120,51 @@ def load_state(save_dir: str) -> tuple[Config, State]:
             state = loads(state_str)
             last_subgraph = list(state.keys())[0]
             state = state[last_subgraph]
-            print(f"State save_path: {state['save_path']} -> {save_dir}")
+            logger.info(f"State save_path: {state['save_path']} -> {save_dir}")
             state["save_path"] = save_dir
         
-        print(f"Loaded state from {max_file_name}, last subgraph: {last_subgraph}")
+        logger.info(f"Loaded state from {max_file_name}, last subgraph: {last_subgraph}")
     else:
         state = {"question": config.question, "messages": [], "thread_id": config.thread_id, "save_path": config.save_path}
+    
+    # 再尝试从latest_state.json加载，这个是每个node保存的
+    latest_state_file_name = os.path.join(save_dir, "latest_state.json")
+    if os.path.exists(latest_state_file_name):
+        with open(latest_state_file_name, "r", encoding="utf-8") as f:
+            state = loads(f.read())
         
+        if "save_path" in state:
+            logger.info(f"State save_path: {state['save_path']} -> {save_dir}")
+            state["save_path"] = save_dir
+
+    
+    try:
+        node_call_stack_path = os.path.join(save_dir, 'node_call_stack.json')
+        with open(node_call_stack_path, 'r') as f:
+            node_call_stack = json.load(f)
+            state['resume_node_call_stack'] = node_call_stack
+            state['node_call_stack'] = []
+    except Exception as e:
+        logger.warning(f"Error loading node call stack: {e}")
+        state['resume_node_call_stack'] = []
+        state['node_call_stack'] = []
+        
+    # 创建备份文件夹并复制openlens_ai文件夹和.env文件
+    backup_path = os.path.join(save_dir, "backup")
+    os.makedirs(backup_path, exist_ok=True)
+    
+    # 复制openlens_ai文件夹
+    if os.path.exists("openlens_ai"):
+        shutil.copytree("openlens_ai", os.path.join(backup_path, "openlens_ai"), dirs_exist_ok=True)
+    
+    # # 复制.env文件
+    # if os.path.exists(".env"):
+    #     shutil.copy2(".env", os.path.join(backup_path, ".env"))
+    # 保存环境变量
+    with open(os.path.join(backup_path, "env.sh"), "w") as fp:
+        # json.dump(dict(os.environ), fp, indent=4)
+        for key, val in dict(os.environ).items():
+            fp.write(f"{key}=\"{val}\"\n")
         
     return config, state, last_subgraph
      
