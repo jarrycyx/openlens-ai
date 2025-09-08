@@ -6,17 +6,34 @@ import argparse
 
 def start_vllm_process(model_path, port="8000", gpu="0", quant4bit=False, memory_utilization=0.75, log_to_file=False):
     gpu_per_process = len(gpu.split(","))
+    
     cmd = [
         "vllm", "serve", model_path, 
-        "--max-model-len", "64000", 
+        "--max-model-len", "110000", 
         "--tensor-parallel-size", f"{gpu_per_process}", 
         "--port", port,
         "--enforce-eager",
+        "--enable-expert-parallel",
         "--gpu-memory-utilization", str(memory_utilization),
         "--enable-auto-tool-choice",
-        "--tool-call-parser", "hermes",
         "--served-model-name", "llm"
     ]
+    
+    if "glm" in model_path.lower():
+        tool_parser = "glm45"
+        reasoning_parser = "glm45"
+        cmd += ["--tool-parser", tool_parser, "--reasoning-parser", reasoning_parser]
+    elif "qwen3" in model_path.lower():
+        if "coder" in model_path.lower():
+            tool_parser = "qwen3_coder"
+            cmd += ["--tool-parser", tool_parser]
+        else:
+            tool_parser = "hermes"
+            cmd += ["--tool-parser", tool_parser]
+    else:
+        print("Model type not recognized. Using hermes parser.")
+        cmd += ["--tool-parser", "hermes"]
+    
     
     if "AWQ" not in model_path:
         cmd += ["--config-format", "hf"]
