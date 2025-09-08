@@ -7,6 +7,7 @@ import csv
 import subprocess
 import concurrent.futures
 import argparse
+import os
 from pathlib import Path
 
 def load_questions(csv_file):
@@ -60,6 +61,9 @@ def main():
                         help='要测试的数据集路径列表')
     
     args = parser.parse_args()
+    
+    os.system("bash llm_router/env_api_perf.sh")
+    
     
     # 加载所有问题
     questions = load_questions(args.csv_file)

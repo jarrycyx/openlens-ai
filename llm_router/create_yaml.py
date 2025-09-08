@@ -24,7 +24,8 @@ forward_names = {
     "Qwen/Qwen3-235B-A22B-Instruct-2507": "qwen3-235b-a22b-instruct-2507",
     "Qwen/Qwen3-Coder-30B-A3B-Instruct": "qwen3-coder-30b-a3b-instruct",
     "Qwen/Qwen3-Coder-480B-A35B-Instruct": "qwen3-coder-480b-a35b-instruct",
-    "BAAI/bge-reranker-v2-m3": "bge-reranker-v2-m3"
+    "BAAI/bge-reranker-v2-m3": "bge-reranker-v2-m3",
+    "Qwen/Qwen3-30B-A3B-Instruct-2507": "qwen3-30b-a3b-instruct-2507"
 }
 
 for a, b in forward_names.items():
@@ -172,7 +173,7 @@ def main():
     parser.add_argument(
         "--model-names", 
         nargs="+", 
-        default=["zai-org/GLM-4.5", "zai-org/GLM-4.5-Air", "Qwen/Qwen3-235B-A22B-Instruct-2507", "Qwen/Qwen3-Coder-30B-A3B-Instruct", "Qwen/Qwen3-Coder-480B-A35B-Instruct", "zai-org/GLM-4.5V"],
+        default=["zai-org/GLM-4.5", "zai-org/GLM-4.5-Air", "Qwen/Qwen3-235B-A22B-Instruct-2507", "Qwen/Qwen3-Coder-30B-A3B-Instruct", "Qwen/Qwen3-Coder-480B-A35B-Instruct", "zai-org/GLM-4.5V", "Qwen/Qwen3-30B-A3B-Instruct-2507"],
         help="Model names to use"
     )
     parser.add_argument(
