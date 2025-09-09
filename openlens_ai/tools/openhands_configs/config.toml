@@ -16,7 +16,7 @@ native_tool_calling = true
 retry_max_wait=60
 
 [sandbox]
-user_id = 1000
+user_id = 3407
 timeout = 3600
 
 

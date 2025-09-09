@@ -36,10 +36,18 @@ Reminders: DO NOT mock or simulate results. Only write python files to generate 
 with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
     oh_config_template = f.read()
 
-def run_docker_container(cmd: str, config: Config):
+def run_docker_container(
+        cmd: str, 
+        config: Config, 
+        docker_name: str = "agent-med-gpu"
+    ):
     """运行Docker容器并实时输出+保存日志"""
     pwd = os.getcwd()
     workspace_dir = os.path.join(pwd, config.save_path, "workspace")
+    
+    if os.getenv("DOCKER_NAME"):
+        docker_name = os.getenv("DOCKER_NAME")
+    logger.info(f"Running docker container: {docker_name}")
     
     this_openhands_config_path = os.path.join(pwd, config.save_path, "openhands_config.toml")
     if config.dataset_path:
@@ -63,7 +71,7 @@ def run_docker_container(cmd: str, config: Config):
             "-v", f"{latex_template_path}:/workspace/latex_template:ro",
             "-v", f"{dot_openhands_path}:/workspace/.openhands:ro",
             "--network", "host",  # 使用主机网络
-            "agent-med-gpu",
+            docker_name,
             "bash",
             "-c",
             cmd,
@@ -81,7 +89,7 @@ def run_docker_container(cmd: str, config: Config):
             "-v", f"{workspace_dir}:/workspace",
             "-v", f"{latex_template_path}:/workspace/latex_template:ro",
             "--network", "host",  # 使用主机网络
-            "agent-med-gpu",
+            docker_name,
             "bash",
             "-c",
             cmd,
@@ -157,7 +165,7 @@ def monitor_process(pid: int, line_count: dict):
     logger.info(f"Starting process monitor for PID {pid}")
     start_count = line_count["count"]
     # 等待1分钟
-    time.sleep(60)
+    time.sleep(120)
     logger.info(f"Process {pid} has been running for 1 minute, checking line count...")
     # 检查1分钟内读取的行数是否不超过10行
     if line_count["count"] - start_count <= 30:

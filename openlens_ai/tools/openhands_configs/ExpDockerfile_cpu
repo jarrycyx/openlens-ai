@@ -73,9 +73,6 @@ RUN cd /helper/OpenHands && git init && make build
 # Create necessary directories
 RUN mkdir -p /workspace
 
-# Set bashrc
-COPY openlens_ai/tools/openhands_configs/openhands_env.sh ~/.bashrc
-
 # setup pip
 RUN cd /helper
 RUN rm -rf /usr/bin/pip3 /usr/bin/pip
@@ -92,3 +89,6 @@ RUN pip install openai langgraph langchain tensorflow mcp-server-fetch --break-s
 RUN apt-get install -y texlive-full
 
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Set bashrc
+COPY openlens_ai/tools/openhands_configs/openhands_env.sh ~/.bashrc
