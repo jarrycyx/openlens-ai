@@ -131,6 +131,7 @@ def build_coder(config: Config) -> StateGraph:
     @track_node_call("coder")
     def subtask_continue_node(state: State):
         state["current_subtask_index"] = state.get("current_subtask_index", 0) + 1
+        state["return_subtask_counter"] = 0
         return state
 
     @track_node_call("coder")
