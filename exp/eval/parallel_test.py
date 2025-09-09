@@ -59,6 +59,7 @@ def main():
     parser.add_argument('--datasets', nargs='+', 
                         default=['datasets/mimic-iv-icu', 'datasets/eicu-demo'],
                         help='要测试的数据集路径列表')
+    parser.add_argument('--start-index', type=int, default=0, help='从问题列表的起始索引开始执行测试')
     
     args = parser.parse_args()
     
@@ -75,6 +76,9 @@ def main():
         for dataset_path in args.datasets:
             thread_id = create_thread_id(question, dataset_path)
             tasks.append((question, dataset_path, thread_id, args.email))
+            
+    tasks = tasks[args.start_index:]
+    print(f"跳过 {args.start_index} 个问题")
     
     print(f"准备执行 {len(tasks)} 个测试任务，使用 {args.max_workers} 个并行工作线程")
     

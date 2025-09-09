@@ -20,7 +20,7 @@ Please analyze this scientific chart/graph/plot for me. Conduct a comprehensive 
 
 **Please provide a summary:** Clearly state if you spot any issues. For each potential problem identified, offer a specific suggestion for improvement or correction.
 
-At last, provide a decision on whether the chart is suitable for presentation or needs improvement (``DECISION: ACCEPT`` or ``DECISION: IMPROVE`` in PLAIN TEXT).
+At last, provide a decision on whether the chart is suitable for presentation or needs improvement (``DECISION: ACCEPT`` or ``DECISION: IMPROVE`` in PLAIN TEXT). If only minor issues are identified, consider accepting the chart. 
 
 **Example of response:**
 

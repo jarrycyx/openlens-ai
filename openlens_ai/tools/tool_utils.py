@@ -111,7 +111,7 @@ def route_by_file_existence(file_path: str):
 
 
 def route_by_subtask_redo_counter(state: State):
-    max_subtask_redo = os.getenv("MAX_SUBTASK_REDO", 10)
+    max_subtask_redo = os.getenv("MAX_SUBTASK_REDO", 3)
     if "return_subtask_counter" not in state:
         state["return_subtask_counter"] = 0
     logger.info(f"MAX_SUBTASK_REDO: {max_subtask_redo}, current redo: {state['return_subtask_counter']}")
