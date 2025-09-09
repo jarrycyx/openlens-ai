@@ -65,6 +65,7 @@ def run_docker_container(
             "--memory", "4g",
             "-v", f"{this_openhands_config_path}:/helper/config.toml",
             "-v", "./openlens_ai:/helper/openlens_ai",
+            # "-v", "./modules/OpenHands:/helper/OpenHands",
             "-v", f"{workspace_dir}:/workspace",
             "-v", f"{openhands_traj_path}:/helper/openhands_traj",
             "-v", f"{dataset_path}:/workspace/datasets:ro",
@@ -220,7 +221,7 @@ def run_openhands_prompt(prompts, config: Config):
         cmd = (
             f"cp /helper/config.toml /helper/OpenHands/ && "
             f"source /helper/openlens_ai/tools/openhands_configs/openhands_env.sh && "
-            f"cd /helper/OpenHands && "
+            f"cd /helper/OpenHands/ && "
             f"mkdir -p /workspace/manuscript/ && chmod -R 777 /workspace/manuscript/ && cp /workspace/latex_template/*.sty /workspace/manuscript/ &&"
             f"mkdir -p /helper/openhands_traj && chmod -R 777 /helper/openhands_traj &&"
             f'poetry run python -m openhands.core.main -t "{prompt}" -i {max_iter}'

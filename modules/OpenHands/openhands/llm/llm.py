@@ -23,6 +23,7 @@ from litellm.exceptions import (
     APIConnectionError,
     RateLimitError,
     ServiceUnavailableError,
+    BadRequestError
 )
 from litellm.types.utils import CostPerToken, ModelResponse, Usage
 from litellm.utils import create_pretrained_tokenizer
@@ -48,6 +49,7 @@ LLM_RETRY_EXCEPTIONS: tuple[type[Exception], ...] = (
     litellm.Timeout,
     litellm.InternalServerError,
     LLMNoResponseError,
+    BadRequestError
 )
 
 
