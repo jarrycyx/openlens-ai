@@ -168,7 +168,7 @@ def monitor_process(pid: int, line_count: dict):
     time.sleep(120)
     logger.info(f"Process {pid} has been running for 1 minute, checking line count...")
     # 检查1分钟内读取的行数是否不超过10行
-    if line_count["count"] - start_count <= 30:
+    if line_count["count"] - start_count <= 10:
         try:
             # 结束进程
             os.kill(pid, 9)  # SIGKILL

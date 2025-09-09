@@ -12,6 +12,6 @@ alias python3.10="python3"
 alias pip3="pip"
 
 echo "env.sh: Setup environment variables complete"
-echo $BASE_URL
+echo $SANBOX_USER_ID
 
 export PATH=$PATH:/home/openhands/.local/bin

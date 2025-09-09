@@ -91,4 +91,4 @@ RUN apt-get install -y texlive-full
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Set bashrc
-COPY openlens_ai/tools/openhands_configs/openhands_env.sh ~/.bashrc
+COPY openlens_ai/tools/openhands_configs/openhands_env.sh /helper/env.sh
