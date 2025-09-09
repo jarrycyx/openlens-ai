@@ -40,6 +40,8 @@ with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_rigor_
     latex_rigor_prompt = f.read()
 with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_literature_check.md")) as f:
     latex_literature_check_prompt = f.read()
+with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_figure_check.md")) as f:
+    latex_figure_check_prompt = f.read()
 
 
 def build_latex_writer(config: Config) -> StateGraph:
@@ -231,7 +233,8 @@ def build_latex_writer(config: Config) -> StateGraph:
             logger.info("No REASON in the AI tool message, use the default prompt.")
             reason = ""
         
-        results = code_tool.invoke({"prompts": [this_prompt, latex_rigor_prompt, latex_literature_check_prompt]})
+        check_figure_prompt = latex_figure_check_prompt.replace("{figures}", "\n".join(state["available_figs"]))
+        results = code_tool.invoke({"prompts": [check_figure_prompt, this_prompt, latex_rigor_prompt, latex_literature_check_prompt]})
         
         state["messages"] += [
             ToolMessage(

@@ -18,6 +18,7 @@ As the workflow router, analyze the subtask report and choose the next action:
 
 3) **REDO_LAST_SUBTASK** (if):  
    - Significant errors in execution/output (not fixable without redoing)  
+   - Synthetic data, fabricated outcomes, or demo/minified versions of datasets are present. (Note that some datasets may contain shifted years for confidentiality reasons, this does not mean the data is fabricated.)
    - Major data gaps or integrity issues  
    - Widespread anomalies affecting >30% of results  
    - Critical subtasks incomplete or failed.
@@ -30,4 +31,4 @@ DECISION: [SELECTED_ACTION]
 REASON: [Concise technical justification referencing specific subtask findings]  
 ```  
 
-Always prioritize FIX_LAST_SUBTASK over REDO_LAST_SUBTASK unless significant errors. Note that some datasets may contain shifted years for confidentiality reasons, this does not mean the data is fabricated.
+Always prioritize FIX_LAST_SUBTASK over REDO_LAST_SUBTASK unless significant errors or totally fabricated data. 
