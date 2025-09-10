@@ -4,8 +4,8 @@ runtime = "local"
 disable_color = true
 search_api_key = "{tavily_key}"
 save_trajectory_path = "/helper/openhands_traj"
-# run_as_openhands = false
-user_id = 3407
+run_as_openhands = false
+debug = true
 
 [llm]
 model="openai/{code_model}" # openai means openai-compatible endpoint, not OpenAI models

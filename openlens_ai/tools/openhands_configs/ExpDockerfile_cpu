@@ -92,3 +92,9 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Set bashrc
 COPY openlens_ai/tools/openhands_configs/openhands_env.sh /helper/env.sh
+
+
+# # Create a group and user
+# RUN groupadd openlens_ai && useradd -g openlens_ai -m openlens_ai
+
+# USER openlens_ai
