@@ -220,6 +220,7 @@ def main():
         
         config["router_settings"] = {
             "routing_strategy": "simple-shuffle",
+            "fallbacks": [{"glm-4.5-air": ["glm-4.5-air-fallback"]}]
         }
         config["litellm_settings"] = {
             "num_retries": 3,

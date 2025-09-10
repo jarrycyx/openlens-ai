@@ -37,6 +37,7 @@
 0. Ensure Docker Installation:
 ```bash
 docker --version
+bash openlens_ai/tools/openhands_configs/build_docker_cpu.sh
 ```
 
 1. Clone the repository:
