@@ -221,13 +221,14 @@ def run_openhands_prompt(prompts, config: Config):
         for try_i in range(5):
             # 构建在Docker容器中执行的命令
             cmd = (
-                f"cp /helper/config.toml /helper/OpenHands/ && "
-                f"source /helper/openlens_ai/tools/openhands_configs/openhands_env.sh && "
-                f"cd /helper/OpenHands/ && "
-                f"mkdir -p /workspace/manuscript/ && chmod -R 777 /workspace/manuscript/ && cp /workspace/latex_template/*.sty /workspace/manuscript/ &&"
-                f"mkdir -p /helper/openhands_traj && chmod -R 777 /helper/openhands_traj &&"
-                f"chmod -R 777 /workspace/ &&"
-                f'poetry run python -m openhands.core.main -t "{prompt}" -i {max_iter}'
+                "cp /helper/config.toml /helper/OpenHands/ ; "
+                "source /helper/openlens_ai/tools/openhands_configs/openhands_env.sh ; "
+                "cd /helper/OpenHands/ ; "
+                "mkdir -p /workspace/manuscript/ ; chmod -R 777 /workspace/manuscript/ ; cp /workspace/latex_template/*.sty /workspace/manuscript/ ;"
+                "mkdir -p /helper/openhands_traj ; chmod -R 777 /helper/openhands_traj ;"
+                "chmod -R 777 /workspace/ ;"
+                f'poetry run python -m openhands.core.main -t "{prompt}" -i {max_iter};'
+                "chmod -R 777 /workspace/ ;"
             )
             results = run_docker_container(cmd, config)
             # 移除ANSI转义序列（颜色代码等）
@@ -257,7 +258,7 @@ def split_and_clean_log(log_text):
     log_entries = re.split(pattern, log_text)
     clean_entries = []
     for entry in log_entries:
-        if "agent_controller.py" in entry:
+        if ("agent_controller.py" in entry) and ("openhands:DEBUG" not in entry):
             clean_entries.append(entry)
     for entry_i in range(len(clean_entries)):
         if "]" in clean_entries[entry_i]:

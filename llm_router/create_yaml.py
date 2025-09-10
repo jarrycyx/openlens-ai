@@ -212,8 +212,11 @@ def main():
             args.min_balance,
             args.processes
         )
-        
-        extra_model_list = yaml.safe_load(open(args.extra, "r"))["model_list"]
+        try:
+            extra_model_list = yaml.safe_load(open(args.extra, "r"))["model_list"]
+        except Exception as e:
+            print(f"Warning: Failed to load extra model list from {args.extra}: {e}")
+            extra_model_list = []
         
         config["router_settings"] = {
             "routing_strategy": "simple-shuffle",

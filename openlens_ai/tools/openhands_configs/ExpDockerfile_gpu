@@ -77,14 +77,14 @@ RUN mkdir -p /workspace
 RUN cd /helper
 RUN rm -rf /usr/bin/pip3 /usr/bin/pip
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-RUN python get-pip.py --break-system-packages
+RUN python get-pip.py
 RUN ln -s /usr/bin/pip /usr/bin/pip3
 
 # Setup basic python environment
 RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
-RUN pip install numpy pandas tqdm omegaconf gpustat einops matplotlib scikit-learn scikit-image matplotlib tensorboard "psycopg[binary]" prettytable xgboost seaborn tabulate psycopg2-binary --break-system-packages
-RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 --break-system-packages
-RUN pip install openai langgraph langchain tensorflow mcp-server-fetch --break-system-packages
+RUN pip install numpy pandas tqdm omegaconf gpustat einops matplotlib scikit-learn scikit-image matplotlib tensorboard "psycopg[binary]" prettytable xgboost seaborn tabulate psycopg2-binary
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+RUN pip install openai langgraph langchain tensorflow mcp-server-fetch
 
 RUN apt-get install -y texlive-full
 
