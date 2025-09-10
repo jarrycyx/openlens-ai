@@ -39,7 +39,7 @@ with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
 def run_docker_container(
         cmd: str, 
         config: Config, 
-        docker_name: str = "agent-med-gpu"
+        docker_name: str = "agent-med-cpu"
     ):
     """运行Docker容器并实时输出+保存日志"""
     pwd = os.getcwd()
@@ -217,20 +217,29 @@ def run_openhands_prompt(prompts, config: Config):
             f.write(oh_config)
         logger.info(f"Using OpenHands config: {oh_config}")
         
-        # 构建在Docker容器中执行的命令
-        cmd = (
-            f"cp /helper/config.toml /helper/OpenHands/ && "
-            f"source /helper/openlens_ai/tools/openhands_configs/openhands_env.sh && "
-            f"cd /helper/OpenHands/ && "
-            f"mkdir -p /workspace/manuscript/ && chmod -R 777 /workspace/manuscript/ && cp /workspace/latex_template/*.sty /workspace/manuscript/ &&"
-            f"mkdir -p /helper/openhands_traj && chmod -R 777 /helper/openhands_traj &&"
-            f'poetry run python -m openhands.core.main -t "{prompt}" -i {max_iter}'
-        )
-        results = run_docker_container(cmd, config)
-        # 移除ANSI转义序列（颜色代码等）
-        results = re.sub(r"\033\[[\d;]*m", "", results)
-        results = split_and_clean_log(results)
-        results = results[-40000:]
+        
+        for try_i in range(5):
+            # 构建在Docker容器中执行的命令
+            cmd = (
+                f"cp /helper/config.toml /helper/OpenHands/ && "
+                f"source /helper/openlens_ai/tools/openhands_configs/openhands_env.sh && "
+                f"cd /helper/OpenHands/ && "
+                f"mkdir -p /workspace/manuscript/ && chmod -R 777 /workspace/manuscript/ && cp /workspace/latex_template/*.sty /workspace/manuscript/ &&"
+                f"mkdir -p /helper/openhands_traj && chmod -R 777 /helper/openhands_traj &&"
+                f"chmod -R 777 /workspace/ &&"
+                f'poetry run python -m openhands.core.main -t "{prompt}" -i {max_iter}'
+            )
+            results = run_docker_container(cmd, config)
+            # 移除ANSI转义序列（颜色代码等）
+            results = re.sub(r"\033\[[\d;]*m", "", results)
+            results = split_and_clean_log(results)
+            results = results[-40000:]
+            if "AgentState.FINISHED" in results:
+                logger.info(f"Docker container executed successfully.")
+                break
+            else:
+                logger.warning(f"Docker container executed unsuccessfully. Trying again ({try_i}/5)...")
+                continue
 
         # 将当前提示的结果添加到总结果中
         all_results += "=" * 20 + f"Prompt: {prompt[:20]}..." + "=" * 20

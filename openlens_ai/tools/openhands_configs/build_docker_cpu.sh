@@ -5,6 +5,7 @@ docker build -t agent-med-cpu \
     --build-arg https_proxy="http://127.0.0.1:7890/" \
     --network=host \
     --progress=plain \
+    --no-cache \
     .
 
 docker save agent-med-cpu | gzip > exp/docker/docker-cpu.tar.gz
