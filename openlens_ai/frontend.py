@@ -166,11 +166,16 @@ def start_new_session(workspace_container, sidebar_usage_container, base_url, ap
                     process.terminate()  # 如果添加失败，终止进程
                     st.error(f"Failed to start process. Maximum number of processes ({process_manager.MAX_PROCESSES}) reached.")
                     return
-            
-            time.sleep(5)
-            config = open(os.path.join("outputs", thread_id, "config.json"), "r").read()
-            config = json.loads(config)
-            config = Config(**config)
+            while True:
+                try:
+                    time.sleep(5)
+                    config = open(os.path.join("outputs", thread_id, "config.json"), "r").read()
+                    config = json.loads(config)
+                    config = Config(**config)
+                    break
+                except Exception as e:
+                    logger.error(f"Error loading config: {e}")
+                    continue
             
             
             st.write(f"Thread ID: {thread_id}")

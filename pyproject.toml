@@ -30,7 +30,7 @@ dependencies = [
     "streamlit_scrollable_textbox",
     "langchain_openai",
     "langchain_mcp_adapters",
-    "graphviz",
+    "pygraphviz",
     "PyMuPDF"
 ]
 

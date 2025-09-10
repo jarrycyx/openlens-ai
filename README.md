@@ -48,6 +48,9 @@ cd agent-med
 
 2. Install dependencies:
 ```bash
+# If with to visualize the workflow, install graphviz:
+#   sudo apt-get install graphviz graphviz-dev
+
 conda create -n py312 python=3.12 # Or with uv / venv
 conda activate py312
 pip install --upgrade pip
@@ -65,28 +68,42 @@ cp .env.example .env
 In your `.env` file, configure the following:
 
 ```bash
+MODEL="glm-4.5-air"  # The main language model used for general tasks
+CODE_MODEL="glm-4.5-air"  # The language model specifically used for code-related tasks
+VISION_MODEL="glm-4.1v-9b-thinking"  # The vision model used for image analysis tasks
+API_KEY="<YOUR API KEY>"  # API key for accessing the language models
+BASE_URL="https://cloud.infini-ai.com/maas/v1/"  # Base URL for the model API service
 
-MODEL="qwen3-235b-a22b-instruct-2507"
-API_KEY="<YOUR API KEY>"
-BASE_URL="https://cloud.infini-ai.com/maas/v1/"
-RERANK_MODEL="bge-reranker-v2-m3"
+RERANK_MODEL="bge-reranker-v2-m3"  # The reranking model used to improve search result relevance
+RERANK_API_KEY="<YOUR API KEY>" # API key for accessing the reranking model (infiniai service)
+RERANK_BASE_URL="https://cloud.infini-ai.com/maas/v1/"  # Base URL for the reranking model API service
 
-TAVILY_API_KEY="<YOUR API KEY>"
+TAVILY_API_KEY="<YOUR API KEY>"  # API key for Tavily search service used for web search
 
-LANGSMITH_TRACING="true"
-LANGSMITH_ENDPOINT="https://api.smith.langchain.com"
-LANGSMITH_API_KEY="<YOUR API KEY>"
+MAX_CONTEXT_TOKEN_CNT=32000  # Maximum number of tokens allowed in the context for normal operations
+MAX_CONTEXT_TOKEN_CNT_LARGE=96000  # Maximum number of tokens allowed in the context for large operations
+LITERATURE_SEARCH_MIN_TOOL_CALL=10  # Minimum number of tool calls for literature search
 
-MAX_CONTEXT_TOKEN_CNT=32000
-MAX_CONTEXT_TOKEN_CNT_LARGE=96000
-LITERATURE_SEARCH_MIN_TOOL_CALL=10
+MAX_TOOL_TOKEN_CNT=2000  # Maximum number of tokens allowed in tool responses
 
-MAX_TOOL_TOKEN_CNT=2000
+OPENHANDS_MAX_ITER=100  # Maximum number of iterations allowed for OpenHands agent execution
+MAX_SUBTASK_REDO=2  # Maximum number of retries for subtasks
+MAX_LATEX_POLISH_ROUND=2  # Maximum number of rounds for LaTeX document polishing
 
-SMTP_SERVER=smtp.yeah.net
-SMTP_PORT=25
-EMAIL_USER=<YOUR EMAIL>
-EMAIL_PASSWORD=<YOUR EMAIL SMTP PASSWORD>
+DOCKER_NAME=agent-med-cpu  # Name of the Docker container used for the agent environment
+
+
+### Optional settings
+
+LANGSMITH_TRACING="true"  # Enable or disable LangSmith tracing for monitoring and debugging
+LANGSMITH_ENDPOINT="https://api.smith.langchain.com"  # Endpoint URL for LangSmith service
+LANGSMITH_PROJECT="openlens"  # Project name in LangSmith for organizing traces
+LANGSMITH_API_KEY="<YOUR API KEY>"  # API key for accessing LangSmith service
+
+SMTP_SERVER=smtpdm.aliyun.com  # SMTP server address for sending emails
+SMTP_PORT=25  # Port number for the SMTP server
+EMAIL_USER=<YOUR EMAIL>  # Email address used for sending notifications
+EMAIL_PASSWORD=<YOUR EMAIL SMTP PASSWORD>  # Password or app-specific password for the email account
 ```
 
 ### Running the Application
@@ -94,12 +111,12 @@ EMAIL_PASSWORD=<YOUR EMAIL SMTP PASSWORD>
 #### Option 1: Command Line Interface
 
 ```bash
-python -m openlens_ai.build_graph --question "Your research question" --dataset-path "path/to/dataset"
+python -m openlens_ai.build_graph --question "Your research question" --dataset-path "path/to/dataset" --thread-id "Unique id for this job"
 ```
 
 Example:
 ```bash
-python -m openlens_ai.build_graph --question "What is the prediction precision of AKI based on historical 2 day data?" --dataset-path "datasets/mimic"
+python -m openlens_ai.build_graph --question "What is the prediction precision of AKI based on historical 2 day data?" --dataset-path "datasets/mimic" --thread-id "test_000"
 ```
 
 #### Option 2: Interactive Web Interface
@@ -126,13 +143,13 @@ Agents communicate through a shared state and can call various tools including:
 - File operations
 - Vector search for context management
 - **Literature Search Tools**:
-  - arXiv Search and Paper Reading
-  - PubMed Search
-  - bioRxiv Search and Paper Reading
-  - medRxiv Search and Paper Reading
-  - Google Scholar Search
-  - IACR ePrint Search
-  - Semantic Scholar Search and Paper Reading
+  - ✅ arXiv Search and Paper Reading
+  - ✅ medRxiv Search and Paper Reading
+  - ✅ Google Scholar Search
+  - ✅ Tavily Search
+  - ⬜ IACR ePrint Search
+  - ⬜ Semantic Scholar Search and Paper Reading
+  - ⬜ PubMed Search
 
 ## 📁 Project Structure
 
@@ -191,6 +208,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- Powered by [LangGraph](https://github.com/langchain-ai/langgraph) for workflow orchestration
 - Uses [OpenHands](https://github.com/All-Hands-AI/OpenHands) for code execution sandbox
+- Powered by [LangGraph](https://github.com/langchain-ai/langgraph) for workflow orchestration
+- Uses [Streamlit](https://streamlit.io/) for the web interface
 - Inspired by recent advances in AI for medical research

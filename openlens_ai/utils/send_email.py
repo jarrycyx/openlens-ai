@@ -13,8 +13,8 @@ import markdown
 import json
 
 # 从环境变量读取邮件配置
-SMTP_SERVER = os.getenv('SMTP_SERVER', 'smtp.yeah.net')  # SMTP服务器地址
-SMTP_PORT = int(os.getenv('SMTP_PORT', '25'))  # SMTP端口号
+SMTP_SERVER = os.getenv('SMTP_SERVER', '')  # SMTP服务器地址
+SMTP_PORT = int(os.getenv('SMTP_PORT', ''))  # SMTP端口号
 EMAIL_USER = os.getenv('EMAIL_USER', '')  # 发件人邮箱
 EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD', '')  # 发件人邮箱密码
 logger.info(f"SMTP_SERVER: {SMTP_SERVER}")
@@ -33,6 +33,10 @@ def send_email(subject: str, content: str, recipients: Union[str, List[str]], at
         attachments (List[str], optional): 附件文件路径列表
         recipients (List[str], optional): 收件人列表，默认使用环境变量中的EMAIL_TO
     """
+    if not SMTP_SERVER:
+        logger.warning("未配置SMTP服务器，请检查环境变量SMTP_SERVER和SMTP_PORT")
+        return
+    
     # 如果没有提供收件人，则使用环境变量中的默认收件人
     if recipients is None:
         recipients = [EMAIL_TO] if EMAIL_TO else []
