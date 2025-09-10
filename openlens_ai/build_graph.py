@@ -218,8 +218,11 @@ def main(question=None, dataset_path=None, thread_id=None, email=None):  # æ–°çš
     
 def main_resume(save_dir: str):
     config, state, last_subgraph = load_state(save_dir)
-    logger.info(f"Last completed subgraph: {last_subgraph}")
-    last_subgraph_index = all_subgraphs.index(last_subgraph)
+    if last_subgraph:
+        logger.info(f"Last completed subgraph: {last_subgraph}")
+        last_subgraph_index = all_subgraphs.index(last_subgraph)
+    else:
+        last_subgraph_index = -1
     if last_subgraph_index == len(all_subgraphs) - 1:
         logger.info("No more subgraphs to run.")
         return
