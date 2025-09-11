@@ -1,192 +1,220 @@
-# OpenLens AI Agents 架构详解
+# OpenLens AI Agents Architecture Overview
 
-## 1. 系统架构概述
+## 1. System Architecture Overview
 
-OpenLens AI 系统由五个核心代理组成：
+The OpenLens AI system consists of five core agents:
 
-1. **监督者代理 (Supervisor Agent)** - 负责整体任务规划和协调
-2. **文献审阅代理 (Literature Reviewer Agent)** - 执行文献搜索和综述生成
-3. **数据分析代理 (Data Analyzer Agent)** - 处理数据并生成分析报告
-4. **代码生成代理 (Coder Agent)** - 根据实验计划生成和执行代码
-5. **LaTeX 写作代理 (LaTeX Writer Agent)** - 生成学术论文
+1. **Supervisor Agent** – Responsible for overall task planning and coordination.
+2. **Literature Reviewer Agent** – Conducts literature search and generates review reports.
+3. **Data Analyzer Agent** – Processes data and generates analysis reports.
+4. **Coder Agent** – Generates and executes code according to the experimental plan.
+5. **LaTeX Writer Agent** – Produces academic papers in LaTeX format.
 
-这些代理通过共享状态进行通信，并使用各种工具完成特定任务。
+These agents communicate through shared state and utilize various tools to accomplish specific tasks.
 
-## 2. 代理详解
+## 2. Agent Details
 
-### 2.1 监督者代理 (Supervisor Agent)
+### 2.1 Supervisor Agent
 
-监督者代理是整个系统的协调者和规划者，负责制定研究计划并协调其他代理的工作。
+The Supervisor Agent serves as the coordinator and planner of the entire system, responsible for formulating research plans and coordinating other agents.
 
-#### 2.1.1 功能描述
+#### 2.1.1 Functional Description
 
-监督者代理的主要功能包括：
-- 根据用户研究问题制定详细的研究计划
-- 协调其他代理按计划执行任务
-- 监控整个研究流程的进度
-- 在必要时调整研究计划
+The main functions of the Supervisor Agent include:
 
-#### 2.1.2 实现机制
+* Creating detailed research plans based on the user's research question
+* Coordinating other agents to execute tasks according to the plan
+* Monitoring the progress of the entire research workflow
+* Adjusting the research plan as needed
 
-监督者代理使用 Tavily 搜索工具获取相关领域知识，结合大型语言模型生成研究计划。它通过 PlanWriterTool 将计划写入文件，并通过 PlanReaderTool 读取现有计划（如果存在）。
+#### 2.1.2 Implementation Mechanism
 
-代理使用两种不同的提示模板：
-- supervisor_plan.md：用于生成初始研究计划
-- supervisor_alter_plan.md：用于调整现有计划
+The Supervisor Agent uses the Tavily search tool to gather domain knowledge and combines it with a large language model to generate research plans. It employs:
 
-#### 2.1.3 工作流程
+* **PlanWriterTool** to write plans to files
+* **PlanReaderTool** to read existing plans (if any)
 
-1. 检查是否存在现有计划文件（plan.md）
-2. 如果不存在，则使用 supervisor_chatbot 生成新计划
-3. 如果存在，则使用 plan_reader_node 读取现有计划
-4. 通过 supervisor_tools 执行计划写入工具
-5. 根据工具调用结果决定是否结束或继续循环
+Two different prompt templates are used:
 
-### 2.2 文献审阅代理 (Literature Reviewer Agent)
+* `supervisor_plan.md` – for generating initial research plans
+* `supervisor_alter_plan.md` – for modifying existing plans
 
-文献审阅代理专门负责执行文献搜索和生成文献综述报告。
+#### 2.1.3 Workflow
 
-#### 2.2.1 功能描述
+1. Check if a plan file (`plan.md`) exists
+2. If not, generate a new plan using `supervisor_chatbot`
+3. If it exists, read the existing plan with `plan_reader_node`
+4. Execute the plan writing tool via `supervisor_tools`
+5. Decide whether to end or continue the loop based on the tool's results
 
-文献审阅代理的主要功能包括：
-- 搜索相关学术文献（支持 arXiv、medRxiv 等平台）
-- 阅读和分析文献内容
-- 生成综合性的文献综述报告
+---
 
-#### 2.2.2 实现机制
+### 2.2 Literature Reviewer Agent
 
-代理使用多种文献搜索工具：
-- SearchArxivTool：搜索 arXiv 平台文献
-- SearchMedRxivTool：搜索 medRxiv 平台文献
-- ReadArxivPaperTool：阅读 arXiv 文献
-- ReadMedRxivPaperTool：阅读 medRxiv 文献
-- TavilySearch：通用网络搜索
+The Literature Reviewer Agent is dedicated to performing literature searches and generating literature review reports.
 
-代理分为两个主要阶段：
-1. 文献搜索阶段：使用 search_llm 和搜索工具搜索相关文献
-2. 报告撰写阶段：使用 write_llm 和 ReportWriterTool 生成文献综述报告
+#### 2.2.1 Functional Description
 
-#### 2.2.3 工作流程
+The main functions include:
 
-1. 启动文献搜索聊天机器人进行文献检索
-2. 当达到最小工具调用次数后，进入报告撰写阶段
-3. 使用报告写入工具生成文献综述报告
-4. 清理状态并结束流程
+* Searching relevant academic literature (supports arXiv, medRxiv, etc.)
+* Reading and analyzing literature content
+* Producing comprehensive literature review reports
 
-### 2.3 数据分析代理 (Data Analyzer Agent)
+#### 2.2.2 Implementation Mechanism
 
-数据分析代理负责处理用户提供的数据集，执行数据分析并生成报告。
+The agent uses multiple literature search tools:
 
-#### 2.3.1 功能描述
+* `SearchArxivTool` – searches arXiv
+* `SearchMedRxivTool` – searches medRxiv
+* `ReadArxivPaperTool` – reads arXiv papers
+* `ReadMedRxivPaperTool` – reads medRxiv papers
+* `TavilySearch` – general web search
 
-数据分析代理的主要功能包括：
-- 分析用户提供的数据集
-- 生成数据可视化图表
-- 执行统计分析
-- 生成数据分析报告
+The agent operates in two main phases:
 
-#### 2.3.2 实现机制
+1. **Literature search phase** – using `search_llm` and search tools
+2. **Report writing phase** – using `write_llm` and `ReportWriterTool`
 
-代理使用 OpenHands 工具执行代码，处理数据并生成分析结果。主要组件包括：
-- data_analyzer_prompt：指导数据分析的提示模板
-- data_report_prompt：指导报告生成的提示模板
-- data_router_prompt：用于决策的路由提示模板
-- OpenHandsTool：执行数据分析代码的工具
+#### 2.2.3 Workflow
 
-#### 2.3.3 工作流程
+1. Launch the literature search chatbot to retrieve papers
+2. After reaching a minimum number of tool calls, move to report writing
+3. Generate the literature review report using the report writing tool
+4. Clear state and finish the workflow
 
-1. 使用 openhands_node 执行数据分析代码
-2. 检查是否存在数据展示文件（data_show.md）
-3. 如果存在，则使用 chatbot 生成数据分析报告
-4. 通过工具节点写入报告
-5. 使用 router_node 进行下一步决策
+---
 
-### 2.4 代码生成代理 (Coder Agent)
+### 2.3 Data Analyzer Agent
 
-代码生成代理根据研究计划生成和执行实验代码。
+The Data Analyzer Agent processes datasets provided by the user, performs data analysis, and generates reports.
 
-#### 2.4.1 功能描述
+#### 2.3.1 Functional Description
 
-代码生成代理的主要功能包括：
-- 根据研究计划生成实验代码
-- 执行生成的代码
-- 验证代码执行结果
-- 根据视觉反馈改进代码和结果
+Key functions include:
 
-#### 2.4.2 实现机制
+* Analyzing user-provided datasets
+* Creating data visualizations
+* Performing statistical analyses
+* Producing data analysis reports
 
-代理使用多种提示模板指导代码生成：
-- coder.md：指导代码生成的主要提示模板
-- coder_validator.md：指导代码验证的提示模板
-- coder_concluder.md：指导结论生成的提示模板
-- coder_router.md：用于决策的路由提示模板
+#### 2.3.2 Implementation Mechanism
 
-代理集成了视觉语言模型（VLM）来评估生成的图表质量，并根据反馈进行改进。
+The agent uses the OpenHands tool to execute code and process data. Main components include:
 
-#### 2.4.3 工作流程
+* `data_analyzer_prompt` – guiding data analysis
+* `data_report_prompt` – guiding report generation
+* `data_router_prompt` – routing decisions
+* `OpenHandsTool` – executes data analysis code
 
-1. 读取研究计划
-2. 使用 openhands_coding_node 生成实验代码
-3. 使用 openhands_validation_node 验证代码执行结果
-4. 使用视觉语言模型评估生成的图表
-5. 根据评估结果决定是否需要改进
-6. 生成结论并写入报告
-7. 使用路由决策下一步操作
+#### 2.3.3 Workflow
 
-### 2.5 LaTeX 写作代理 (LaTeX Writer Agent)
+1. Execute data analysis code using `openhands_node`
+2. Check if a data presentation file (`data_show.md`) exists
+3. If it exists, generate a data analysis report via the chatbot
+4. Write the report using the tool node
+5. Use `router_node` to determine the next step
 
-LaTeX 写作代理负责将研究结果整理成学术论文格式。
+---
 
-#### 2.5.1 功能描述
+### 2.4 Coder Agent
 
-LaTeX 写作代理的主要功能包括：
-- 生成论文各个部分（引言、相关工作、方法、实验等）
-- 整合数据分析结果和图表
-- 生成完整的 LaTeX 格式论文
-- 根据反馈改进论文质量
+The Coder Agent generates and executes experimental code according to the research plan.
 
-#### 2.5.2 实现机制
+#### 2.4.1 Functional Description
 
-代理使用多个专门的提示模板：
-- latex_abstract_intro.md：生成摘要和引言
-- latex_related_works.md：生成相关工作部分
-- latex_methods.md：生成方法部分
-- latex_experiments.md：生成实验部分
-- latex_validator.md：验证论文质量
-- latex_concluder.md：生成结论
-- latex_router.md：用于决策的路由提示模板
-- latex_rigor_prompt.md：提高论文严谨性的提示
-- latex_literature_check.md：检查文献引用
-- latex_figure_check.md：检查图表质量
+Key functions include:
 
-代理同样集成了视觉语言模型来评估生成的 PDF 质量。
+* Generating experimental code based on the research plan
+* Executing the generated code
+* Validating code execution results
+* Improving code and results based on visual feedback
 
-#### 2.5.3 工作流程
+#### 2.4.2 Implementation Mechanism
 
-1. 清理状态并收集结果文件
-2. 生成论文引言部分
-3. 生成相关工作部分
-4. 生成方法部分
-5. 生成实验部分
-6. 验证论文质量
-7. 根据验证结果决定是否需要改进
-8. 通过路由决定是否继续润色或结束
+The agent uses several prompt templates:
 
-## 3. 代理间协作机制
+* `coder.md` – guides code generation
+* `coder_validator.md` – guides code validation
+* `coder_concluder.md` – guides conclusion generation
+* `coder_router.md` – routing decisions
 
-OpenLens AI 中的各个代理通过共享状态进行协作。状态包括：
-- 研究问题
-- 研究计划
-- 当前子任务索引
-- 消息历史
-- 各种中间结果
+It integrates a visual-language model (VLM) to assess chart quality and improve results based on feedback.
 
-代理间的工作流由 LangGraph 管理，确保任务按正确的顺序执行，并在必要时进行重试或调整。
+#### 2.4.3 Workflow
 
-## 4. 工具和集成
+1. Read the research plan
+2. Generate experimental code via `openhands_coding_node`
+3. Validate code execution with `openhands_validation_node`
+4. Evaluate charts using the visual-language model
+5. Decide whether improvements are needed
+6. Generate conclusions and write to the report
+7. Use routing to determine the next operation
 
-系统集成了多种工具来支持代理的功能：
-- Tavily 搜索：用于网络搜索
-- OpenHands：用于代码执行沙箱
-- 多种文献搜索工具：用于学术文献检索
-- 视觉语言模型：用于图表和论文质量评估
+---
+
+### 2.5 LaTeX Writer Agent
+
+The LaTeX Writer Agent organizes research results into academic papers.
+
+#### 2.5.1 Functional Description
+
+Key functions include:
+
+* Generating different sections of a paper (Introduction, Related Work, Methods, Experiments, etc.)
+* Integrating data analysis results and charts
+* Producing a complete LaTeX-formatted paper
+* Improving paper quality based on feedback
+
+#### 2.5.2 Implementation Mechanism
+
+The agent uses multiple specialized prompt templates:
+
+* `latex_abstract_intro.md` – abstract and introduction
+* `latex_related_works.md` – related work section
+* `latex_methods.md` – methods section
+* `latex_experiments.md` – experiments section
+* `latex_validator.md` – validates paper quality
+* `latex_concluder.md` – conclusion generation
+* `latex_router.md` – routing decisions
+* `latex_rigor_prompt.md` – improves rigor
+* `latex_literature_check.md` – checks references
+* `latex_figure_check.md` – evaluates chart quality
+
+It also integrates a visual-language model to assess the quality of the generated PDF.
+
+#### 2.5.3 Workflow
+
+1. Clear state and collect result files
+2. Generate the Introduction section
+3. Generate the Related Work section
+4. Generate the Methods section
+5. Generate the Experiments section
+6. Validate paper quality
+7. Improve if necessary based on validation
+8. Use routing to decide whether to continue polishing or finish
+
+---
+
+## 3. Inter-Agent Collaboration Mechanism
+
+Agents in OpenLens AI collaborate through shared state, which includes:
+
+* Research question
+* Research plan
+* Current subtask index
+* Message history
+* Various intermediate results
+
+Workflow is managed by **LangGraph**, ensuring tasks are executed in the correct sequence and retried or adjusted if necessary.
+
+---
+
+## 4. Tools and Integration
+
+The system integrates multiple tools to support agent functions:
+
+* **Tavily Search** – for web searches
+* **OpenHands** – for code execution sandbox
+* **Various literature search tools** – for academic paper retrieval
+* **Visual-language models** – for evaluating charts and paper quality

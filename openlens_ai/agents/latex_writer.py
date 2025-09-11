@@ -72,13 +72,13 @@ def build_latex_writer(config: Config) -> StateGraph:
 
     @track_node_call("latex_writer")
     def clear_state(state: State):
-        state["polish_latex_counter"] = state.get("return_subtask_counter", 0)
+        state["polish_latex_counter"] = state.get("polish_latex_counter", 0)
         state["messages"] = []
         return state
 
     @track_node_call("latex_writer")
     def write_introduction_node(state: State):
-        state["polish_latex_counter"] = state.get("return_subtask_counter", 0) + 1
+        state["polish_latex_counter"] = state.get("polish_latex_counter", 0) + 1
         
         this_prompt = introduction_prompt.replace("{question}", state["question"])
         
