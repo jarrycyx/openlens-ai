@@ -148,6 +148,10 @@ def collect_token_usage(config: Config, overall: bool = True) -> str:
                     model_name = data["model_name"]
                 else:
                     model_name = data["model"]
+                
+                if "/" in model_name:
+                    model_name = model_name.split("/")[-1]
+                model_name = model_name.lower()
                     
                 if "token_usage" in data:
                     token_usage = data["token_usage"]
@@ -228,6 +232,10 @@ def collect_token_usage(config: Config, overall: bool = True) -> str:
     df = pd.DataFrame(df_data)
     if "Model" in df.columns:
         df = df.set_index('Model')
+    try:
+        df.to_csv(os.path.join(save_path, "token_usage.csv"))
+    except Exception as e:
+        logger.warning(f"Error saving token usage csv: {e}")
     
     # Return both string summary and DataFrame
     return output_str, df
