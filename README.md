@@ -8,7 +8,7 @@
 
 <table>
   <tr>
-    <td style="width:80px; text-align:center;">
+    <td style="width:3cm; text-align:center;">
       <img src="static/logo.svg" alt="Logo" width="100">
     </td>
     <td style="text-align: justify;">
