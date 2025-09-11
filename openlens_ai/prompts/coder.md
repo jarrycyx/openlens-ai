@@ -22,4 +22,4 @@ Reminders:
 - Data prepreration and model training may take a long time, DO NOT set a short timeout for the execution, also DO NOT force kill the process unless you are sure it is stuck.
 - When writing any scripts related to data loading/processing, DO NOT try to load all data into memory at once, use batch processing or data streaming techniques to handle large datasets efficiently.
 - When fixing issues or writing improved version, edit the original script directly, do not write new scripts, i.e. DO NOT create files such as train_improved.py, process_fixed.py because this may make the workspace messy and difficult to manage.
-- Only write code, reports and save results in the designated directory (/workspace/subtask_XX), do not write code outside the directory (i.e., DO NOT CREATE FILES IN /workspace or its subdirectories).
+- Only write code, reports and save results in the designated directory (/workspace/subtask_XX), do not create files outside the directory (i.e., DO NOT CREATE ANY FILES directly in /workspace or its other subdirectories).

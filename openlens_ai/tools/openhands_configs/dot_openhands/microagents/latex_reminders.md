@@ -30,4 +30,5 @@ and refer to them using \ref{fig:figure_name}
   - 6. Conclusion (300 words)  
   - 7. References (10+ citations)
   - 8. Appendix
-- When fixing issues or writing improved version, edit the original files directly, do not write new files, i.e. DO NOT create files such as main_improved.tex, main_fixed.py because this may make the workspace messy and difficult to manage.
+- When fixing issues or writing improved version, edit the original files directly, do not write new files, i.e. DO NOT create files such as main_improved.tex, main_fixed.tex, main_clean.tex, main_fixed.pdf, etc because this may make the workspace messy and difficult to manage.
+- Only write latex files, reports and compile pdf in the designated directory (/workspace/manuscript), do not create files outside the directory (i.e., DO NOT CREATE ANY FILES directly in /workspace or its other subdirectories).

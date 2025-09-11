@@ -65,6 +65,7 @@ Reminders:
 ```
 and refer to them using \ref{fig:figure_name}
 - DO NOT draw new figures when writing paper unless ABSOLUTELY NECESSARY.
+- Only write latex files, reports and compile pdf in the designated directory (/workspace/manuscript), do not create files outside the directory (i.e., DO NOT CREATE ANY FILES directly in /workspace or its other subdirectories).
 
 
 Research Question:
