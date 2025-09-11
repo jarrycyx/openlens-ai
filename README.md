@@ -1,4 +1,4 @@
-# OpenLens AI 📚🔍💡: Fully Autonomous Research Agent for Health Infomatics
+# OpenLens AI: Fully Autonomous Research Agent for Health Infomatics
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.9%2B-blue" alt="Python Version">
@@ -6,7 +6,18 @@
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
 </p>
 
-**OpenLens AI** is a fully autonomous research agent designed for the medical field. Provide it with your dataset and a single-line research idea, and it will independently conduct literature review, design experiments, analyze data, and generate comprehensive research reports—**no manual intervention required**.
+<table>
+  <tr>
+    <td style="width:80px; text-align:center;">
+      <img src="logo.svg" alt="Logo" width="100">
+    </td>
+    <td style="text-align: justify;">
+      <strong>OpenLens AI</strong> is a fully autonomous research agent designed for the medical field.  
+      Provide it with your dataset and a single-line research idea, and it will independently conduct literature review, design experiments, analyze data, and generate comprehensive research reports—<strong>no manual intervention required</strong>.
+    </td>
+  </tr>
+</table>
+
 
 ## 🔍 Key Features
 

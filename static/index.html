@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLens AI - Fully Autonomous Research Agent for Health Informatics</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #0066cc;
+            --secondary-color: #00a86b;
+            --accent-color: #ff6b6b;
+            --dark-color: #1a1a2e;
+            --light-color: #f8f9fa;
+            --text-color: #333;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin-left: 30px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .cta-button {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 102, 204, 0.2);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 100px 5%;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .hero-content {
+            flex: 1;
+            max-width: 600px;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: var(--dark-color);
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 30px;
+            color: #555;
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+            color: #666;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+        }
+
+        .hero-image {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero-graphic {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+        }
+
+        .badges {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            background-color: #f0f2f5;
+            color: #333;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .badge i {
+            margin-right: 5px;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 5%;
+            background-color: white;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--dark-color);
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            max-width: 700px;
+            margin: 0 auto 60px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            border-top: 5px solid var(--primary-color);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--dark-color);
+        }
+
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .feature-status {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-available {
+            background-color: rgba(0, 168, 107, 0.1);
+            color: var(--secondary-color);
+        }
+
+        .status-coming {
+            background-color: rgba(255, 107, 107, 0.1);
+            color: var(--accent-color);
+        }
+
+        /* Architecture Section */
+        .architecture {
+            padding: 100px 5%;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+        }
+
+        .architecture-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .architecture-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 50px;
+        }
+
+        .architecture-text {
+            flex: 1;
+        }
+
+        .architecture-image {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+
+        .architecture-diagram {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .agent-list {
+            margin-top: 30px;
+        }
+
+        .agent-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .agent-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .agent-name {
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        /* Quick Start Section */
+        .quickstart {
+            padding: 100px 5%;
+            background-color: white;
+        }
+
+        .quickstart-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .quickstart-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tab-button {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .tab-button.active {
+            color: var(--primary-color);
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .code-block {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+            margin: 20px 0;
+        }
+
+        .code-block pre {
+            margin: 0;
+        }
+
+        .prerequisites-list {
+            list-style-type: none;
+            margin: 20px 0;
+        }
+
+        .prerequisites-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+
+        .prerequisites-list li::before {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: var(--secondary-color);
+            margin-right: 15px;
+        }
+
+        /* Use Cases Section */
+        .usecases {
+            padding: 100px 5%;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+        }
+
+        .usecases-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .usecase-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .usecase-card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .usecase-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .usecase-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--dark-color);
+        }
+
+        .usecase-description {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .usecase-example {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 70px 5% 30px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+        }
+
+        .footer-column h3 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .footer-column h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: #ccc;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .social-icon:hover {
+            background-color: var(--primary-color);
+            transform: translateY(-3px);
+        }
+
+        .copyright {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .hero-container {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .hero-content {
+                margin-bottom: 50px;
+            }
+
+            .architecture-content {
+                flex-direction: column;
+            }
+
+            .architecture-image {
+                margin-top: 30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero-title {
+                font-size: 2.2rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .usecase-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="logo-container">
+            <div class="logo">
+                <img src="./logo.png" alt="OpenLens AI Logo" style="width: 100%; height: 100%;">
+            </div>
+            <div class="logo-text">OpenLens AI</div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#architecture">Architecture</a></li>
+            <li><a href="#quickstart">Quick Start</a></li>
+            <li><a href="#usecases">Use Cases</a></li>
+            <li><a href="#contribute">Contribute</a></li>
+        </ul>
+        <a href="#quickstart" class="cta-button">Get Started</a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">OpenLens AI</h1>
+                <h2 class="hero-subtitle">Fully Autonomous Research Agent for Health Informatics</h2>
+                <p class="hero-description">
+                    A cutting-edge AI research assistant that autonomously conducts literature reviews, designs experiments, analyzes data, and generates comprehensive research reports—all with minimal human intervention.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#quickstart" class="cta-button">Get Started</a>
+                    <a href="https://github.com/jarrycyx/openlens-ai" class="cta-button" style="background: transparent; color: var(--primary-color); border: 2px solid var(--primary-color);">
+                        <i class="fab fa-github"></i> View on GitHub
+                    </a>
+                </div>
+                <div class="badges">
+                    <span class="badge"><i class="fab fa-python"></i> Python 3.9+</span>
+                    <span class="badge"><i class="fas fa-project-diagram"></i> LangGraph-Powered</span>
+                    <span class="badge"><i class="fas fa-certificate"></i> MIT License</span>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="https://picsum.photos/seed/openlens-ai-hero-image2/600/400.jpg" alt="OpenLens AI Visualization" class="hero-graphic">
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <h2 class="section-title">Powerful Features</h2>
+        <p class="section-subtitle">OpenLens AI combines cutting-edge AI technologies to deliver a comprehensive research experience for health informatics</p>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-book-medical"></i>
+                </div>
+                <h3 class="feature-title">Automated Literature Review</h3>
+                <p class="feature-description">Search and summarize medical papers based on your research question with advanced AI-powered analysis.</p>
+                <span class="feature-status status-available">Available</span>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="feature-title">Data Analysis</h3>
+                <p class="feature-description">Analyze medical datasets and generate comprehensive reports with statistical insights and visualizations.</p>
+                <span class="feature-status status-available">Available</span>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-flask"></i>
+                </div>
+                <h3 class="feature-title">Experiment Design</h3>
+                <p class="feature-description">Suggest and validate experimental approaches tailored to your specific research questions and datasets.</p>
+                <span class="feature-status status-available">Available</span>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-code"></i>
+                </div>
+                <h3 class="feature-title">Code Generation and Execution</h3>
+                <p class="feature-description">Generate and execute code for data analysis and experiments with OpenHands integration.</p>
+                <span class="feature-status status-available">Available</span>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-users-cog"></i>
+                </div>
+                <h3 class="feature-title">Multi-Agent Collaboration</h3>
+                <p class="feature-description">Coordinate multiple specialized agents to handle complex research tasks efficiently.</p>
+                <span class="feature-status status-available">Available</span>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h3 class="feature-title">LaTeX Paper Generation</h3>
+                <p class="feature-description">Automated creation and management of research papers and reports in professional LaTeX format.</p>
+                <span class="feature-status status-available">Available</span>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-desktop"></i>
+                </div>
+                <h3 class="feature-title">Interactive UI</h3>
+                <p class="feature-description">Streamlit-based interface for monitoring and interacting with the research process in real-time.</p>
+                <span class="feature-status status-available">Available</span>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <h3 class="feature-title">Context Management</h3>
+                <p class="feature-description">Automated management of contextual information for agents via vector search technology.</p>
+                <span class="feature-status status-available">Available</span>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <h3 class="feature-title">Vision-Language Feedback</h3>
+                <p class="feature-description">Integrate with VLM for visualization and feedback to enhance research understanding.</p>
+                <span class="feature-status status-available">Available</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture Section -->
+    <section class="architecture" id="architecture">
+        <div class="architecture-container">
+            <h2 class="section-title">Multi-Agent Architecture</h2>
+            <p class="section-subtitle">Powered by LangGraph, OpenLens AI uses a sophisticated multi-agent system to handle complex research tasks</p>
+            
+            <div class="architecture-content">
+                <div class="architecture-text">
+                    <p style="font-size: 1.1rem; margin-bottom: 30px;">
+                        OpenLens AI leverages a collaborative multi-agent architecture where specialized agents work together to accomplish complex research tasks. Each agent has specific capabilities and communicates through a shared state system.
+                    </p>
+                    
+                    <div class="agent-list">
+                        <div class="agent-item">
+                            <div class="agent-icon">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="agent-name">Literature Reviewer</div>
+                        </div>
+                        
+                        <div class="agent-item">
+                            <div class="agent-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <div class="agent-name">Data Analyzer</div>
+                        </div>
+                        
+                        <div class="agent-item">
+                            <div class="agent-icon">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                            <div class="agent-name">Supervisor</div>
+                        </div>
+                        
+                        <div class="agent-item">
+                            <div class="agent-icon">
+                                <i class="fas fa-laptop-code"></i>
+                            </div>
+                            <div class="agent-name">Coder</div>
+                        </div>
+                        
+                        <div class="agent-item">
+                            <div class="agent-icon">
+                                <i class="fas fa-pen-fancy"></i>
+                            </div>
+                            <div class="agent-name">LaTeX Writer</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="architecture-image">
+                    <img src="https://picsum.photos/seed/openlens-ai-architecture/500/400.jpg" alt="OpenLens AI Architecture" class="architecture-diagram">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start Section -->
+    <section class="quickstart" id="quickstart">
+        <div class="quickstart-container">
+            <h2 class="section-title">Quick Start</h2>
+            <p class="section-subtitle">Get up and running with OpenLens AI in just a few simple steps</p>
+            
+            <div class="quickstart-tabs">
+                <button class="tab-button active" onclick="openTab(event, 'prerequisites')">Prerequisites</button>
+                <button class="tab-button" onclick="openTab(event, 'installation')">Installation</button>
+                <button class="tab-button" onclick="openTab(event, 'running')">Running</button>
+            </div>
+            
+            <div id="prerequisites" class="tab-content active">
+                <h3 style="margin-bottom: 20px; font-size: 1.5rem;">What You'll Need</h3>
+                
+                <ul class="prerequisites-list">
+                    <li>Python 3.9 or higher</li>
+                    <li>Docker (for OpenHands runtime environment)</li>
+                    <li>API keys for LLM service (e.g., DeepSeek, OpenAI, Qwen, etc.)</li>
+                    <li>Tavily search API key (for literature search)</li>
+                </ul>
+                
+                <p style="margin-top: 30px;">Make sure you have all the necessary requirements before proceeding with installation.</p>
+            </div>
+            
+            <div id="installation" class="tab-content">
+                <h3 style="margin-bottom: 20px; font-size: 1.5rem;">Installation Steps</h3>
+                
+                <div class="code-block">
+                    <pre># Step 1: Clone the repository
+git clone git@github.com:jarrycyx/openlens-ai.git
+cd agent-med
+
+# Step 2: Install dependencies
+conda create -n py312 python=3.12
+conda activate py312
+pip install --upgrade pip
+pip install -e .
+
+# Step 3: Configure environment variables
+cp .env.example .env
+# Edit .env with your API keys and model settings</pre>
+                </div>
+                
+                <p>After installation, make sure to configure your environment variables with the necessary API keys.</p>
+            </div>
+            
+            <div id="running" class="tab-content">
+                <h3 style="margin-bottom: 20px; font-size: 1.5rem;">Running OpenLens AI</h3>
+                
+                <h4 style="margin: 25px 0 15px; font-size: 1.2rem;">Option 1: Command Line Interface</h4>
+                <div class="code-block">
+                    <pre>python -m openlens_ai.build_graph --question "Your research question" --dataset-path "path/to/dataset" --thread-id "Unique id for this job"</pre>
+                </div>
+                
+                <h4 style="margin: 25px 0 15px; font-size: 1.2rem;">Option 2: Interactive Web Interface</h4>
+                <div class="code-block">
+                    <pre>streamlit run start_app.py</pre>
+                </div>
+                
+                <p>Then open your browser to <code>http://localhost:8501</code> to access the interactive interface.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases Section -->
+    <section class="usecases" id="usecases">
+        <div class="usecases-container">
+            <h2 class="section-title">Example Use Cases</h2>
+            <p class="section-subtitle">See how OpenLens AI can accelerate your medical research in various scenarios</p>
+            
+            <div class="usecase-cards">
+                <div class="usecase-card">
+                    <h3 class="usecase-title">Disease Prediction Modeling</h3>
+                    <p class="usecase-description">
+                        Use OpenLens AI to develop predictive models for diseases based on historical patient data.
+                    </p>
+                    <div class="usecase-example">
+                        Question: "What is the prediction precision of AKI based on historical 2 day data?"<br>
+                        Dataset: MIMIC-III critical care dataset
+                    </div>
+                </div>
+                
+                <div class="usecase-card">
+                    <h3 class="usecase-title">Drug Interaction Research</h3>
+                    <p class="usecase-description">
+                        Analyze the latest findings on drug interactions to improve medication safety and efficacy.
+                    </p>
+                    <div class="usecase-example">
+                        Question: "What are the latest findings on drug interactions for hypertension medications?"<br>
+                        Dataset: Clinical trial data
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contribute">
+        <div class="footer-container">
+            <div class="footer-column">
+                <h3>OpenLens AI</h3>
+                <p>A fully autonomous research agent designed for the medical field.</p>
+                <div class="social-icons">
+                    <a href="#" class="social-icon"><i class="fab fa-github"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-discord"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-column">
+                <h3>Resources</h3>
+                <ul class="footer-links">
+                    <li><a href="#">Documentation</a></li>
+                    <li><a href="#">API Reference</a></li>
+                    <li><a href="#">Tutorials</a></li>
+                    <li><a href="#">Examples</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-column">
+                <h3>Community</h3>
+                <ul class="footer-links">
+                    <li><a href="#">Contributing</a></li>
+                    <li><a href="#">Code of Conduct</a></li>
+                    <li><a href="#">Discussion Forum</a></li>
+                    <li><a href="#">Issues</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-column">
+                <h3>Legal</h3>
+                <ul class="footer-links">
+                    <li><a href="#">License (MIT)</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Disclaimer</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="copyright">
+            <p>&copy; 2023 OpenLens AI. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Tab functionality
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active");
+            }
+            
+            tablinks = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+            }
+            
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+        
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // Add animation on scroll
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = 1;
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+        
+        // Observe all feature cards and use case cards
+        document.querySelectorAll('.feature-card, .usecase-card').forEach(card => {
+            card.style.opacity = 0;
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>
