@@ -9,7 +9,7 @@
 <table>
   <tr>
     <td style="width:80px; text-align:center;">
-      <img src="logo.svg" alt="Logo" width="100">
+      <img src="static/logo.svg" alt="Logo" width="100">
     </td>
     <td style="text-align: justify;">
       <strong>OpenLens AI</strong> is a fully autonomous research agent designed for the medical field.  
