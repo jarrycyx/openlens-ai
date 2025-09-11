@@ -20,6 +20,7 @@ retry_max_wait=60
 [sandbox]
 user_id = 3407
 timeout = 3600
+runtime_container_image = ""
 
 
 [mcp]

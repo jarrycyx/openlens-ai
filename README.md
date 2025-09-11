@@ -37,6 +37,11 @@
 0. Ensure Docker Installation:
 ```bash
 docker --version
+
+# Pull docker
+docker pull crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs.com/cyx-docker/openlens-ai:cpu-latest
+
+# or Build docker image
 bash openlens_ai/tools/openhands_configs/build_docker_cpu.sh
 ```
 
