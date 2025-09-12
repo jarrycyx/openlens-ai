@@ -1,0 +1,94 @@
+# cp static/openlens.icu.nginx /etc/nginx/sites-available/openlens.icu && ln -s /etc/nginx/sites-available/openlens.icu /etc/nginx/sites-enabled/ && chmod 755 /root /root/openlens-ai /root/openlens-ai/static && sudo systemctl restart nginx
+
+
+server {
+    listen 80;
+    server_name www.openlens.icu openlens.icu 101.37.34.77;
+    root /root/openlens-ai/static;
+    index index.html;
+
+    location / {
+	    try_files $uri $uri/ =404;
+    }
+}
+
+
+# HTTPS 配置
+server {
+    listen 443 ssl;
+    server_name www.openlens.icu openlens.icu 101.37.34.77;
+
+    # SSL 证书配置
+    ssl_certificate /home/admin/openlens.icu.pem;
+    ssl_certificate_key /home/admin/openlens.icu.key;
+
+    # SSL 优化设置
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    ssl_session_tickets off;
+
+    # 启用 HSTS
+    add_header Strict-Transport-Security "max-age=63072000" always;
+
+    root /root/openlens-ai/static;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+
+
+
+server {
+    listen 80;
+    server_name app.openlens.icu;
+
+    location / {
+	    #proxy_pass https://localhost:9000;
+        proxy_pass https://101.6.121.247:8501;
+	    proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+
+# HTTPS 配置
+server {
+    listen 443 ssl;
+    server_name app.openlens.icu;
+
+    # SSL 证书配置
+    ssl_certificate /home/admin/openlens.icu.pem;
+    ssl_certificate_key /home/admin/openlens.icu.key;
+
+    # SSL 优化设置
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    ssl_session_tickets off;
+
+    # 启用 HSTS
+    add_header Strict-Transport-Security "max-age=63072000" always;
+
+    location / {
+        proxy_pass https://101.6.121.247:8501;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # WebSocket 支持
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 86400;
+    }
+}
