@@ -286,7 +286,9 @@ def resume_session(workspace_container, sidebar_usage_container):
 
 
 def main():
-    st.set_page_config(page_title="OpenLens AI 📚🔍💡", layout="wide")
+    st.logo("static/logo.svg")
+    
+    st.set_page_config(page_title="OpenLens AI 📚🔍💡", layout="wide", page_icon="static/logo.svg")
     st.title("OpenLens AI 📚🔍💡")
     st.subheader("Fully Autonomous Research Agent for Health Infomatics")
     

@@ -29,6 +29,8 @@ baselines/autobuild/.OAI_CONFIG_LIST
 curie/setup/env.sh
 .streamlit/openlens.icu.key
 .streamlit/openlens.icu.pem
+.streamlit/app.openlens.icu.key
+.streamlit/app.openlens.icu.pem
 
 # 缓存和临时文件
 code_logging
