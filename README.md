@@ -50,8 +50,9 @@
 docker --version
 
 # Pull docker
-docker pull crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs.com/cyx-docker/openlens-ai:cpu-latest
-docker tag crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs.com/cyx-docker/openlens-ai:cpu-latest openlens-ai:cpu-latest
+ALIYUN_REMOTE_DOCKER_NAME=crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs.com/cyx-docker/openlens-ai:cpu-latest
+docker pull $ALIYUN_REMOTE_DOCKER_NAME
+docker tag $ALIYUN_REMOTE_DOCKER_NAME openlens-ai:cpu-latest
 
 # or Build docker image
 bash openlens_ai/tools/openhands_configs/build_docker_cpu.sh
@@ -88,7 +89,7 @@ In your `.env` file, configure the following:
 MODEL="glm-4.5-air"  # The main language model used for general tasks
 CODE_MODEL="glm-4.5-air"  # The language model specifically used for code-related tasks
 VISION_MODEL="glm-4.1v-9b-thinking"  # The vision model used for image analysis tasks
-API_KEY="<YOUR API KEY>"  # API key for accessing the language models
+OPENAI_API_KEY="<YOUR API KEY>"  # API key for accessing the language models
 BASE_URL="https://cloud.infini-ai.com/maas/v1/"  # Base URL for the model API service
 
 RERANK_MODEL="bge-reranker-v2-m3"  # The reranking model used to improve search result relevance
