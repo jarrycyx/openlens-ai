@@ -241,7 +241,7 @@ def collect_token_usage(config: Config, overall: bool = True) -> str:
     return output_str, df
 
 
-def prepare_file_config(thread_id: str, question: str, dataset_path: str, email: str) -> tuple[dict, Config, str]:
+def prepare_file_config(thread_id: str, question: str, dataset_path: str, email: str = "") -> tuple[dict, Config, str]:
     save_path = os.path.join("./outputs", thread_id)
     if os.path.exists(save_path):
         thread_id = thread_id + "_" + datetime.now().strftime("%Y%m%d%H%M%S")

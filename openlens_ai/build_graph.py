@@ -203,7 +203,7 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
         stop_sending_emails.set()
 
 
-def main(question=None, dataset_path=None, thread_id=None, email=None):  # 新的执行_流程
+def main(question=None, dataset_path=None, thread_id=None, email=""):  # 新的执行_流程
     init_state, config, save_path = prepare_file_config(thread_id, question, dataset_path, email)
     global graph
     graph = build_graph(config, None)
@@ -254,7 +254,7 @@ def parse_args():
     parser.add_argument("--question", type=str, help="The research question to investigate")
     parser.add_argument("--dataset-path", type=str, help="Path to the dataset")
     parser.add_argument("--thread-id", type=str, help="Thread ID for the run")
-    parser.add_argument("--email", type=str, help="Email address for notifications")
+    parser.add_argument("--email", type=str, help="Email address for notifications", default="")
     parser.add_argument("--api-key", type=str, help="API key for the chat model")
     parser.add_argument("--chat-model", type=str, help="Chat model to use")
     parser.add_argument("--base-url", type=str, help="Base URL for the chat model")

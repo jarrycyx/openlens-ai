@@ -11,4 +11,4 @@ class Config(BaseModel):
     thread_id: str
     question: str
     dataset_path: str
-    email: str
+    email: str = ""
