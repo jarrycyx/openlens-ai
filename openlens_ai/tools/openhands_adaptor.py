@@ -157,7 +157,7 @@ def run_docker_container(
             break
         except Exception as e:
             error_log = "".join(log_lines) + f"\nERROR: {str(e)}"
-            traceback.print_exc()
+            # traceback.print_exc()
             return error_log
 
 
@@ -228,7 +228,7 @@ def run_openhands_prompt(prompts, config: Config):
                 "mkdir -p /helper/openhands_traj ; chmod -R 777 /helper/openhands_traj ;"
                 "chmod -R 777 /workspace/ ;"
                 f'poetry run python -m openhands.core.main -t "{prompt}" -i {max_iter};'
-                "chmod -R 777 /workspace/ ;"
+                "chmod -R 777 /workspace/;"
             )
             results = run_docker_container(cmd, config)
             # 移除ANSI转义序列（颜色代码等）
