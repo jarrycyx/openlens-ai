@@ -62,7 +62,7 @@ def run_docker_container(
             "-t",
             "--gpus", "all",
             "--cpus", "2",
-            "--memory", "4g",
+            "--memory", "8g",
             "-v", f"{this_openhands_config_path}:/helper/config.toml",
             "-v", "./openlens_ai:/helper/openlens_ai",
             # "-v", "./modules/OpenHands:/helper/OpenHands",
@@ -167,7 +167,7 @@ def monitor_process(pid: int, line_count: dict):
     start_count = line_count["count"]
     # 等待1分钟
     time.sleep(120)
-    logger.info(f"Process {pid} has been running for 1 minute, checking line count...")
+    logger.info(f"Process {pid} has been running for 2 minute, checking line count...")
     # 检查1分钟内读取的行数是否不超过10行
     if line_count["count"] - start_count <= 10:
         try:
@@ -179,6 +179,24 @@ def monitor_process(pid: int, line_count: dict):
             pass
         except Exception as e:
             logger.error(f"Error killing process {pid}: {e}")
+    
+    last_line_count = 0
+    # 每隔2分钟检查是否卡住
+    while True:
+        time.sleep(300)
+        logger.info(f"Process {pid} has been running for 5 minutes, current line count: {line_count['count']}, last line count: {last_line_count}")
+        if line_count["count"] == last_line_count:
+            try:
+                # 结束进程
+                os.kill(pid, 9)  # SIGKILL
+                logger.info(f"Process {pid} killed due to insufficient output")
+            except ProcessLookupError:
+                # 进程已经结束
+                pass
+            except Exception as e:
+                logger.error(f"Error killing process {pid}: {e}")
+        
+        last_line_count = line_count["count"]
 
 
 def run_openhands_prompt(prompts, config: Config):

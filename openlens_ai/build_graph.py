@@ -155,7 +155,6 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
     email_thread.start()
     
     try:
-        kk
         step_i = 0
         for event in graph.stream(init_state, {"recursion_limit": 100}):
             # event: [("...", "..."), {}]
