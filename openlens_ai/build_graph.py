@@ -1,4 +1,4 @@
-import os
+import os, sys
 import json
 import dotenv
 import asyncio
@@ -155,6 +155,7 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
     email_thread.start()
     
     try:
+        kk
         step_i = 0
         for event in graph.stream(init_state, {"recursion_limit": 100}):
             # event: [("...", "..."), {}]
@@ -198,9 +199,20 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
             recipients=config.email,
             attachments=zipfile,
         )
+        stop_sending_emails.set()
+        email_thread.join(timeout=5)
+        sys.exit(0)
     finally:
         # 停止定期发送邮件
+        send_email(
+            subject=f"OpenLens Job Successful | {config.thread_id}",
+            content=f"All subgraphs completed successfully.\n\n{latest_md}",
+            recipients=config.email,
+            attachments=zipfile,
+        )
         stop_sending_emails.set()
+        email_thread.join(timeout=5)
+        sys.exit(0)
 
 
 def main(question=None, dataset_path=None, thread_id=None, email=""):  # 新的执行_流程

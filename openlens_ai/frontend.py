@@ -72,8 +72,8 @@ def start_new_session(workspace_container, sidebar_usage_container, base_url, ap
     # Dataset selection with dropdown
     dataset_option = st.selectbox(
         "Dataset Source",
-        ["MIMIC-IV", "eICU", "PLAGH", "Upload My Own"],
-        # ["MIMIC-IV", "eICU", "Upload My Own"],
+        # ["MIMIC-IV-ICU", "eICU-Demo", "PLAGH", "Upload My Own"],
+        ["MIMIC-IV-ICU", "eICU-Demo", "Upload My Own"],
         help="Select a pre-existing dataset or upload your own data"
     )
     
@@ -81,15 +81,15 @@ def start_new_session(workspace_container, sidebar_usage_container, base_url, ap
     dataset_path = ""
     
     # Handle dataset selection
-    if dataset_option == "MIMIC-IV":
-        dataset_path = "datasets/mimic"
+    if dataset_option == "MIMIC-IV-ICU":
+        dataset_path = "datasets/mimic-iv-icu"
         st.text_input("Dataset Path", dataset_path, disabled=True, key="dataset_path_mimic")
-    elif dataset_option == "eICU":
-        dataset_path = "datasets/eicu"
+    elif dataset_option == "eICU-Demo":
+        dataset_path = "datasets/eicu-demo"
         st.text_input("Dataset Path", dataset_path, disabled=True, key="dataset_path_eicu")
-    elif dataset_option == "PLAGH":
-        dataset_path = "datasets/301_pros"
-        st.text_input("Dataset Path", dataset_path, disabled=True, key="dataset_path_plagh")
+    # elif dataset_option == "PLAGH":
+    #     dataset_path = "datasets/301_pros"
+    #     st.text_input("Dataset Path", dataset_path, disabled=True, key="dataset_path_plagh")
     elif dataset_option == "Upload My Own":
         st.info("Please upload your dataset files below. They will be saved to ./datasets/user_upload/")
         uploaded_files = st.file_uploader(
