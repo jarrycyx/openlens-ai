@@ -190,6 +190,7 @@ def monitor_process(pid: int, line_count: dict):
                 # 结束进程
                 os.kill(pid, 9)  # SIGKILL
                 logger.info(f"Process {pid} killed due to insufficient output")
+                return
             except ProcessLookupError:
                 # 进程已经结束
                 pass
