@@ -193,7 +193,7 @@ def monitor_process(pid: int, line_count: dict):
                 return
             except ProcessLookupError:
                 # 进程已经结束
-                pass
+                return
             except Exception as e:
                 logger.error(f"Error killing process {pid}: {e}")
         

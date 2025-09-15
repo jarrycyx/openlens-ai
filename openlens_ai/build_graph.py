@@ -155,7 +155,17 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
     email_thread.start()
     
     try:
+        
         step_i = 0
+        # 先尝试在state目录下加载state，这个是每个subgraph保存一次
+        state_dir = os.path.join(save_path, "states")
+        # 遍历里面的文件，格式是step_i.json，找最大的
+        file_names = os.listdir(state_dir)
+        if file_names:
+            file_indices = [int(file_name.split("_")[1]) for file_name in file_names if file_name.endswith(".json")]
+            max_index = max(file_indices)
+            logger.info(f"State from step {max_index}")
+            step_i = 0
         for event in graph.stream(init_state, {"recursion_limit": 100}):
             # event: [("...", "..."), {}]
             if len(list(event.keys())) > 0:
@@ -228,7 +238,7 @@ def main(question=None, dataset_path=None, thread_id=None, email=""):  # 新的�
     run_graph(config, graph, save_path, init_state)
     
 def main_resume(save_dir: str):
-    config, state, last_subgraph = load_state(save_dir)
+    config, state, last_subgraph, new_save_dir = load_state(save_dir)
     if last_subgraph:
         logger.info(f"Last completed subgraph: {last_subgraph}")
         last_subgraph_index = all_subgraphs.index(last_subgraph)
@@ -255,7 +265,7 @@ def main_resume(save_dir: str):
         start_from = all_subgraphs[last_subgraph_index + 1]
         logger.info(f"Resuming from subgraph {start_from}")
         graph = build_graph(config, start_from)
-        run_graph(config, graph, save_dir, state)
+        run_graph(config, graph, new_save_dir, state)
     
 
 

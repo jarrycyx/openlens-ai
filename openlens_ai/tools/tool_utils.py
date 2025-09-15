@@ -54,6 +54,7 @@ def route_by_tool_call(tool_name: str):
         """
         Route to END if the specified tool was called, otherwise return "RETURN_TO_LLM"
         """
+        ai_message = None
         if isinstance(state, list):
             ai_message = state[-1]
         elif messages := state.get("messages", []):
@@ -74,7 +75,7 @@ def route_by_tool_call(tool_name: str):
         else:
             raise ValueError(f"No messages found in input state to tool_edge: {state}")
 
-        if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
+        if ai_message and hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
             # Check if the specific tool was called
             for tool_call in ai_message.tool_calls:
                 if tool_call.get("name") == tool_name:

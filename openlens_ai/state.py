@@ -166,5 +166,5 @@ def load_state(save_dir: str) -> tuple[Config, State]:
         for key, val in dict(os.environ).items():
             fp.write(f"{key}=\"{val}\"\n")
         
-    return config, state, last_subgraph
+    return config, state, last_subgraph, save_dir
      

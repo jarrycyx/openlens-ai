@@ -328,7 +328,7 @@ def build_latex_writer(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/code_paper_success_format_wrong/pred_aki_dy_mimic_icu_csv")
+    config, state, last_subgraph, new_save_dir = load_state("outputs/code_paper_success_format_wrong/pred_aki_dy_mimic_icu_csv")
     graph = build_latex_writer(config)
 
     graph.invoke(state)
