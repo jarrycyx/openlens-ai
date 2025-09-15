@@ -139,6 +139,11 @@ def run_docker_container(
                         if clean_chunk:
                             logger.info(clean_chunk)
                         output_chunk = ""
+                        
+                    if "tenacity.RetryError" in output_line:
+                        # TODO: I am not sure why this is happening in OpenHands currently, need further investigations. Related issues: https://github.com/All-Hands-AI/OpenHands/issues/8211, https://github.com/All-Hands-AI/OpenHands/issues/8211
+                        logger.warning(f"tenacity.RetryError occurred, killing docker process {process.pid} and retrying...")
+                        os.system(f"kill -9 {process.pid}")
                     output_chunk += output_line
                     # 同时保存到日志集合
                     log_lines.append(output_line)    
@@ -166,8 +171,8 @@ def monitor_process(pid: int, line_count: dict):
     logger.info(f"Starting process monitor for PID {pid}")
     start_count = line_count["count"]
     # 等待1分钟
-    time.sleep(120)
-    logger.info(f"Process {pid} has been running for 2 minute, checking line count...")
+    time.sleep(300)
+    logger.info(f"Process {pid} has been running for 5 minute, checking line count...")
     # 检查1分钟内读取的行数是否不超过10行
     if line_count["count"] - start_count <= 10:
         try:
@@ -181,10 +186,10 @@ def monitor_process(pid: int, line_count: dict):
             logger.error(f"Error killing process {pid}: {e}")
     
     last_line_count = 0
-    # 每隔2分钟检查是否卡住
+    # 每隔30分钟检查是否卡住
     while True:
-        time.sleep(300)
-        logger.info(f"Process {pid} has been running for 5 minutes, current line count: {line_count['count']}, last line count: {last_line_count}")
+        time.sleep(3600)
+        logger.info(f"Process {pid} has been running for 60 minutes, current line count: {line_count['count']}, last line count: {last_line_count}")
         if line_count["count"] == last_line_count:
             try:
                 # 结束进程

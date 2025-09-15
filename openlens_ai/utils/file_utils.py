@@ -284,7 +284,7 @@ def prepare_file_config(thread_id: str, question: str, dataset_path: str, email:
     )
 
     # os.makedirs(os.path.join("outputs", "log"), exist_ok=True)
-    logger.add(os.path.join(save_path, "logs.log"), 
+    logger.add(os.path.join(save_path, f"logs_{os.getpid()}.log"), 
                format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|"+thread_id, 
                colorize=False, rotation="10 MB", level="DEBUG")
     # logger.configure(handlers=[{"sink": sys.stderr, "level": "INFO"}])

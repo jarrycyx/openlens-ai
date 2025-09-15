@@ -149,6 +149,7 @@ def get_last_node(graph: CompiledStateGraph, this_node_name: str):
 
 
 def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_state: State):
+    logger.info(f"Main process is running with PID {os.getpid()}")
     
     # 启动定期发送邮件的线程
     email_thread = threading.Thread(target=send_periodic_emails, args=(config,), daemon=True)

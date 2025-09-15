@@ -100,7 +100,7 @@ def load_state(save_dir: str) -> tuple[Config, State]:
     with open(config_path, "w") as f:
         json.dump(config.model_dump(), f, indent=2)
         
-    logger.add(os.path.join(save_dir, "logs.log"), 
+    logger.add(os.path.join(save_dir, f"logs_{os.getpid()}.log"), 
                format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|"+config.thread_id, 
                colorize=False, rotation="10 MB", level="DEBUG")
     
