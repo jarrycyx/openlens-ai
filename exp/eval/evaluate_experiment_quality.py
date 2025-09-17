@@ -8,6 +8,8 @@ from openai import OpenAI
 from multiprocessing import Pool, cpu_count
 from functools import partial
 import numpy as np
+import traceback
+import time
 
 # 加载环境变量
 dotenv.load_dotenv()
@@ -15,9 +17,13 @@ dotenv.load_dotenv()
 
 def init_llm_client():
     """初始化LLM客户端"""
+    # client = OpenAI(
+    #     api_key="52b052aaa86d40acbde12a7f58937073.CDUoIu9w5rwizB79",
+    #     base_url="https://open.bigmodel.cn/api/paas/v4/",
+    # )
     client = OpenAI(
-        api_key="52b052aaa86d40acbde12a7f58937073.CDUoIu9w5rwizB79",
-        base_url="https://open.bigmodel.cn/api/paas/v4/",
+        api_key="0",
+        base_url="http://127.0.0.1:8077/v1",
     )
     
     return client
@@ -123,8 +129,7 @@ def evaluate_single_experiment_parallel(experiment_root, model, experiment_data)
             'code_execution': '',
             'result_validity': '',
             'paper_completeness': '',
-            'conclusion_quality': '',
-            'overall_score': ''
+            'conclusion_quality': ''
         }
     
     # 构建各个文件的路径
@@ -161,7 +166,7 @@ Please evaluate the quality of the following experiment and analyze it according
 4. Is the paper structure complete? Are there any unresolved LaTeX compilation errors? Does the paper have blank images, placeholder text, or invalid content?
 5. Does the paper reach an effective conclusion? Is the text accurate and elegant enough?
 
-For each dimension, please provide a score out of 3 and a brief explanation (1 for severe issues, 2 for moderate issues, 3 for minor/no issues).
+For each dimension, please provide a score out of 3 and a brief explanation (1 for severe issues that makes the research fundamentally wrong, 2 for moderate issues that still makes the research valid, 3 for minor/no issues).
 
 Please follow EXACTLY the format in the example below:
 
@@ -174,16 +179,13 @@ Please follow EXACTLY the format in the example below:
 The content of the experiment-related files is as follows:
 
 1. Subtask reports (subtask_*_report.md):
-{subtask_reports_content[:50*1000*4]}...
+{subtask_reports_content[:40*1000*4]}...
 
 2. Literature check report (literature_check_report.md):
 {literature_check_report_content[:20*1000*4]}...
 
-3. LaTeX quality report (latex_quality_report.md):
-{latex_quality_report_content[:20*1000*4]}...
-
 4. Main Tex file (main.tex):
-{main_tex_content[:60*1000*4]}...
+{main_tex_content[:40*1000*4]}...
 """
 
     # 构建消息
@@ -192,21 +194,27 @@ The content of the experiment-related files is as follows:
         {"role": "user", "content": evaluation_prompt}
     ]
     
-    try:
-        # 调用LLM进行评估
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=0.1,
-            max_tokens=4000
-        )
-        
-        evaluation = response.choices[0].message.content
-    except Exception as e:
-        evaluation = f"Error during evaluation: {str(e)}"
     
-    # 解析评分
-    scores = parse_evaluation_scores(evaluation)
+    for _ in range(10):
+        try:
+            # 调用LLM进行评估
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.1,
+                max_tokens=4000
+            )
+            
+            evaluation = response.choices[0].message.content
+        except Exception as e:
+            evaluation = f"Error during evaluation: {str(e)}"
+        
+        # 解析评分
+        scores = parse_evaluation_scores(evaluation)
+        for k, score in scores.items():
+            if score == 0:
+                time.sleep(20)
+                continue
     
     # 保存评估结果
     result = {
@@ -219,7 +227,6 @@ The content of the experiment-related files is as follows:
         'result_validity': scores['result_validity'],
         'paper_completeness': scores['paper_completeness'],
         'conclusion_quality': scores['conclusion_quality'],
-        'overall_score': np.mean(scores.values()),
     }
     
     print(f"  Evaluation completed for: {experiment_data['question']}")
@@ -240,7 +247,7 @@ def evaluate_experiments_from_csv(csv_file_path, experiment_root="outputs", mode
         print(f"Error reading CSV file: {str(e)}")
         return None
     
-    experiments = experiments[:1]
+    # experiments = experiments[:1]
     
     print(f"Using {num_processes} processes to evaluate {len(experiments)} experiments")
     
@@ -253,25 +260,34 @@ def evaluate_experiments_from_csv(csv_file_path, experiment_root="outputs", mode
             evaluation_results = pool.map(evaluate_func, experiments)
     except Exception as e:
         print(f"Error during parallel processing: {str(e)}")
+        traceback.print_exc()
         return None
     
     # 保存评估结果到CSV文件
     output_csv_path = csv_file_path.replace('.csv', '_evaluated.csv')
+    score_csv_path = csv_file_path.replace('.csv', '_scores.csv')
     try:
         with open(output_csv_path, 'w', newline='', encoding='utf-8') as csvfile:
-            fieldnames = ['question', 'dataset', 'thread_ids', 'plan_completion', 'code_execution', 
-                        'result_validity', 'paper_completeness', 'conclusion_quality', 'overall_score', 'evaluation']
+            fieldnames = ['question', 'dataset', 'thread_ids', 'evaluation']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            
             writer.writeheader()
             for result in evaluation_results:
-                writer.writerow(result)
+                writer.writerow({k: result[k] for k in fieldnames})
+        
+        with open(score_csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+            fieldnames = ['question', 'dataset', 'thread_ids', 'plan_completion', 'code_execution', 
+                        'result_validity', 'paper_completeness', 'conclusion_quality']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for result in evaluation_results:
+                writer.writerow({k: result[k] for k in fieldnames})
         
         print(f"Evaluation results saved to: {output_csv_path}")
         return output_csv_path
     except Exception as e:
         print(f"Error writing output CSV file: {str(e)}")
         return None
+    
 
 
 if __name__ == "__main__":

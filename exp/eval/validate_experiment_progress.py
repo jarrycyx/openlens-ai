@@ -156,6 +156,9 @@ def validate_experiment_progress(experiment_root="outputs", dataset_file="exp/ev
             'completed': 'Yes' if completed_count == len(experiments) else 'No'
         })
     
+    # 按dataset然后question的顺序排序
+    csv_data.sort(key=lambda x: (x['dataset'], x['question']))
+    
     # 显示每个问题的总体完成进度
     if expected_questions:
         print("Overall Progress by Question:")
