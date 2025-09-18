@@ -181,9 +181,6 @@ The content of the experiment-related files is as follows:
 1. Subtask reports (subtask_*_report.md):
 {subtask_reports_content[:40*1000*4]}...
 
-2. Literature check report (literature_check_report.md):
-{literature_check_report_content[:20*1000*4]}...
-
 4. Main Tex file (main.tex):
 {main_tex_content[:40*1000*4]}...
 """
