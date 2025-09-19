@@ -7,7 +7,7 @@
   <a href="https://openlens.icu">
     <img src="https://img.shields.io/badge/Project-Page-blue" alt="Project Page" >
   </a>
-  <a href="https://openlens.icu">
+  <a href="https://app.openlens.icu">
     <img src="https://img.shields.io/badge/Try-Now-green" alt="Try Now" >
   </a> -->
   <img src="https://img.shields.io/badge/Python-3.9%2B-blue" alt="Python Version">
