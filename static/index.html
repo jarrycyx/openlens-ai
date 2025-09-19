@@ -16,7 +16,7 @@
       :root {
         --primary-color: #0066cc;
         --secondary-color: #00a86b;
-        --accent-color: #ff6b6b;
+        --accent-color: #BE6669;
         --dark-color: #1a1a2e;
         --light-color: #fafbfc;
         --text-color: #333;
@@ -95,6 +95,16 @@
         transform: translateY(-3px);
         box-shadow: 0 10px 20px rgba(0, 102, 204, 0.2);
       }
+      .cta-paper {
+        background: transparent;
+        color: var(--accent-color); /* 使用红色系表示论文 */
+        border: 2px solid var(--accent-color);
+      }
+
+      .cta-paper:hover {
+        background-color: var(--accent-color);
+        color: white;
+      }
       .cta-secondary {
         background: transparent;
         color: var(--primary-color);
@@ -107,6 +117,7 @@
       /* Hero Section */
       .hero {
         padding: 100px 5%;
+        padding-bottom: 50px;
         background: linear-gradient(
           135deg,
           #fafbfc 0%,
@@ -116,23 +127,42 @@
         overflow: hidden;
       }
       .hero-container {
-        max-width: 1200px;
+        max-width: 1800px;
         margin: 0 auto;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
+        text-align: center;
       }
       .hero-content {
-        flex: 1;
-        max-width: 600px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .hero-title-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+      .hero-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
       }
       .hero-title {
-        font-size: 3rem;
+        font-size: 2.1rem;
         font-weight: 800;
-        margin-bottom: 20px;
         line-height: 1.2;
         display: flex;
         align-items: center;
+        margin-right: 20px;
       }
       .hero-title .logo {
         margin-right: 15px;
@@ -150,36 +180,30 @@
         display: inline-block;
       }
       .hero-subtitle {
-        font-size: 1.3rem;
-        margin-bottom: 30px;
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin-left: 5px;
         color: #555;
       }
       .hero-description {
-        font-size: 1.1rem;
+        font-size: 1.2rem;
         margin-bottom: 40px;
+        max-width: 1000px;
+        text-align: center;
         color: #666;
       }
       .hero-buttons {
         display: flex;
         gap: 20px;
         flex-wrap: wrap;
-      }
-      .hero-image {
-        flex: 1;
-        display: flex;
         justify-content: center;
-        align-items: center;
-      }
-      .hero-graphic {
-        width: 100%;
-        max-width: 500px;
-        height: auto;
       }
       .badges {
         display: flex;
         gap: 10px;
         margin-top: 30px;
         flex-wrap: wrap;
+        justify-content: center;
       }
       .badge {
         display: inline-flex;
@@ -203,7 +227,7 @@
 
       /* How It Works Section - New Architecture Section */
       .how-it-works {
-        padding: 80px 5%;
+        padding: 30px 5%;
         background: linear-gradient(
           135deg,
           #fafbfc 0%,
@@ -233,6 +257,19 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+      }
+
+      .workflow-image-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin-bottom: 50px;
+      }
+      .workflow-image {
+        max-width: 900px;
+        width: 100%;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
       }
 
       .workflow-steps {
@@ -359,6 +396,7 @@
         justify-content: center;
         position: relative;
         margin-top: 30px;
+        margin-bottom: 60px;
         height: 400px;
       }
 
@@ -791,10 +829,10 @@
           display: none;
         }
         .hero-title {
-          font-size: 2.2rem;
+          font-size: 2.5rem;
         }
         .hero-subtitle {
-          font-size: 1.1rem;
+          font-size: 1.4rem;
         }
         .section-title {
           font-size: 2rem;
@@ -822,6 +860,17 @@
         .paper-stack {
           transform: scale(0.8);
         }
+        .workflow-image {
+          max-width: 100%;
+        }
+        .hero-title-row {
+          flex-direction: column;
+          align-items: center;
+        }
+        .hero-title {
+          margin-right: 0;
+          margin-bottom: 10px;
+        }
       }
     </style>
   </head>
@@ -847,19 +896,23 @@
     <section class="hero">
       <div class="hero-container">
         <div class="hero-content">
-          <h1 class="hero-title">
-            <div class="logo">
-              <img
-                src="./logo.svg"
-                alt="OpenLens AI Logo"
-                style="width: 100%; height: 100%"
-              />
+          <div class="hero-title-container">
+            <div class="hero-title-row">
+              <h1 class="hero-title">
+                <div class="logo">
+                  <img
+                    src="./logo.svg"
+                    alt="OpenLens AI Logo"
+                    style="width: 100%; height: 100%"
+                  />
+                </div>
+                <span class="title-text">OpenLens AI</span>
+              </h1>
+              <h2 class="hero-subtitle">
+                Fully Autonomous Research Agent for Health Informatics
+              </h2>
             </div>
-            <span class="title-text">OpenLens AI</span>
-          </h1>
-          <h2 class="hero-subtitle">
-            Fully Autonomous Research Agent for Health Informatics
-          </h2>
+          </div>
           <p class="hero-description">
             A cutting-edge AI research assistant that autonomously conducts
             literature reviews, designs experiments, analyzes data, and
@@ -880,6 +933,13 @@
             >
               <i class="fab fa-github"></i> View on GitHub
             </a>
+            <a
+              href="https://arxiv.org/abs/2509.14778"
+              class="cta-button cta-paper"
+              target="_blank"
+            >
+              <i class="fa-solid fa-file"></i> Read Paper
+            </a>
           </div>
           <div class="badges">
             <div>
@@ -898,118 +958,16 @@
             </div>
           </div>
         </div>
-        <div class="hero-image">
-          <img
-            src="https://picsum.photos/seed/openlens-ai-hero-image4/600/400.jpg"
-            alt="OpenLens AI Visualization"
-            class="hero-graphic"
-          />
-        </div>
       </div>
     </section>
 
     <!-- How It Works Section - New Architecture Section -->
     <section class="how-it-works" id="how-it-works">
-      <div class="how-it-works-container">
-        <h2 class="section-title">How Does It Work?</h2>
-        <p class="section-subtitle">
-          OpenLens AI transforms your research questions into comprehensive
-          papers through a streamlined multi-agent workflow
-        </p>
-
-        <div class="workflow-container">
-          <div class="workflow-steps">
-            <div class="workflow-line"></div>
-
-            <div class="workflow-step">
-              <div class="step-icon">
-                <i class="fas fa-question"></i>
-              </div>
-              <h3 class="step-title">Input Question</h3>
-              <p class="step-description">
-                Submit your research question and data
-              </p>
-            </div>
-
-            <div class="workflow-step">
-              <div class="step-icon">
-                <i class="fas fa-users-cog"></i>
-              </div>
-              <h3 class="step-title">Autonomous Reading/Coding/Writing</h3>
-              <p class="step-description">
-                Five specialized agents collaborate
-              </p>
-            </div>
-
-            <div class="workflow-step">
-              <div class="step-icon">
-                <i class="fas fa-file-pdf"></i>
-              </div>
-              <h3 class="step-title">Generate Paper</h3>
-              <p class="step-description">
-                Comprehensive research paper in PDF format
-              </p>
-            </div>
-          </div>
-
-          <!-- Agents Integrated in Workflow -->
-          <div class="agents-in-workflow">
-            <div class="agent-in-workflow">
-              <div class="agent-icon-small">
-                <i class="fas fa-search"></i>
-              </div>
-              <h4 class="agent-name-small">Literature Reviewer</h4>
-              <p class="agent-description-small">
-                Searches and summarizes relevant medical papers
-              </p>
-            </div>
-
-            <div class="agent-in-workflow">
-              <div class="agent-icon-small">
-                <i class="fas fa-chart-pie"></i>
-              </div>
-              <h4 class="agent-name-small">Data Analyzer</h4>
-              <p class="agent-description-small">
-                Analyzes datasets and generates insights
-              </p>
-            </div>
-
-            <div class="agent-in-workflow">
-              <div class="agent-icon-small">
-                <i class="fas fa-user-tie"></i>
-              </div>
-              <h4 class="agent-name-small">Supervisor</h4>
-              <p class="agent-description-small">
-                Coordinates and validates all agent activities
-              </p>
-            </div>
-
-            <div class="agent-in-workflow">
-              <div class="agent-icon-small">
-                <i class="fas fa-laptop-code"></i>
-              </div>
-              <h4 class="agent-name-small">Coder</h4>
-              <p class="agent-description-small">
-                Generates and executes code for analysis
-              </p>
-            </div>
-
-            <div class="agent-in-workflow">
-              <div class="agent-icon-small">
-                <i class="fas fa-pen-fancy"></i>
-              </div>
-              <h4 class="agent-name-small">LaTeX Writer</h4>
-              <p class="agent-description-small">
-                Creates professional research papers
-              </p>
-            </div>
-          </div>
-
-          <h3
+      <h3
             style="
               text-align: center;
-              font-size: 1.5rem;
-              margin: 10px 0 30px;
+              font-size: 2rem;
+              margin: 0px 0 60px;
               color: var(--dark-color);
             "
           >
@@ -1070,12 +1028,119 @@
               </div>
             </div>
           </div>
+
+
+      <div class="how-it-works-container">
+        <h2 class="section-title">How Does It Work?</h2>
+        <p class="section-subtitle">
+          OpenLens AI transforms your research questions into comprehensive
+          papers through a streamlined multi-agent workflow
+        </p>
+
+        <div class="workflow-container">
+          <div class="workflow-steps">
+            <div class="workflow-line"></div>
+
+            <div class="workflow-step">
+              <div class="step-icon">
+                <i class="fas fa-question"></i>
+              </div>
+              <h3 class="step-title">Input Question</h3>
+              <p class="step-description">
+                Submit your research question and data
+              </p>
+            </div>
+
+            <div class="workflow-step">
+              <div class="step-icon">
+                <i class="fas fa-users-cog"></i>
+              </div>
+              <h3 class="step-title">Autonomous Reading/Coding/Writing</h3>
+              <p class="step-description">
+                Five specialized agents collaborate
+              </p>
+            </div>
+
+            <div class="workflow-step">
+              <div class="step-icon">
+                <i class="fas fa-file-pdf"></i>
+              </div>
+              <h3 class="step-title">Generate Paper</h3>
+              <p class="step-description">
+                Comprehensive research paper in PDF format
+              </p>
+            </div>
+          </div>
+
+          <!-- Agents Integrated in Workflow -->
+          <!-- <div class="agents-in-workflow">
+            <div class="agent-in-workflow">
+              <div class="agent-icon-small">
+                <i class="fas fa-search"></i>
+              </div>
+              <h4 class="agent-name-small">Literature Reviewer</h4>
+              <p class="agent-description-small">
+                Searches and summarizes relevant medical papers
+              </p>
+            </div>
+
+            <div class="agent-in-workflow">
+              <div class="agent-icon-small">
+                <i class="fas fa-chart-pie"></i>
+              </div>
+              <h4 class="agent-name-small">Data Analyzer</h4>
+              <p class="agent-description-small">
+                Analyzes datasets and generates insights
+              </p>
+            </div>
+
+            <div class="agent-in-workflow">
+              <div class="agent-icon-small">
+                <i class="fas fa-user-tie"></i>
+              </div>
+              <h4 class="agent-name-small">Supervisor</h4>
+              <p class="agent-description-small">
+                Coordinates and validates all agent activities
+              </p>
+            </div>
+
+            <div class="agent-in-workflow">
+              <div class="agent-icon-small">
+                <i class="fas fa-laptop-code"></i>
+              </div>
+              <h4 class="agent-name-small">Coder</h4>
+              <p class="agent-description-small">
+                Generates and executes code for analysis
+              </p>
+            </div>
+
+            <div class="agent-in-workflow">
+              <div class="agent-icon-small">
+                <i class="fas fa-pen-fancy"></i>
+              </div>
+              <h4 class="agent-name-small">LaTeX Writer</h4>
+              <p class="agent-description-small">
+                Creates professional research papers
+              </p>
+            </div>
+          </div> -->
+
+
+          <!-- 添加原来的架构图 -->
+          <div class="workflow-image-container">
+            <img
+              src="arch.png"
+              alt="OpenLens AI Architecture"
+              class="workflow-image"
+            />
+          </div>
+          
         </div>
       </div>
     </section>
 
     <!-- Features Section -->
-    <section class="features" id="features">
+    <!-- <section class="features" id="features">
       <h2 class="section-title">Powerful Features</h2>
       <p class="section-subtitle">
         OpenLens AI combines cutting-edge AI technologies to deliver a
@@ -1202,7 +1267,7 @@
           </button>
         </div>
       </div>
-    </section>
+    </section> -->
 
     <!-- Quick Start Section -->
     <section class="quickstart" id="quickstart">
