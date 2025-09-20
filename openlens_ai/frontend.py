@@ -289,6 +289,7 @@ def main():
     st.set_page_config(page_title="OpenLens AI", layout="wide")
     st.title("🫧 OpenLens AI")
     st.subheader("Fully Autonomous Research Agent for Health Infomatics")
+    st.page_link("https://github.com/jarrycyx/openlens-ai", label="🔗 Star our project on GitHub")
     
     # 显示当前进程数量
     process_count = process_manager.get_process_count()
