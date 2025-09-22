@@ -14,6 +14,7 @@ import subprocess
 import time
 import zipfile
 import io
+import shutil
 logger.configure(handlers=[{"sink": sys.stderr, "level": "INFO"}])
 
 from .build_graph import build_graph, run_graph
@@ -21,6 +22,41 @@ from .utils.frontend_utils import WorkspaceMonitor, display_messages_from_file
 from .utils.config import Config
 from .state import load_state
 from .utils.process_manager import process_manager
+
+def load_saved_experiments():
+    """Load saved experiments from exp/saved_exp directory"""
+    preset_experiments = []
+    saved_exp_root = "exp/saved_exp"
+    
+    if not os.path.exists(saved_exp_root):
+        return []
+    
+    # 遍历所有子目录查找实验目录
+    for root, dirs, files in os.walk(saved_exp_root):
+        for dir_name in dirs:
+            if dir_name.startswith("test_"):
+                # 解析目录名获取dataset和question信息
+                # 格式: test_{dataset}_{question}
+                dir_path = os.path.join(root, dir_name)
+                config_path = os.path.join(dir_path, "config.json")
+                
+                if os.path.exists(config_path):
+                    try:
+                        with open(config_path, 'r') as f:
+                            config = json.load(f)
+                        
+                        preset_experiments.append({
+                            'question': config.get('question', ''),
+                            'dataset_path': config.get('dataset_path', ''),
+                            'dir_name': dir_name,
+                            'path': dir_path,
+                            'thread_id': config.get('thread_id', ''),
+                            'email': config.get('email', '')
+                        })
+                    except Exception as e:
+                        logger.warning(f"Failed to load config from {config_path}: {e}")
+    
+    return preset_experiments
 
 def load_saved_sessions(email_filter=None):
     """Load saved sessions from outputs directory, optionally filtered by email"""
@@ -62,154 +98,212 @@ def load_saved_sessions(email_filter=None):
 
 def start_new_session(workspace_container, sidebar_usage_container, base_url, api_key, model, code_model, vision_model):
     """Handle the start new session mode"""
-    # 输入字段
-    question = st.text_area(
-        "Research Question",
-        "What is the prediction precision of AKI in ICU patients when dynamically predicting each day based on the past two days of historical data?",
-        height=150,
-    )
-
-    # Dataset selection with dropdown
-    dataset_option = st.selectbox(
-        "Dataset Source",
-        # ["MIMIC-IV-ICU", "eICU-Demo", "PLAGH", "Upload My Own"],
-        ["MIMIC-IV-ICU", "eICU-Demo", "Upload My Own"],
-        help="Select a pre-existing dataset or upload your own data"
-    )
     
-    # Initialize dataset_path
+    # 添加预设问题选择
+    preset_experiments = load_saved_experiments()
+    
+    use_preset = st.checkbox("Use preset research question and dataset", value=True)
+    
+    question = ""
     dataset_path = ""
+    preset_selected = None
     
-    # Handle dataset selection
-    if dataset_option == "MIMIC-IV-ICU":
-        dataset_path = "datasets/mimic-iv-icu"
-        st.text_input("Dataset Path", dataset_path, disabled=True, key="dataset_path_mimic")
-    elif dataset_option == "eICU-Demo":
-        dataset_path = "datasets/eicu-demo"
-        st.text_input("Dataset Path", dataset_path, disabled=True, key="dataset_path_eicu")
-    # elif dataset_option == "PLAGH":
-    #     dataset_path = "datasets/301_pros"
-    #     st.text_input("Dataset Path", dataset_path, disabled=True, key="dataset_path_plagh")
-    elif dataset_option == "Upload My Own":
-        st.info("Please upload your dataset files below. They will be saved to ./datasets/user_upload/")
-        uploaded_files = st.file_uploader(
-            "Upload Dataset Files", 
-            accept_multiple_files=True,
-            type=["csv", "txt", "json", "parquet", "xls", "xlsx"],
-            help="Upload your dataset files"
+    if use_preset and preset_experiments:
+        # 创建预设问题选项列表
+        preset_options = [f"{exp['question']} | Dataset: {exp['dataset_path']}" for exp in preset_experiments]
+        selected_preset = st.selectbox("Select a preset experiment", preset_options)
+        
+        # 根据选择的预设填充问题和数据集路径
+        if selected_preset:
+            selected_index = preset_options.index(selected_preset)
+            preset_selected = preset_experiments[selected_index]
+            question = preset_selected['question']
+            dataset_path = preset_selected['dataset_path']
+            
+            # 显示预设的问题和数据集
+            st.text_area("Research Question (preset)", question, height=150, key="preset_question", disabled=True)
+            st.text_input("Dataset Path (preset)", dataset_path, disabled=True, key="preset_dataset")
+            
+            # 添加"Resume with Preset"按钮
+            if st.button("Resume with Preset"):
+                if preset_selected:
+                    # 设置session state模拟从已保存会话恢复
+                    config_dict = {
+                        'save_path': preset_selected['path'],
+                        'thread_id': preset_selected['thread_id'],
+                        'question': preset_selected['question'],
+                        'dataset_path': preset_selected['dataset_path'],
+                        'email': preset_selected['email']
+                    }
+                    config = Config(**config_dict)
+                    st.session_state.config = config
+                    
+                    # 如果有旧的监控线程，停止它
+                    if st.session_state.monitor_thread:
+                        logger.info("Stopping old monitor thread")
+                        st.session_state.monitor_thread.stop()
+
+                    # 启动新的监控线程
+                    monitor_thread = WorkspaceMonitor(config, workspace_container, sidebar_usage_container)
+                    add_script_run_ctx(monitor_thread, get_script_run_ctx())
+                    monitor_thread.start()
+                    st.session_state.monitor_thread = monitor_thread
+                    
+                    st.success(f"Resumed with preset: {question}")
+                    
+                    with st.empty():
+                        while True:
+                            display_messages_from_file(config)
+                            time.sleep(5)
+    else:
+        # 输入字段
+        question = st.text_area(
+            "Research Question",
+            "What is the prediction precision of AKI in ICU patients when dynamically predicting each day based on the past two days of historical data?",
+            height=150,
+        )
+
+        # Dataset selection with dropdown
+        dataset_option = st.selectbox(
+            "Dataset Source",
+            # ["MIMIC-IV-ICU", "eICU-Demo", "PLAGH", "Upload My Own"],
+            ["MIMIC-IV-ICU", "eICU-Demo", "Upload My Own"],
+            help="Select a pre-existing dataset or upload your own data"
         )
         
-        # Create user_upload directory if it doesn't exist
-        user_upload_dir = "datasets/user_upload"
-        os.makedirs(user_upload_dir, exist_ok=True)
+        # Initialize dataset_path
+        dataset_path = ""
         
-        # Handle file uploads
-        if uploaded_files:
-            # Create a subdirectory with timestamp
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            upload_subdir = os.path.join(user_upload_dir, f"upload_{timestamp}_{random.randint(1000, 9999):04d}")
-            os.makedirs(upload_subdir, exist_ok=True)
+        # Handle dataset selection
+        if dataset_option == "MIMIC-IV-ICU":
+            dataset_path = "datasets/mimic-iv-icu"
+            st.text_input("Dataset Path", dataset_path, disabled=True, key="dataset_path_mimic")
+        elif dataset_option == "eICU-Demo":
+            dataset_path = "datasets/eicu-demo"
+            st.text_input("Dataset Path", dataset_path, disabled=True, key="dataset_path_eicu")
+        # elif dataset_option == "PLAGH":
+        #     dataset_path = "datasets/301_pros"
+        #     st.text_input("Dataset Path", dataset_path, disabled=True, key="dataset_path_plagh")
+        elif dataset_option == "Upload My Own":
+            st.info("Please upload your dataset files below. They will be saved to ./datasets/user_upload/")
+            uploaded_files = st.file_uploader(
+                "Upload Dataset Files", 
+                accept_multiple_files=True,
+                type=["csv", "txt", "json", "parquet", "xls", "xlsx"],
+                help="Upload your dataset files"
+            )
             
-            # Save uploaded files
-            for uploaded_file in uploaded_files:
-                file_path = os.path.join(upload_subdir, uploaded_file.name)
-                with open(file_path, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
+            # Create user_upload directory if it doesn't exist
+            user_upload_dir = "datasets/user_upload"
+            os.makedirs(user_upload_dir, exist_ok=True)
             
-            dataset_path = upload_subdir
-            st.success(f"Files uploaded successfully to: {upload_subdir}")
-            st.text_input("Dataset Path", dataset_path, disabled=True, key="dataset_path_uploaded")
-        else:
-            st.warning("Please upload at least one file for your dataset")
-            dataset_path = None
-    
-    # email = st.text_input("Email (will update with you the progress)", "openlens@yeah.net")
-    email = st.text_input("Email (will update with you the progress)", "")
-
-    # 生成线程ID
-    question_show = re.sub(r'[^\w]', '_', question.strip())
-    thread_id = "OL_" + datetime.now().strftime("%Y%m%d%H%M%S") + \
-        f"_{question_show[:15]}" + f"_{question_show[-15:]}" + \
-            "_" + email.replace("@", "_").replace(".", "_") + "_" + \
-            str(random.randint(1000, 9999))
-
-    btn1, btn2 = st.columns(2)
-    btn1 = btn1.button("Run Agent", type="secondary")
-    # btn2 = btn2.container(horizontal_alignment="right").button("Abort", type="primary")
-    
-    if btn1:
-        if question and dataset_path and (len(email) > 5):
-            # 检查进程数量是否已满
-            if process_manager.is_full():
-                st.error(f"Maximum number of processes ({process_manager.MAX_PROCESSES}) reached. Please wait for some processes to finish.")
-                return
+            # Handle file uploads
+            if uploaded_files:
+                # Create a subdirectory with timestamp
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                upload_subdir = os.path.join(user_upload_dir, f"upload_{timestamp}_{random.randint(1000, 9999):04d}")
+                os.makedirs(upload_subdir, exist_ok=True)
                 
-            st.chat_message("human").write("**Question:** " + question + "\n\n**Dataset Path:** " + dataset_path)
-            
-            if not process_manager.is_full():
-                # 启动新进程运行任务
-                process = subprocess.Popen([
-                    "python", "-m", "openlens_ai.build_graph",
-                    "--question", question,
-                    "--dataset-path", dataset_path,
-                    "--thread-id", thread_id,
-                    "--email", email,
-                    "--chat-model", model,
-                    "--api-key", os.environ["OPENAI_API_KEY"] if "Default" in api_key else api_key,
-                    "--base-url", os.environ["BASE_URL"] if "Default" in base_url else base_url,
-                    "--code-model", code_model,
-                    "--vision-model", vision_model,
-                ])
-            
-                # 将进程信息添加到进程管理器
-                if not process_manager.add_process(process.pid, thread_id):
-                    process.terminate()  # 如果添加失败，终止进程
-                    st.error(f"Failed to start process. Maximum number of processes ({process_manager.MAX_PROCESSES}) reached.")
+                # Save uploaded files
+                for uploaded_file in uploaded_files:
+                    file_path = os.path.join(upload_subdir, uploaded_file.name)
+                    with open(file_path, "wb") as f:
+                        f.write(uploaded_file.getbuffer())
+                
+                dataset_path = upload_subdir
+                st.success(f"Files uploaded successfully to: {upload_subdir}")
+                st.text_input("Dataset Path", dataset_path, disabled=True, key="dataset_path_uploaded")
+            else:
+                st.warning("Please upload at least one file for your dataset")
+                dataset_path = None
+
+        # email = st.text_input("Email (will update with you the progress)", "openlens@yeah.net")
+        email = st.text_input("Email (will update with you the progress)", "")
+
+        # 生成线程ID
+        question_show = re.sub(r'[^\w]', '_', question.strip())
+        thread_id = "OL_" + datetime.now().strftime("%Y%m%d%H%M%S") + \
+            f"_{question_show[:15]}" + f"_{question_show[-15:]}" + \
+                "_" + email.replace("@", "_").replace(".", "_") + "_" + \
+                str(random.randint(1000, 9999))
+
+        btn1, btn2 = st.columns(2)
+        btn1 = btn1.button("Run Agent", type="secondary")
+        # btn2 = btn2.container(horizontal_alignment="right").button("Abort", type="primary")
+        
+        if btn1:
+            if question and dataset_path and (len(email) > 5):
+                # 检查进程数量是否已满
+                if process_manager.is_full():
+                    st.error(f"Maximum number of processes ({process_manager.MAX_PROCESSES}) reached. Please wait for some processes to finish.")
                     return
-            while True:
-                try:
-                    time.sleep(5)
-                    config = open(os.path.join("outputs", thread_id, "config.json"), "r").read()
-                    config = json.loads(config)
-                    config = Config(**config)
-                    break
-                except Exception as e:
-                    logger.error(f"Error loading config: {e}")
-                    continue
-            
-            
-            st.write(f"Thread ID: {thread_id}")
-            st.warning(f"Job progress and results will be sent to {email}, please make sure the address is correct.")
-
-            # 保存 config 到 session state
-            st.session_state.config = config
-
-            # 如果有旧的监控线程，停止它
-            if st.session_state.monitor_thread:
-                logger.info("Stopping old monitor thread")
-                st.session_state.monitor_thread.stop()
-
-            # 启动新的监控线程
-            monitor_thread = WorkspaceMonitor(config, workspace_container, sidebar_usage_container)
-            add_script_run_ctx(monitor_thread, get_script_run_ctx())
-            monitor_thread.start()
-            st.session_state.monitor_thread = monitor_thread
-
-            st.success("Graph built successfully!")
-            
-            with st.empty():
-                while True:
-                    display_messages_from_file(config)
-                    time.sleep(5)
+                    
+                st.chat_message("human").write("**Question:** " + question + "\n\n**Dataset Path:** " + dataset_path)
                 
+                if not process_manager.is_full():
+                    # 启动新进程运行任务
+                    process = subprocess.Popen([
+                        "python", "-m", "openlens_ai.build_graph",
+                        "--question", question,
+                        "--dataset-path", dataset_path,
+                        "--thread-id", thread_id,
+                        "--email", email,
+                        "--chat-model", model,
+                        "--api-key", os.environ["OPENAI_API_KEY"] if "Default" in api_key else api_key,
+                        "--base-url", os.environ["BASE_URL"] if "Default" in base_url else base_url,
+                        "--code-model", code_model,
+                        "--vision-model", vision_model,
+                    ])
+                
+                    # 将进程信息添加到进程管理器
+                    if not process_manager.add_process(process.pid, thread_id):
+                        process.terminate()  # 如果添加失败，终止进程
+                        st.error(f"Failed to start process. Maximum number of processes ({process_manager.MAX_PROCESSES}) reached.")
+                        return
+                while True:
+                    try:
+                        time.sleep(5)
+                        config = open(os.path.join("outputs", thread_id, "config.json"), "r").read()
+                        config = json.loads(config)
+                        config = Config(**config)
+                        break
+                    except Exception as e:
+                        logger.error(f"Error loading config: {e}")
+                        continue
+                
+                
+                st.write(f"Thread ID: {thread_id}")
+                st.warning(f"Job progress and results will be sent to {email}, please make sure the address is correct.")
 
-        else:
-            if not question:
-                st.error("Please enter a question.")
-            elif not dataset_path:
-                st.error("Please enter a dataset path.")
-            elif not len(email) > 5:
-                st.error("Please enter an email.")
+                # 保存 config 到 session state
+                st.session_state.config = config
+
+                # 如果有旧的监控线程，停止它
+                if st.session_state.monitor_thread:
+                    logger.info("Stopping old monitor thread")
+                    st.session_state.monitor_thread.stop()
+
+                # 启动新的监控线程
+                monitor_thread = WorkspaceMonitor(config, workspace_container, sidebar_usage_container)
+                add_script_run_ctx(monitor_thread, get_script_run_ctx())
+                monitor_thread.start()
+                st.session_state.monitor_thread = monitor_thread
+
+                st.success("Graph built successfully!")
+                
+                with st.empty():
+                    while True:
+                        display_messages_from_file(config)
+                        time.sleep(5)
+                    
+
+            else:
+                if not question:
+                    st.error("Please enter a question.")
+                elif not dataset_path:
+                    st.error("Please enter a dataset path.")
+                elif not len(email) > 5:
+                    st.error("Please enter an email.")
 
 
 def resume_session(workspace_container, sidebar_usage_container):
@@ -289,7 +383,7 @@ def main():
     st.set_page_config(page_title="OpenLens AI", layout="wide")
     st.title("🫧 OpenLens AI")
     st.subheader("Fully Autonomous Research Agent for Health Infomatics")
-    st.page_link("https://github.com/jarrycyx/openlens-ai", label="🔗 Star our project on GitHub")
+    st.page_link("https://github.com/jarrycyx/openlens-ai", label="🌟 Star our project on GitHub")
     
     # 显示当前进程数量
     process_count = process_manager.get_process_count()
