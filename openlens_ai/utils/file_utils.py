@@ -291,7 +291,7 @@ def prepare_file_config(thread_id: str, question: str, dataset_path: str, email:
 
     # 保存config
     with open(os.path.join(save_path, "config.json"), "w") as f:
-        json.dump(config.model_dump(), f, indent=4)
+        json.dump(config.model_dump(), f, indent=4, ensure_ascii=False)
     logger.info("Config saved to" + os.path.join(config.save_path, "config.json"))
     logger.info(f"Config: {config}")
 

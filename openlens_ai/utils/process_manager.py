@@ -43,7 +43,7 @@ class ProcessManager:
     def save_processes(self, processes: List[Dict[str, Any]]):
         """保存进程信息到文件"""
         with open(self.process_file, 'w') as f:
-            json.dump(processes, f, indent=2)
+            json.dump(processes, f, indent=2, ensure_ascii=False)
 
     def add_process(self, pid: int, thread_id: str) -> bool:
         """添加新进程，如果成功返回True，如果达到最大进程数返回False"""

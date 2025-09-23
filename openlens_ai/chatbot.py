@@ -362,7 +362,7 @@ def chatbot_with_context_manager(
           
         if "{plan}" in this_prompt:  
             try:
-                plan_str = json.dumps(plan)
+                plan_str = json.dumps(plan, ensure_ascii=False, indent=4)
                 if len(plan_str) > 4000*4:
                     logger.warning("Plan is too long, clamping with vector search")
                     plan_str = vector_search(plan_str, prompt, token_cnt=4000)

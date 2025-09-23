@@ -12,6 +12,7 @@
    * Check if any experiment was prematurely stopped or had incomplete outputs (e.g., missing data, incomplete runs).
    * Validate that the results align with the objectives outlined in the experiment plan.
    * **If experiments are incomplete**, revise the code to handle missing data or unfinished experiments, and rerun.
+   * Make sure the program ONLY SAVE ONE COPY of each figure and does not save different formats of the same figure.
 
 3. **Check for Data Integrity:**
    * Ensure that no synthetic data, fabricated outcomes, or demo/minified versions of datasets are present unless explicitly stated in the experimental setup (make sure that actual sample/patient/row numbers used match the provided dataset). Note that some datasets may contain shifted years for confidentiality reasons, this does not mean the data is fabricated.
