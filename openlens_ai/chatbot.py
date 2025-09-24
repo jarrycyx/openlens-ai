@@ -149,7 +149,10 @@ def perform_rerank(all_docs_str: list[str], query: str, token_cnt: int):
                 logger.warning(f"Get rerank result error: {e}")
                 logger.warning(traceback.format_exc())
                 logger.warning(f"Retrying... {try_i}/10")
-                logger.warning(response.json())
+                try:
+                    logger.warning(response.json())
+                except:
+                    logger.warning(str(response))
                 time.sleep(10)
                 continue
                 
