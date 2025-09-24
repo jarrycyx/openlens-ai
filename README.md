@@ -1,15 +1,15 @@
 # OpenLens AI: Fully Autonomous Research Agent for Health Infomatics
 
 <p align="center">
-  <a href="https://arxiv.org/abs/2509.14778">
+  <!-- <a href="https://arxiv.org/abs/2509.14778">
     <img src="https://img.shields.io/badge/arXiv-paper-red" alt="arXiv-paper" >
   </a>
   <a href="https://openlens.icu">
     <img src="https://img.shields.io/badge/Project-Page-blue" alt="Project Page" >
   </a>
-  <a href="https://openlens.icu">
+  <a href="https://app.openlens.icu">
     <img src="https://img.shields.io/badge/Try-Now-green" alt="Try Now" >
-  </a>
+  </a> -->
   <img src="https://img.shields.io/badge/Python-3.9%2B-blue" alt="Python Version">
   <img src="https://img.shields.io/badge/LangGraph-Powered-orange" alt="LangGraph">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
@@ -18,9 +18,13 @@
 
 <div align="center">
 <p>
-<strong>📄 Paper:</strong> <a href="https://arxiv.org/abs/2509.14778">Read our research paper on arXiv</a> |
-<strong>🌐 Project Page:</strong> <a href="https://openlens.icu">Explore detailed documentation and examples</a> |
+<strong>📄 Paper:</strong> <a href="https://arxiv.org/abs/2509.14778">Read our research paper on arXiv</a> 
+
+<strong>🌐 Project Page:</strong> <a href="https://openlens.icu">Explore detailed documentation and examples</a> 
+
 <strong>🚀 Try Now:</strong> <a href="https://openlens.icu">Use our cloud application directly in your browser</a>
+<p> </p>
+
 </p>
 </div>
 
