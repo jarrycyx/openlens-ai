@@ -83,13 +83,14 @@ bash openlens_ai/tools/openhands_configs/build_docker_cpu.sh
 1. Clone the repository:
 ```bash
 git clone git@github.com:jarrycyx/openlens-ai.git
-cd agent-med
+cd openlens-ai
 ```
 
 2. Install dependencies:
 ```bash
-# If with to visualize the workflow, install graphviz:
+# If wish to visualize the workflow, install graphviz:
 #   sudo apt-get install graphviz graphviz-dev
+#   pip install pygraphviz
 
 conda create -n py312 python=3.12 # Or with uv / venv
 conda activate py312
