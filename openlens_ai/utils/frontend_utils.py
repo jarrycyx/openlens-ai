@@ -41,6 +41,21 @@ def _get_messages_file_path(config: Config):
     os.makedirs(streamlit_dir, exist_ok=True)
     return os.path.join(streamlit_dir, "messages.json")
 
+def _message_remove_duplicates(messages: list):
+    def to_string(msg):
+        return msg["type"] + msg["content"]
+    
+    logger.info(f"Removing duplicates from {len(messages)} messages")
+    # 对整个list去除重复
+    messages_no_dup = []
+    for message in messages:
+        if to_string(message) not in [to_string(m) for m in messages_no_dup]:
+            messages_no_dup.append(message)
+    logger.info(f"Removed {len(messages) - len(messages_no_dup)} duplicates")
+    messages = messages_no_dup
+    return messages
+
+
 def _save_message(config: Config, message_data: dict):
     """保存消息到JSON文件，只保留最新的30条消息"""
     messages_file = _get_messages_file_path(config)
@@ -60,6 +75,9 @@ def _save_message(config: Config, message_data: dict):
     
     # 添加新消息
     messages.append(message_data)
+    
+    # 去重
+    messages = _message_remove_duplicates(messages)
     
     # 保存回文件
     try:
@@ -167,6 +185,7 @@ def display_messages_from_file(config: Config):
             logger.warning(f"Failed to read messages file: {e}")
             return
         
+        messages = _message_remove_duplicates(messages)
         logger.debug(f"Loaded {len(messages)} messages from {messages_file}")
         # 显示消息
         for msg in messages:
