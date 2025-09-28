@@ -26,7 +26,8 @@ forward_names = {
     "Qwen/Qwen3-Coder-480B-A35B-Instruct": "qwen3-coder-480b-a35b-instruct",
     "BAAI/bge-reranker-v2-m3": "bge-reranker-v2-m3",
     "Qwen/Qwen3-30B-A3B-Instruct-2507": "qwen3-30b-a3b-instruct-2507",
-    "THUDM/GLM-4.1V-9B-Thinking": "glm-4.1v-9b-thinking"
+    "THUDM/GLM-4.1V-9B-Thinking": "glm-4.1v-9b-thinking",
+    "Kwaipilot/KAT-Dev": "kat-dev-32b"
 }
 
 for a, b in forward_names.items():
@@ -220,7 +221,7 @@ def main():
         
         config["router_settings"] = {
             "routing_strategy": "simple-shuffle",
-            "fallbacks": [{"glm-4.5-air": ["glm-4.5"]}]
+            "fallbacks": [{"glm-4.5-air": ["glm-4.5"]}, {"kat-dev-32b": ["glm-4.5-air"]}]
         }
         config["litellm_settings"] = {
             "num_retries": 3,
