@@ -226,14 +226,16 @@ class BasicToolNode:
             # traceback.print_exc()
             error_str = str(e).replace("\"", "").replace("\\", "").replace("[", "").replace("]", "").replace("{", "").replace("}", "")
             if "id" in tool_call and "name" in tool_call:
-                state["messages"] += [
-                        ToolMessage(
-                            content=error_str,
-                            name=tool_call["name"],
-                            tool_call_id=tool_call["id"], 
-                            status="error"
-                        )
-                    ]
+                new_message = ToolMessage(
+                    content=error_str,
+                    name=tool_call["name"],
+                    tool_call_id=tool_call["id"], 
+                    status="error"
+                )
+                # 去除重复的错误信息
+                state["messages"] = [m for m in state["messages"] if m.content != new_message.content]
+                state["messages"].append(new_message)
+                
             self.save_tool_call(state["messages"][-1])
             state["last_tool_call"] = tool_call["name"]
             return state

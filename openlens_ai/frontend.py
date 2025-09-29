@@ -429,11 +429,11 @@ def main():
         # 将code_model和vision_model放在新的一行
         col3, col4, col5 = st.columns(3)
         with col3:
-            model = st.text_input("Chat Model", value=os.environ.get("MODEL", ""))
+            model = st.text_input("Chat Model", value="glm-4.5-air")
         with col4:
-            code_model = st.text_input("Code Model", value=os.environ.get("CODE_MODEL", ""))
+            code_model = st.text_input("Code Model", value="glm-4.5-air")
         with col5:
-            vision_model = st.text_input("Vision Model", value=os.environ.get("VISION_MODEL", ""))
+            vision_model = st.text_input("Vision Model", value="glm-4.1v-9b-thinking")
 
     # 如果有正在运行的监控线程，但 config 已更改，则停止旧线程
     if (

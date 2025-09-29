@@ -5,7 +5,7 @@ disable_color = true
 search_api_key = "{tavily_key}"
 save_trajectory_path = "/helper/openhands_traj"
 run_as_openhands = false
-# debug = true
+debug = true
 
 [llm]
 model="openai/{code_model}" # openai means openai-compatible endpoint, not OpenAI models
@@ -14,7 +14,7 @@ base_url="{base_url}"
 input_cost_per_token = 1.0
 output_cost_per_token = 1.0
 max_message_chars = 100000
-native_tool_calling = true
+native_tool_calling = false
 retry_max_wait=60
 
 [sandbox]
