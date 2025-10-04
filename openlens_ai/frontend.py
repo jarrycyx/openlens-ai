@@ -422,7 +422,7 @@ def main():
         #     api_key = st.text_input("API Key", value="Default (slow)")
         
         with col1:
-            base_url = st.text_input("API Base URL", value="", help="Recommended platform: https://www.siliconflow.cn/, https://cloud.infini-ai.com/, https://openrouter.ai/models", placeholder="Enter LLM Base URL")
+            base_url = st.text_input("API Base URL", value="", help="Recommended platform: https://www.siliconflow.cn/, https://cloud.infini-ai.com/, https://openrouter.ai/models, https://bigmodel.cn/", placeholder="Enter LLM Base URL")
         with col2:
             api_key = st.text_input("API Key", value="", placeholder="Enter LLM API key")
         
@@ -433,7 +433,7 @@ def main():
         with col4:
             code_model = st.text_input("Code Model", value="glm-4.5-air")
         with col5:
-            vision_model = st.text_input("Vision Model", value="glm-4.1v-9b-thinking")
+            vision_model = st.text_input("Vision Model", value="glm-4.1v-9b-thinking", help="Please select a vision model (e.g. qwen3-vl, glm-4.5v, glm-4.1v-9b-thinking)")
 
     # 如果有正在运行的监控线程，但 config 已更改，则停止旧线程
     if (

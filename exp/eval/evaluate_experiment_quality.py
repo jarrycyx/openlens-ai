@@ -17,14 +17,14 @@ dotenv.load_dotenv()
 
 def init_llm_client():
     """初始化LLM客户端"""
-    # client = OpenAI(
-    #     api_key="52b052aaa86d40acbde12a7f58937073.CDUoIu9w5rwizB79",
-    #     base_url="https://open.bigmodel.cn/api/paas/v4/",
-    # )
     client = OpenAI(
-        api_key="0",
-        base_url="http://127.0.0.1:8077/v1",
+        api_key="52b052aaa86d40acbde12a7f58937073.CDUoIu9w5rwizB79",
+        base_url="https://open.bigmodel.cn/api/paas/v4/",
     )
+    # client = OpenAI(
+    #     api_key="0",
+    #     base_url="http://127.0.0.1:8077/v1",
+    # )
     
     return client
 
@@ -293,12 +293,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate experiment quality")
     parser.add_argument(
         "--csv-file",
-        default="exp/saved_exp/eval_0915/experiment_summary.csv",
+        default="exp/saved_exp/eval_1001_kat_dev/experiment_summary.csv",
         help="Experiment summary CSV file path (default: outputs/experiment_summary.csv)"
     )
     parser.add_argument(
         "--experiment-root",
-        default="exp/saved_exp/eval_0915",
+        default="exp/saved_exp/eval_1001_kat_dev",
         help="Experiment root directory (default: outputs)"
     )
     parser.add_argument(

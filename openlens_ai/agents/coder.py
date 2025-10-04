@@ -68,11 +68,12 @@ def build_coder(config: Config) -> StateGraph:
             
         results = code_tool.invoke({"prompts": [this_prompt]})
         state["messages"] += [
-            ToolMessage(
-                content=results,
-                name="openhands_tool",
-                tool_call_id="openhands_tool",
-            )
+            # ToolMessage(
+            #     content=results,
+            #     name="openhands_tool",
+            #     tool_call_id="openhands_tool",
+            # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
+            HumanMessage(content=results)
         ]
         return state
 
@@ -82,11 +83,12 @@ def build_coder(config: Config) -> StateGraph:
         this_prompt = validator_prompt.format(question=state["question"], subplan=subplan)
         results = code_tool.invoke({"prompts": [this_prompt]})
         state["messages"] += [
-            ToolMessage(
-                content=results,
-                name="openhands_tool",
-                tool_call_id="openhands_tool",
-            )
+            # ToolMessage(
+            #     content=results,
+            #     name="openhands_tool",
+            #     tool_call_id="openhands_tool",
+            # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
+            HumanMessage(content=results)
         ]
         
         ## Check for generated images using vision-language model

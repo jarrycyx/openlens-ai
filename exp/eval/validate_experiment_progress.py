@@ -198,7 +198,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Validate experiment progress")
     parser.add_argument(
         "--experiment-root", 
-        default="outputs", 
+        default="exp/saved_exp/eval_1001_kat_dev", 
         help="Root directory for experiments (default: outputs)"
     )
     parser.add_argument(
