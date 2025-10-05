@@ -230,8 +230,8 @@ def main():
             
         }
         config["environment_variables"] = {
-            "LANGSMITH_API_KEY": os.environ.get("LANGSMITH_API_KEY", ""),
-            "LANGSMITH_PROJECT": "litellm",
+            # "LANGSMITH_API_KEY": os.environ.get("LANGSMITH_API_KEY", ""),
+            # "LANGSMITH_PROJECT": "litellm",
             # "LANGSMITH_BASE_URL": os.environ.get("LANGSMITH_BASE_URL", ""),
         }
         config["model_list"].extend(extra_model_list)

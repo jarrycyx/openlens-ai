@@ -13,8 +13,10 @@ dotenv.load_dotenv()
 
 # ================== 配置部分 ==================
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")  # 从环境变量读取Token
-SEARCH_KEYWORDS = ["mimic medical", "eicu medical", "medical", "health"]  # 搜索关键词列表
-KEYWORDS_REPO_NUM = [2000, 2000, 500, 500]
+# SEARCH_KEYWORDS = ["mimic medical", "eicu medical", "medical", "health"]  # 搜索关键词列表
+# KEYWORDS_REPO_NUM = [2000, 2000, 500, 500]
+SEARCH_KEYWORDS = ["eicu medical", "medical", "health"]  # 搜索关键词列表
+KEYWORDS_REPO_NUM = [2000, 500, 500]
 OUTPUT_DIR = "data/downloaded_py_md_sh_sql"  # 输出目录
 FILE_EXT = ["py", "sh", "md", "sql"]
 # FILE_EXT = ["sql"]
