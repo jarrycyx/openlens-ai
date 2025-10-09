@@ -37,6 +37,8 @@
 无需安装！访问我们的 <a href="https://openlens.icu">项目主页</a> 了解更多关于 OpenLens AI 的信息，或尝试我们的 <a href="https://openlens.icu">云应用</a>，无需任何设置即可体验全自动研究智能体。
 </p>
 
+<img src="static/papers/example.png" alt="Logo" width="100%">
+
 - ✅ **自动化文献综述**：根据您的研究问题搜索和总结医学论文
 - ✅ **数据分析**：分析医学数据集并生成综合报告
 - ✅ **实验设计**：建议并验证实验方法

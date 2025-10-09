@@ -49,6 +49,8 @@
 No installation required! Visit our <a href="https://openlens.icu">project page</a> to learn more about OpenLens AI or try our <a href="https://openlens.icu">cloud application</a> to experience the fully autonomous research agent without any setup.
 </p>
 
+<img src="static/papers/example.png" alt="Logo" width="100%">
+
 - ✅ **Automated Literature Review**: Search and summarize medical papers based on your research question
 - ✅ **Data Analysis**: Analyze medical datasets and generate comprehensive reports
 - ✅ **Experiment Design**: Suggest and validate experimental approaches
@@ -230,20 +232,6 @@ openlens_ai/
 1. Add tool implementation in [openlens_ai/tools/](openlens_ai/tools/)
 2. Register the tool in the appropriate agent
 3. Update prompts if needed
-
-## 📊 Example Use Cases
-
-1. **Disease Prediction Modeling**:
-   ```
-   Question: "What is the prediction precision of AKI based on historical 2 day data?"
-   Dataset: MIMIC-III critical care dataset
-   ```
-
-2. **Drug Interaction Research**:
-   ```
-   Question: "What are the latest findings on drug interactions for hypertension medications?"
-   Dataset: Clinical trial data
-   ```
 
 ## 🤝 Contributing
 
