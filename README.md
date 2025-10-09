@@ -1,3 +1,5 @@
+**[中文版本](README_CN.md)**
+
 # OpenLens AI: Fully Autonomous Research Agent for Health Infomatics
 
 <p align="center">
