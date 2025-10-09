@@ -8,6 +8,7 @@ ArXiv论文源码搜索和下载工具
 3. 下载论文的LaTeX源码文件
 """
 
+import time
 import os
 import re
 import requests
@@ -274,6 +275,7 @@ def main():
             paper_id = paper['id']
             print(f"正在下载论文 {paper_id} 的PDF和源码...")
             result = downloader.download_paper_with_source(paper_id)
+            time.sleep(5)
         
         if result['success']:
             print("下载成功:")

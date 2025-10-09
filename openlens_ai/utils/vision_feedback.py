@@ -128,7 +128,13 @@ def get_vision_feedback(image_base64: str, config: Config) -> str:
                 },
             ])
         return image_feedback_message
-
+ 
+    vlm = init_chat_model(
+        os.environ.get("VISION_MODEL", "deepseek-chat"),
+        base_url=os.environ.get("BASE_URL", ""),
+        model_provider="openai",
+        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
+    )
     
     for try_i in range(10):
         for this_formatter in [formatter_a, formatter_b]:
