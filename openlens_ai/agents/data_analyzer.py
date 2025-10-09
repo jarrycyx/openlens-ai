@@ -74,11 +74,12 @@ def build_data_analyzer(config: Config) -> StateGraph:
                 this_prompt += "\n\nPrevious coding results:\n" + last_router_message.content
                 results = code_tool.invoke({"prompts": [this_prompt]})
             state["messages"] += [
-                ToolMessage(
-                    content=results,
-                    name="openhands_tool",
-                    tool_call_id="openhands_tool",
-                )
+                # ToolMessage(
+                #     content=results,
+                #     name="openhands_tool",
+                #     tool_call_id="openhands_tool",
+                # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
+                HumanMessage(content=results)
             ]
             return state
         

@@ -1,7 +1,7 @@
 
 
 export RUNTIME=local
-# export DEBUG=true
+export DEBUG=true
 export SANBOX_USER_ID=3407
 export SANDBOX_TIMEOUT=3600
 export LOG_ALL_EVENTS=true

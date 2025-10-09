@@ -232,78 +232,80 @@ def start_new_session(workspace_container, sidebar_usage_container, base_url, ap
         # btn2 = btn2.container(horizontal_alignment="right").button("Abort", type="primary")
         
         if btn1:
-            if question and dataset_path and (len(email) > 5):
-                # 检查进程数量是否已满
-                if process_manager.is_full():
-                    st.error(f"Maximum number of processes ({process_manager.MAX_PROCESSES}) reached. Please wait for some processes to finish.")
-                    return
-                    
-                st.chat_message("human").write("**Question:** " + question + "\n\n**Dataset Path:** " + dataset_path)
-                
-                if not process_manager.is_full():
-                    # 启动新进程运行任务
-                    process = subprocess.Popen([
-                        "python", "-m", "openlens_ai.build_graph",
-                        "--question", question,
-                        "--dataset-path", dataset_path,
-                        "--thread-id", thread_id,
-                        "--email", email,
-                        "--chat-model", model,
-                        "--api-key", os.environ["OPENAI_API_KEY"] if "Default" in api_key else api_key,
-                        "--base-url", os.environ["BASE_URL"] if "Default" in base_url else base_url,
-                        "--code-model", code_model,
-                        "--vision-model", vision_model,
-                    ])
-                
-                    # 将进程信息添加到进程管理器
-                    if not process_manager.add_process(process.pid, thread_id):
-                        process.terminate()  # 如果添加失败，终止进程
-                        st.error(f"Failed to start process. Maximum number of processes ({process_manager.MAX_PROCESSES}) reached.")
+            if api_key and base_url:
+                if question and dataset_path and (len(email) > 5):
+                    # 检查进程数量是否已满
+                    if process_manager.is_full():
+                        st.error(f"Maximum number of processes ({process_manager.MAX_PROCESSES}) reached. Please wait for some processes to finish.")
                         return
-                while True:
-                    try:
-                        time.sleep(5)
-                        config = open(os.path.join("outputs", thread_id, "config.json"), "r").read()
-                        config = json.loads(config)
-                        config = Config(**config)
-                        break
-                    except Exception as e:
-                        logger.error(f"Error loading config: {e}")
-                        continue
-                
-                
-                st.write(f"Thread ID: {thread_id}")
-                st.warning(f"Job progress and results will be sent to {email}, please make sure the address is correct.")
-
-                # 保存 config 到 session state
-                st.session_state.config = config
-
-                # 如果有旧的监控线程，停止它
-                if st.session_state.monitor_thread:
-                    logger.info("Stopping old monitor thread")
-                    st.session_state.monitor_thread.stop()
-
-                # 启动新的监控线程
-                monitor_thread = WorkspaceMonitor(config, workspace_container, sidebar_usage_container)
-                add_script_run_ctx(monitor_thread, get_script_run_ctx())
-                monitor_thread.start()
-                st.session_state.monitor_thread = monitor_thread
-
-                st.success("Graph built successfully!")
-                
-                with st.empty():
-                    while True:
-                        display_messages_from_file(config)
-                        time.sleep(5)
+                        
+                    st.chat_message("human").write("**Question:** " + question + "\n\n**Dataset Path:** " + dataset_path)
                     
+                    if not process_manager.is_full():
+                        # 启动新进程运行任务
+                        process = subprocess.Popen([
+                            "python", "-m", "openlens_ai.build_graph",
+                            "--question", question,
+                            "--dataset-path", dataset_path,
+                            "--thread-id", thread_id,
+                            "--email", email,
+                            "--chat-model", model,
+                            "--api-key", os.environ["OPENAI_API_KEY"] if "Default" in api_key else api_key,
+                            "--base-url", os.environ["BASE_URL"] if "Default" in base_url else base_url,
+                            "--code-model", code_model,
+                            "--vision-model", vision_model,
+                        ])
+                    
+                        # 将进程信息添加到进程管理器
+                        if not process_manager.add_process(process.pid, thread_id):
+                            process.terminate()  # 如果添加失败，终止进程
+                            st.error(f"Failed to start process. Maximum number of processes ({process_manager.MAX_PROCESSES}) reached.")
+                            return
+                    while True:
+                        try:
+                            time.sleep(5)
+                            config = open(os.path.join("outputs", thread_id, "config.json"), "r").read()
+                            config = json.loads(config)
+                            config = Config(**config)
+                            break
+                        except Exception as e:
+                            logger.error(f"Error loading config: {e}")
+                            continue
+                    
+                    
+                    st.write(f"Thread ID: {thread_id}")
+                    st.warning(f"Job progress and results will be sent to {email}, please make sure the address is correct.")
 
+                    # 保存 config 到 session state
+                    st.session_state.config = config
+
+                    # 如果有旧的监控线程，停止它
+                    if st.session_state.monitor_thread:
+                        logger.info("Stopping old monitor thread")
+                        st.session_state.monitor_thread.stop()
+
+                    # 启动新的监控线程
+                    monitor_thread = WorkspaceMonitor(config, workspace_container, sidebar_usage_container)
+                    add_script_run_ctx(monitor_thread, get_script_run_ctx())
+                    monitor_thread.start()
+                    st.session_state.monitor_thread = monitor_thread
+
+                    st.success("Graph built successfully!")
+                    
+                    with st.empty():
+                        while True:
+                            display_messages_from_file(config)
+                            time.sleep(5)
+                        
+                else:
+                    if not question:
+                        st.error("Please enter a question.")
+                    elif not dataset_path:
+                        st.error("Please enter a dataset path.")
+                    elif not len(email) > 5:
+                        st.error("Please enter an email.")
             else:
-                if not question:
-                    st.error("Please enter a question.")
-                elif not dataset_path:
-                    st.error("Please enter a dataset path.")
-                elif not len(email) > 5:
-                    st.error("Please enter an email.")
+                st.error("Please provide both API Key and Base URL. Recommended platform: https://www.siliconflow.cn/, https://cloud.infini-ai.com/, https://openrouter.ai/models")
 
 
 def resume_session(workspace_container, sidebar_usage_container):
@@ -414,19 +416,24 @@ def main():
         # 使用列布局使三个模型输入框并排放置
         col1, col2 = st.columns(2)
         
+        # with col1:
+        #     base_url = st.text_input("API Base URL", value="Default (slow)")
+        # with col2:
+        #     api_key = st.text_input("API Key", value="Default (slow)")
+        
         with col1:
-            base_url = st.text_input("API Base URL", value="Default (slow)")
+            base_url = st.text_input("API Base URL", value="", help="Recommended platform: https://www.siliconflow.cn/, https://cloud.infini-ai.com/, https://openrouter.ai/models, https://bigmodel.cn/", placeholder="Enter LLM Base URL")
         with col2:
-            api_key = st.text_input("API Key", value="Default (slow)")
-            
+            api_key = st.text_input("API Key", value="", placeholder="Enter LLM API key")
+        
         # 将code_model和vision_model放在新的一行
         col3, col4, col5 = st.columns(3)
         with col3:
-            model = st.text_input("Chat Model", value=os.environ.get("MODEL", ""))
+            model = st.text_input("Chat Model", value="glm-4.5-air")
         with col4:
-            code_model = st.text_input("Code Model", value=os.environ.get("CODE_MODEL", ""))
+            code_model = st.text_input("Code Model", value="glm-4.5-air")
         with col5:
-            vision_model = st.text_input("Vision Model", value=os.environ.get("VISION_MODEL", ""))
+            vision_model = st.text_input("Vision Model", value="glm-4.1v-9b-thinking", help="Please select a vision model (e.g. qwen3-vl, glm-4.5v, glm-4.1v-9b-thinking)")
 
     # 如果有正在运行的监控线程，但 config 已更改，则停止旧线程
     if (
@@ -447,6 +454,7 @@ def main():
 
     # 添加模式选择
     mode = st.radio("Select Mode", ["Start New", "Resume"], horizontal=True, key="mode")
+    
     
     if mode == "Start New":
         start_new_session(workspace_container, sidebar_usage_container, base_url, api_key, model, code_model, vision_model)

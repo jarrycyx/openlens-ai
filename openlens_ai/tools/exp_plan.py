@@ -17,7 +17,7 @@ class PlanWriterToolInput(BaseModel):
     )
     sub_tasks: List[str] = Field(
         ...,
-        description="List of sub tasks to be performed in the experiment"
+        description="List of sub tasks to be performed in the experiment, must be a LIST OF STRINGS, make sure each string is detailed enough (at least 500 characters), and there should be at least 3 sub tasks."
     )
     expected_result: str = Field(
         ...,
@@ -47,7 +47,7 @@ class PlanWriterTool(BaseTool):
             raise ValueError("Must have at least 3 subtasks. If the question is complex, may increase to 4 or 5 subtasks.")
         for sub_task in sub_tasks:
             if len(sub_task) < 500:
-                raise ValueError("Please provide a more detailed sub-task description.")
+                raise ValueError("Please provide a more detailed sub-task description. Remeber: Argument sub_tasks must be a LIST OF STRINGS, make sure each string is detailed enough (at least 500 characters), and there should be at least 3 sub tasks")
         
         workspace_dir = os.path.join(self.config.save_path, "workspace")
         # 写入JSON格式的计划文件

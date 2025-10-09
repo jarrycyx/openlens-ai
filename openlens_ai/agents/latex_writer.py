@@ -8,7 +8,7 @@ import traceback
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
 from langchain.load.dump import dumps
-from langchain_core.messages import ToolMessage, AIMessage
+from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
 from ..tools.tool_utils import BasicToolNode, route_by_tool_call, route_by_keywords, route_by_latex_polish_counter
 from ..tools.openhands_adaptor import OpenHandsTool
@@ -94,11 +94,12 @@ def build_latex_writer(config: Config) -> StateGraph:
         
         results = code_tool.invoke({"prompts": [this_prompt]})
         state["messages"] += [
-            ToolMessage(
-                content=results,
-                name="openhands_tool",
-                tool_call_id="openhands_tool",
-            )
+            # ToolMessage(
+            #     content=results,
+            #     name="openhands_tool",
+            #     tool_call_id="openhands_tool",
+            # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
+            HumanMessage(content=results)
         ]
         return state
     
@@ -118,11 +119,12 @@ def build_latex_writer(config: Config) -> StateGraph:
         
         results = code_tool.invoke({"prompts": [this_prompt]})
         state["messages"] += [
-            ToolMessage(
-                content=results,
-                name="openhands_tool",
-                tool_call_id="openhands_tool",
-            )
+            # ToolMessage(
+            #     content=results,
+            #     name="openhands_tool",
+            #     tool_call_id="openhands_tool",
+            # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
+            HumanMessage(content=results)
         ]
         return state
     
@@ -184,11 +186,12 @@ def build_latex_writer(config: Config) -> StateGraph:
         this_prompt = this_prompt.replace("{figures}", "\n".join(state["available_figs"]))
         results = code_tool.invoke({"prompts": [this_prompt]})
         state["messages"] += [
-            ToolMessage(
-                content=results,
-                name="openhands_tool",
-                tool_call_id="openhands_tool",
-            )
+            # ToolMessage(
+            #     content=results,
+            #     name="openhands_tool",
+            #     tool_call_id="openhands_tool",
+            # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
+            HumanMessage(content=results)
         ]
         return state
     
@@ -209,11 +212,12 @@ def build_latex_writer(config: Config) -> StateGraph:
         
         results = code_tool.invoke({"prompts": [this_prompt]})
         state["messages"] += [
-            ToolMessage(
-                content=results,
-                name="openhands_tool",
-                tool_call_id="openhands_tool",
-            )
+            # ToolMessage(
+            #     content=results,
+            #     name="openhands_tool",
+            #     tool_call_id="openhands_tool",
+            # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
+            HumanMessage(content=results)
         ]
         return state
     
@@ -237,11 +241,12 @@ def build_latex_writer(config: Config) -> StateGraph:
         results = code_tool.invoke({"prompts": [check_figure_prompt, this_prompt, latex_rigor_prompt, latex_literature_check_prompt]})
         
         state["messages"] += [
-            ToolMessage(
-                content=results,
-                name="openhands_tool",
-                tool_call_id="openhands_tool",
-            ),
+            # ToolMessage(
+            #     content=results,
+            #     name="openhands_tool",
+            #     tool_call_id="openhands_tool",
+            # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
+            HumanMessage(content=results)
         ]
         
         

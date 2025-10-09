@@ -94,13 +94,31 @@ def save_llm_call(messages: list, config: Config):
         f.write(dumps(messages, indent=4))
 
 def get_vision_feedback(image_base64: str, config: Config) -> str:
-    for try_i in range(10):
-        try:
-            # Call VLM to evaluate the image
-            image_feedback_message = HumanMessage(content=[
+    
+    def formatter_a(prompt, image_base64):
+        logger.info(f"Using formatter A")
+        # https://docs.bigmodel.cn/api-reference/%E6%A8%A1%E5%9E%8B-api/%E5%AF%B9%E8%AF%9D%E8%A1%A5%E5%85%A8#%E5%9B%BE%E7%89%87
+        # https://docs.siliconflow.cn/cn/api-reference/chat-completions/chat-completions#vlm
+        image_feedback_message = HumanMessage(content=[
                 {
                     "type": "text",
-                    "text": vision_feedback_prompt
+                    "text": prompt
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": image_base64,
+                    }
+                },
+            ])
+        return image_feedback_message
+    
+    def formatter_b(prompt, image_base64):
+        logger.info(f"Using formatter B")
+        image_feedback_message = HumanMessage(content=[
+                {
+                    "type": "text",
+                    "text": prompt
                 },
                 {
                     "type": "image",
@@ -109,16 +127,31 @@ def get_vision_feedback(image_base64: str, config: Config) -> str:
                     "mime_type": "image/jpeg",
                 },
             ])
-            
-            vlm_response = vlm.invoke([image_feedback_message])
-            save_llm_call([image_feedback_message, vlm_response], config)
-            logger.info(f"Vision feedback: {vlm_response.content}")
-            return vlm_response.content
-        except Exception as e:
-            logger.warning(f"Error when calling llm: {e}")
-            logger.warning(traceback.format_exc())
-            logger.warning("Retrying...")
-            time.sleep(5)
+        return image_feedback_message
+ 
+    vlm = init_chat_model(
+        os.environ.get("VISION_MODEL", "deepseek-chat"),
+        base_url=os.environ.get("BASE_URL", ""),
+        model_provider="openai",
+        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
+    )
+    
+    for try_i in range(10):
+        for this_formatter in [formatter_a, formatter_b]:
+        # for this_formatter in [formatter_b]:
+            try:
+                # Call VLM to evaluate the image
+                image_feedback_message = this_formatter(vision_feedback_prompt, image_base64)
+                
+                vlm_response = vlm.invoke([image_feedback_message])
+                save_llm_call([image_feedback_message, vlm_response], config)
+                logger.info(f"Vision feedback: {vlm_response.content}")
+                return vlm_response.content
+            except Exception as e:
+                logger.warning(f"Error when calling llm: {e}")
+                logger.warning(traceback.format_exc())
+                logger.warning("Retrying...")
+                time.sleep(5)
 
 
 
@@ -175,3 +208,9 @@ def get_vision_classification(image_base64: str, config: Config) -> str:
             logger.warning(traceback.format_exc())
             logger.warning("Retrying...")
             time.sleep(5)
+            
+
+if __name__ == "__main__":
+    test_image = "outputs/comprehensive_dashboard.png"
+    image_base64 = base64.b64encode(open(test_image, "rb").read()).decode('utf-8')
+    vlm_response = get_vision_feedback(image_base64, Config(save_path="", thread_id="", question="", dataset_path=""))

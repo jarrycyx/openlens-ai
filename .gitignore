@@ -53,6 +53,8 @@ exp/saved_exp
 downloads
 .langgraph_api
 exp/docker
+data/
+model/saves
 
 # 其他
 debug

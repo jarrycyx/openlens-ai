@@ -188,7 +188,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='OpenAI API 性能和吞吐量测试工具')
     parser.add_argument('--api-key', required=True, help='OpenAI API 密钥')
     parser.add_argument('--model', default='gpt-3.5-turbo', help='要测试的模型名称')
-    parser.add_argument('--prompt', default='请用中文回答：什么是人工智能？', help='发送的提示文本')
+    parser.add_argument('--prompt', default='请用中文回答：什么是人工智能？'*3000, help='发送的提示文本')
     parser.add_argument('--num-requests', type=int, default=10, help='要发送的请求总数')
     parser.add_argument('--max-workers', type=int, default=5, help='并发工作线程数')
     parser.add_argument('--base-url', help='自定义API端点URL (例如: https://api.openai.com/v1)')

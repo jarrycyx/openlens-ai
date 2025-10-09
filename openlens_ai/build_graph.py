@@ -44,7 +44,7 @@ all_subgraphs = ["literature_reviewer", "data_analyzer", "supervisor", "coder", 
 def send_periodic_emails(config: Config):
     """每60分钟发送一次进度邮件"""
     logger.info("Starting to send periodic emails...")
-    while not stop_sending_emails.wait(3600):  # 600秒 = 10分钟
+    while not stop_sending_emails.wait(18000):  # 600秒 = 10分钟
         try:
             zipfile, latest_md = collect_files(config)
             send_email(
