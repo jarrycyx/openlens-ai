@@ -1,15 +1,17 @@
+**[中文版本](README_CN.md)**
+
 # OpenLens AI: Fully Autonomous Research Agent for Health Infomatics
 
 <p align="center">
-  <a href="https://arxiv.org/abs/2509.14778">
+  <!-- <a href="https://arxiv.org/abs/2509.14778">
     <img src="https://img.shields.io/badge/arXiv-paper-red" alt="arXiv-paper" >
   </a>
   <a href="https://openlens.icu">
     <img src="https://img.shields.io/badge/Project-Page-blue" alt="Project Page" >
   </a>
-  <a href="https://openlens.icu">
+  <a href="https://app.openlens.icu">
     <img src="https://img.shields.io/badge/Try-Now-green" alt="Try Now" >
-  </a>
+  </a> -->
   <img src="https://img.shields.io/badge/Python-3.9%2B-blue" alt="Python Version">
   <img src="https://img.shields.io/badge/LangGraph-Powered-orange" alt="LangGraph">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
@@ -18,9 +20,13 @@
 
 <div align="center">
 <p>
-<strong>📄 Paper:</strong> <a href="https://arxiv.org/abs/2509.14778">Read our research paper on arXiv</a> |
-<strong>🌐 Project Page:</strong> <a href="https://openlens.icu">Explore detailed documentation and examples</a> |
+<strong>📄 Paper:</strong> <a href="https://arxiv.org/abs/2509.14778">Read our research paper on arXiv</a> 
+
+<strong>🌐 Project Page:</strong> <a href="https://openlens.icu">Explore detailed documentation and examples</a> 
+
 <strong>🚀 Try Now:</strong> <a href="https://openlens.icu">Use our cloud application directly in your browser</a>
+<p> </p>
+
 </p>
 </div>
 
@@ -42,6 +48,8 @@
 <p>
 No installation required! Visit our <a href="https://openlens.icu">project page</a> to learn more about OpenLens AI or try our <a href="https://openlens.icu">cloud application</a> to experience the fully autonomous research agent without any setup.
 </p>
+
+<img src="static/papers/example.png" alt="Logo" width="100%">
 
 - ✅ **Automated Literature Review**: Search and summarize medical papers based on your research question
 - ✅ **Data Analysis**: Analyze medical datasets and generate comprehensive reports
@@ -224,20 +232,6 @@ openlens_ai/
 1. Add tool implementation in [openlens_ai/tools/](openlens_ai/tools/)
 2. Register the tool in the appropriate agent
 3. Update prompts if needed
-
-## 📊 Example Use Cases
-
-1. **Disease Prediction Modeling**:
-   ```
-   Question: "What is the prediction precision of AKI based on historical 2 day data?"
-   Dataset: MIMIC-III critical care dataset
-   ```
-
-2. **Drug Interaction Research**:
-   ```
-   Question: "What are the latest findings on drug interactions for hypertension medications?"
-   Dataset: Clinical trial data
-   ```
 
 ## 🤝 Contributing
 
