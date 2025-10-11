@@ -26,7 +26,7 @@ from .utils.process_manager import process_manager
 def load_saved_experiments():
     """Load saved experiments from exp/saved_exp directory"""
     preset_experiments = []
-    saved_exp_root = "exp/saved_exp"
+    saved_exp_root = "exp/saved_exp/eval_0915_old"
     
     if not os.path.exists(saved_exp_root):
         return []
@@ -64,8 +64,10 @@ def load_saved_sessions(email_filter=None):
         return []
     
     sessions = []
-    if email_filter in ["dzdzzd@126.com"]:
+    admin_email = os.environ.get("FRONTEND_ADMIN_EMAIL", "")
+    if email_filter == admin_email:
         pattern = os.path.join("./outputs", f"*")
+        email_filter = ""
     else:
         email_show = email_filter.replace("@", "_").replace(".", "_")
         pattern = os.path.join("./outputs", f"OL_*{email_show}*")
@@ -88,11 +90,14 @@ def load_saved_sessions(email_filter=None):
     if os.path.exists(os.path.join("./outputs", email_filter)):
         filter_list.append(os.path.join("./outputs", email_filter))
         config_path = os.path.join("./outputs", email_filter, "config.json")
-        with open(config_path, 'r') as f:
-            config = json.load(f)
-            config = Config(**config)
-            logger.info(f"Exact match found for {email_filter}")
-            sessions.append(config)
+        try:
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+                config = Config(**config)
+                logger.info(f"Exact match found for {email_filter}")
+                sessions.append(config)
+        except Exception as e:
+            logger.warning(f"Failed to load config from {config_path}: {e}")
     return sorted(sessions, key=lambda x: x.thread_id, reverse=True)
 
 
@@ -125,7 +130,18 @@ def start_new_session(workspace_container, sidebar_usage_container, base_url, ap
             st.text_input("Dataset Path (preset)", dataset_path, disabled=True, key="preset_dataset")
             
             # 添加"Resume with Preset"按钮
-            if st.button("Resume with Preset"):
+            paper_path = os.path.join(preset_selected['path'], "workspace", "manuscript", "*main*.pdf")
+            paper_path = glob.glob(paper_path)
+            paper_path = paper_path[0] if paper_path else None
+            
+            if paper_path and os.path.exists(paper_path):
+                with open(paper_path, "rb") as f:
+                    pdf_buffer = f.read()
+                btn = st.download_button("Resume with Preset", data=pdf_buffer, file_name="paper.pdf")
+            else:
+                btn = st.button("Resume with Preset", width="stretch")
+            
+            if btn:
                 if preset_selected:
                     # 设置session state模拟从已保存会话恢复
                     config_dict = {
@@ -344,7 +360,18 @@ def resume_session(workspace_container, sidebar_usage_container):
                 st.write(f"**Path:** {config.save_path}")
                 
                 # Resume按钮
-                if st.button("Resume Session"):
+                paper_path = os.path.join(config.save_path, "workspace", "manuscript", "*main*.pdf")
+                paper_path = glob.glob(paper_path)
+                paper_path = paper_path[0] if paper_path else None
+                
+                if paper_path and os.path.exists(paper_path):
+                    with open(paper_path, "rb") as f:
+                        pdf_buffer = f.read()
+                    btn = st.download_button("Resume Session", data=pdf_buffer, file_name="paper.pdf", type="primary")
+                else:
+                    btn = st.button("Resume Session")
+                
+                if btn:
                     st.chat_message("human").write(
                         f"**Resuming Session**\n\n"
                         f"**Thread ID:** {config.thread_id}\n\n"
