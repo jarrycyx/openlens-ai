@@ -16,6 +16,8 @@ import streamlit_scrollable_textbox as stx
 import glob
 import json
 import traceback
+from streamlit_pdf_viewer import pdf_viewer
+
 from .file_utils import prepare_file_config, collect_files, collect_token_usage
 from .config import Config
 
@@ -166,6 +168,77 @@ def frontend_update_node(node_name: str, config: Config):
         "content": f"Subgraph complete: {node_name}"
     }
     _save_message(config, message_data)
+
+
+pdf_file_ext = [".pdf"]
+image_file_ext = [".png", ".jpg", ".jpeg", ".gif", ".svg"]
+text_file_ext = [".md", ".txt"]
+code_file_ext = [".py"]
+all_view_ext = pdf_file_ext+image_file_ext+text_file_ext+code_file_ext
+def display_file_preview(config: Config):
+    """显示最新生成的文件内容预览"""
+    workspace_path = os.path.join(config.save_path, "workspace")
+    
+    if not os.path.exists(workspace_path):
+        st.info("No files generated yet.")
+        return
+    
+    # 获取所有文件并按修改时间排序
+    all_files = []
+    for root, dirs, files in os.walk(workspace_path):
+        for file in files:
+            if not file.startswith(".") and not file.endswith(".pyc"):
+                file_path = os.path.join(root, file)
+                rel_path = os.path.relpath(file_path, workspace_path)
+                all_files.append((file_path, rel_path, os.path.getmtime(file_path)))
+    
+    if not all_files:
+        st.info("No files generated yet.")
+        return
+    
+    # 按修改时间排序，取最新的几个文件
+    all_files.sort(key=lambda x: x[2], reverse=True)
+    all_files = [x for x in all_files if x[1].endswith(tuple(all_view_ext))]
+    latest_files = all_files[:5]  # 显示最新的5个文件
+    
+    for i, (file_path, rel_path, _) in enumerate(latest_files):
+        try:
+            expand = (i == 0)
+            
+            with st.expander(f"📄 {rel_path}", expanded=expand):
+                # 尝试读取文件内容
+                if rel_path.endswith(tuple(image_file_ext)):
+                    st.image(file_path)
+                elif rel_path.endswith(tuple(pdf_file_ext)):
+                    pdf_viewer(file_path)
+                elif rel_path.endswith(tuple(text_file_ext+code_file_ext)):
+                    with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                        content = f.read()
+                    
+                    # 限制显示内容长度
+                    if len(content) > 2000:
+                        content = content[:2000] + "\n\n... (content truncated)"
+                    
+                    if rel_path.endswith(".md"):
+                        st.markdown(content)
+                    else:
+                        st.code(content, language=rel_path.split('.')[-1] if '.' in rel_path else None)
+                else:
+                    pass
+                
+                # 提供下载按钮
+                with open(file_path, 'rb') as f:
+                    file_data = f.read()
+                
+                st.download_button(
+                    label=f"⬇️ Download",
+                    data=file_data,
+                    file_name=rel_path,
+                    key=f"download_{rel_path}_{random.randint(1000, 9999)}"
+                )
+        except Exception as e:
+            st.error(f"Error reading file {rel_path}: {e}")
+
 
 @st.fragment
 def display_messages_from_file(config: Config):

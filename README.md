@@ -1,6 +1,90 @@
 **[中文版本](README_CN.md)**
 
-# OpenLens AI: Fully Autonomous Research Agent for Health Infomatics
+# OpenLens AI - Advanced AI Research Platform
+
+🚀 A comprehensive web-based platform for AI research, experiment management, and collaborative development.
+
+## 🌟 Features
+
+- **AI Research Tools**: Advanced machine learning experiment management
+- **Real-time Collaboration**: Multi-user support with WebSocket integration
+- **Modern UI**: Built with React and Ant Design for excellent user experience
+- **Backend API**: Flask-based REST API with JWT authentication
+- **Database**: SQLite for development, PostgreSQL ready for production
+- **Task Queue**: Redis and Celery for background task processing
+- **Payment Integration**: Stripe integration for subscription management
+
+## 🛠️ System Requirements
+
+- Python 3.7+
+- Node.js 14+ (optional, for enhanced frontend)
+- Redis (for task queue)
+- SQLite (included)
+
+## 🚀 Quick Start
+
+### 1. Automatic Setup (Recommended)
+
+```bash
+# Clone and enter the repository
+cd openlens-ai
+
+# Run the complete setup script
+python3 web/setup_environment.py
+
+# Start the complete system
+python3 web/start_complete_system.py
+```
+
+### 2. Manual Setup
+
+#### Backend Setup
+```bash
+cd web/backend
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your configuration
+
+# Initialize database
+python3 -c "
+import sqlite3
+conn = sqlite3.connect('openlens.db')
+cursor = conn.cursor()
+# Add your table creation scripts here
+conn.close()
+"
+
+# Start backend server
+python3 run.py
+```
+
+#### Frontend Setup
+```bash
+cd web/frontend
+
+# Install dependencies (if Node.js is available)
+npm install
+
+# Build frontend
+npm run build
+# OR use the custom build script
+chmod +x build.sh && ./build.sh
+
+# Start frontend server
+python3 -m http.server 3000 --directory build
+# OR if Node.js is available
+npm start
+```
+
+## 📊 Service URLs
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:5000
+- **Health Check**: http://localhost:5000/api/health
 
 <p align="center">
   <!-- <a href="https://arxiv.org/abs/2509.14778">

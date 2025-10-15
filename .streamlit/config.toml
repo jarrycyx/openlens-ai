@@ -1,3 +1,6 @@
 [server]
 sslCertFile = '.streamlit/app.openlens.icu.pem'
 sslKeyFile = '.streamlit/app.openlens.icu.key'
+
+[theme]
+borderColor = "#e4e4e4"
