@@ -195,7 +195,15 @@ def display_single_file(config: Config, file_path: str):
 
     st.download_button(label="⬇️ Download", data=file_data, file_name=rel_path, key=f"download_{rel_path}_{random.randint(1000, 9999)}")
 
-
+def get_paper_path(config: Config):
+    if os.path.exists(os.path.join(config.save_path, "workspace", "manuscript", "main.pdf")):
+        return os.path.join(config.save_path, "workspace", "manuscript", "main.pdf")
+    else:
+        pdf_path_list = glob.glob(os.path.join(config.save_path, "workspace", "manuscript", "*.pdf"))
+        if pdf_path_list:
+            return pdf_path_list[0]
+        else:
+            return None
 
 def get_latest_files(config: Config):
     workspace_path = os.path.join(config.save_path, "workspace")
@@ -220,6 +228,11 @@ def get_latest_files(config: Config):
     # 按修改时间排序，取最新的几个文件
     all_files.sort(key=lambda x: x[2], reverse=True)
     all_files = [x for x in all_files if x[1].endswith(tuple(all_view_ext))]
+    pdf_path = get_paper_path(config)
+    print(pdf_path)
+    if pdf_path:
+        all_files.insert(0, (pdf_path, os.path.relpath(pdf_path, workspace_path), os.path.getmtime(pdf_path)))
+    
     latest_files = all_files[:10]  # 显示最新的5个文件
 
     return latest_files

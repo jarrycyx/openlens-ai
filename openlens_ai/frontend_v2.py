@@ -119,6 +119,10 @@ def build_sidebar():
                     st.write(f"Sub: {st.user.sub}")
                 st.button("🚶‍♂️‍➡ Log out", on_click=st.logout, width="content", type="tertiary")
 
+        # 新建项目按钮
+        if st.button("🚀 \+ New project", width="stretch"):
+            st.session_state.config = None
+            st.rerun()
         # 用户专属项目列表（移到侧边栏底部）
         st.subheader("📁 Your Projects")
         if st.user.is_logged_in:
@@ -148,10 +152,6 @@ def build_sidebar():
             else:
                 st.info("No projects yet. Create your first project below.")
 
-        # 新建项目按钮
-        if st.button("\+ New project", width="stretch"):
-            st.session_state.config = None
-            st.rerun()
 
 
 def start_job(question, dataset_path, email):
@@ -467,6 +467,7 @@ def main():
                                 config_data = json.load(f)
 
                             config = Config(**config_data)
+                            config.save_path = exp["path"] # 确保保存路径与实验路径一致
                             st.session_state.config = config
                             logger.info(f"Loaded config for experiment: {exp.get('question', 'No question specified')}")
                             st.rerun()
