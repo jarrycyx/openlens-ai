@@ -210,7 +210,7 @@ def start_job(question, dataset_path, email):
                 st.error(f"Failed to start process. Maximum number of processes ({process_manager.MAX_PROCESSES}) reached.")
                 return
 
-        with st.status("Creating job...") as status:
+        with st.spinner("Creating job..."):
             while True:
                 try:
                     time.sleep(5)
