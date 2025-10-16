@@ -37,7 +37,28 @@ from openhands.storage.data_models.settings import Settings
 from openhands.storage.files import FileStore
 
 
-class Session:
+class WebSession:
+    """Web server-bound session wrapper.
+
+    This was previously named `Session`. We keep `Session` as a compatibility alias
+    (see openhands.server.session.__init__) so downstream imports/tests continue to
+    work. The class manages a single web client connection and orchestrates the
+    AgentSession lifecycle for that conversation.
+
+    Attributes:
+        sid: Stable conversation id across transports.
+        sio: Socket.IO server used to emit events to the web client.
+        last_active_ts: Unix timestamp of last successful send.
+        is_alive: Whether the web connection is still alive.
+        agent_session: Core agent session coordinating runtime/LLM.
+        loop: The asyncio loop associated with the session.
+        config: Effective OpenHands configuration for this conversation.
+        llm_registry: Registry responsible for LLM access and retry hooks.
+        file_store: File storage interface for this conversation.
+        user_id: Optional multi-tenant user identifier.
+        logger: Logger with session context.
+    """
+
     sid: str
     sio: socketio.AsyncServer | None
     last_active_ts: int = 0
@@ -191,6 +212,8 @@ class Session:
 
         # TODO: override other LLM config & agent config groups (#2075)
         agent_config = self.config.get_agent_config(agent_cls)
+        # Pass runtime information to agent config for runtime-specific tool behavior
+        agent_config.runtime = self.config.runtime
         agent_name = agent_cls if agent_cls is not None else 'agent'
         llm_config = self.config.get_llm_config_from_agent(agent_name)
         if settings.enable_default_condenser:
@@ -427,3 +450,8 @@ class Session:
         asyncio.run_coroutine_threadsafe(
             self._send_status_message(msg_type, runtime_status, message), self.loop
         )
+
+
+# Backward-compatible alias for external imports that still reference
+# openhands.server.session.session import Session
+Session = WebSession

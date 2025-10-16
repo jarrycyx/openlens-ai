@@ -188,7 +188,7 @@ def monitor_process(pid: int, line_count: dict):
     last_line_count = 0
     # 每隔30分钟检查是否卡住
     while True:
-        time.sleep(3600)
+        time.sleep(300)
         logger.info(f"Process {pid} has been running for 60 minutes, current line count: {line_count['count']}, last line count: {last_line_count}")
         if line_count["count"] == last_line_count:
             try:

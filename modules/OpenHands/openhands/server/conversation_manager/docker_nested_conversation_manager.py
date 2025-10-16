@@ -34,7 +34,7 @@ from openhands.server.data_models.agent_loop_info import AgentLoopInfo
 from openhands.server.monitoring import MonitoringListener
 from openhands.server.session.conversation import ServerConversation
 from openhands.server.session.conversation_init_data import ConversationInitData
-from openhands.server.session.session import Session
+from openhands.server.session.session import WebSession as Session
 from openhands.storage.conversation.conversation_store import ConversationStore
 from openhands.storage.data_models.conversation_metadata import ConversationMetadata
 from openhands.storage.data_models.conversation_status import ConversationStatus
@@ -62,6 +62,7 @@ class DockerNestedConversationManager(ConversationManager):
     async def __aenter__(self):
         runtime_cls = get_runtime_cls(self.config.runtime)
         runtime_cls.setup(self.config)
+        return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         runtime_cls = get_runtime_cls(self.config.runtime)
@@ -567,7 +568,8 @@ class DockerNestedConversationManager(ConversationManager):
         env_vars['SERVE_FRONTEND'] = '0'
         env_vars['RUNTIME'] = 'local'
         # TODO: In the long term we may come up with a more secure strategy for user management within the nested runtime.
-        env_vars['USER'] = 'root'
+        env_vars['USER'] = 'openhands' if config.run_as_openhands else 'root'
+        env_vars['SANDBOX_USER_ID'] = str(config.sandbox.user_id)
         env_vars['SESSION_API_KEY'] = self._get_session_api_key_for_conversation(sid)
         # We need to be able to specify the nested conversation id within the nested runtime
         env_vars['ALLOW_SET_CONVERSATION_ID'] = '1'
