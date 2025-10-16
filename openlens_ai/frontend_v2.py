@@ -257,27 +257,27 @@ def main():
         st.session_state.question_input = ""
     if "dataset_selected" not in st.session_state:
         st.session_state.dataset_selected = "MIMIC-IV-ICU"
-
+    st.markdown(
+    """
+    <style>
+    /* Target all Streamlit buttons */
+    div.stButton > button {
+        text-align: left !important;
+        justify-content: flex-start !important; /* Ensures content starts from the left */
+    }
+    .block-container {
+        padding-top: 4rem;
+        padding-bottom: 2rem;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+    </style>
+    """,
+        unsafe_allow_html=True,
+    )
     # 如果有当前项目，显示项目界面
     if st.session_state.config:
-        st.markdown(
-            """
-        <style>
-        /* Target all Streamlit buttons */
-        div.stButton > button {
-            text-align: left !important;
-            justify-content: flex-start !important; /* Ensures content starts from the left */
-        }
-        .block-container {
-            padding-top: 4rem;
-            padding-bottom: 2rem;
-            padding-left: 2rem;
-            padding-right: 2rem;
-        }
-        </style>
-        """,
-            unsafe_allow_html=True,
-        )
+        
 
         st.set_page_config(
             page_title="OpenLens AI",
@@ -320,24 +320,6 @@ def main():
             watch_job(config)
 
     else:
-        st.markdown(
-            """
-        <style>
-        /* Target all Streamlit buttons */
-        div.stButton > button {
-            text-align: left !important;
-            justify-content: flex-start !important; /* Ensures content starts from the left */
-        }
-        .block-container {
-            padding-top: 6rem;
-            padding-bottom: 2rem;
-            padding-left: 4rem;
-            padding-right: 4rem;
-        }
-        </style>
-        """,
-            unsafe_allow_html=True,
-        )
 
         st.set_page_config(
             page_title="OpenLens AI",

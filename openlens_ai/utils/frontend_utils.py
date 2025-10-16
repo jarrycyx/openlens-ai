@@ -229,7 +229,6 @@ def get_latest_files(config: Config):
     all_files.sort(key=lambda x: x[2], reverse=True)
     all_files = [x for x in all_files if x[1].endswith(tuple(all_view_ext))]
     pdf_path = get_paper_path(config)
-    print(pdf_path)
     if pdf_path:
         all_files.insert(0, (pdf_path, os.path.relpath(pdf_path, workspace_path), os.path.getmtime(pdf_path)))
     
