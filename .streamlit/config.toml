@@ -3,4 +3,8 @@ sslCertFile = '.streamlit/app.openlens.icu.pem'
 sslKeyFile = '.streamlit/app.openlens.icu.key'
 
 [theme]
-borderColor = "#e4e4e4"
+borderColor = "#e1e1e1"
+baseFontSize = 15
+
+# [ui]
+# hideTopBar = true
