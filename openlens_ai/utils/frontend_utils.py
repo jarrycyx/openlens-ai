@@ -179,8 +179,8 @@ def display_single_file(config: Config, file_path: str):
             content = f.read()
 
         # 限制显示内容长度
-        if len(content) > 2000:
-            content = content[:2000] + "\n\n... (content truncated)"
+        if len(content) > 4000:
+            content = content[:4000] + "\n\n... (content truncated)"
 
         if rel_path.endswith(".md"):
             st.markdown(content)
@@ -220,7 +220,7 @@ def get_latest_files(config: Config):
     # 按修改时间排序，取最新的几个文件
     all_files.sort(key=lambda x: x[2], reverse=True)
     all_files = [x for x in all_files if x[1].endswith(tuple(all_view_ext))]
-    latest_files = all_files[:5]  # 显示最新的5个文件
+    latest_files = all_files[:10]  # 显示最新的5个文件
 
     return latest_files
 
@@ -394,20 +394,23 @@ def show_workspace(config):
             current_fils_hash[fp] = hashlib.md5(open(fp, "rb").read()).hexdigest()
     
     with st.container(horizontal=False):
-        download_workspace_button(config)
+        with st.container(horizontal=True):
+            download_workspace_button(config)
         
-        with st.popover("See file list"):
-            with st.container(horizontal=True):
-                # 显示文件列表
-                if current_files:
-                    # 创建一个按钮，点击后设置要查看的文件
-                    for file_path in sorted(current_files):
-                        try:
-                            file_name = os.path.basename(file_path)
-                            rel_path = os.path.relpath(file_path, workspace_path)
-                            st.write(f"- {rel_path}")
-                        except Exception as e:
-                            logger.error(f"Error previewing file {file_path}: {e}")
-                        # show_file_in_dialog(file)
-                else:
-                    st.info("No files in workspace yet.")
+        # with st.popover("See file list"):
+        st.success(f"Click **📥 Download Workspace** button to download all files.")
+        st.write("**File List:**")
+        with st.container(horizontal=True):
+            # 显示文件列表
+            if current_files:
+                # 创建一个按钮，点击后设置要查看的文件
+                for file_path in sorted(current_files):
+                    try:
+                        file_name = os.path.basename(file_path)
+                        rel_path = os.path.relpath(file_path, workspace_path)
+                        st.caption(f"- {rel_path}")
+                    except Exception as e:
+                        logger.error(f"Error previewing file {file_path}: {e}")
+                    # show_file_in_dialog(file)
+            else:
+                st.info("No files in workspace yet.")

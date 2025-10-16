@@ -25,7 +25,7 @@ from .utils.process_manager import process_manager
 os.environ["STREAMLIT_RUNNING"] = "True"
 logger.configure(handlers=[{"sink": sys.stderr, "level": "INFO"}])
 
-
+@st.cache_data()
 def load_saved_experiments():
     """Load saved experiments from exp/saved_exp directory"""
     preset_experiments = []
@@ -228,7 +228,7 @@ def start_job(question, dataset_path, email):
 def watch_job(config):
     thread_id = config.thread_id
     email = config.email
-    st.write(f"Thread ID: {thread_id}")
+    st.caption(f"Thread ID: {thread_id}")
     st.warning(f"Job progress and results will be sent to {email}, please make sure the address is correct.")
 
     # 保存 config 到 session state
@@ -301,18 +301,20 @@ def main():
 
             with col1:
                 st.write("💬 **Conversation History**")
-                with st.container(height=1200):
+                with st.container(height=1200, border=False):
                     watch_job(config)
                     
             with col2:
                 tab_names = ["**All files**"]
                 tab_names += [os.path.basename(fp) for fp, _, _ in latest_files]
-                tab_list = st.tabs(tab_names)
+                tab_list = st.tabs(tab_names, default=tab_names[1])
                 for i, (latest_file_path, _, _) in enumerate(latest_files):
                     with tab_list[i+1]:
-                        display_single_file(config, latest_file_path)
+                        with st.container(height=1200, border=False):
+                            display_single_file(config, latest_file_path)
                 with tab_list[0]:
-                    show_workspace(config)
+                    with st.container(height=1200, border=False):
+                        show_workspace(config)
 
         else:
             watch_job(config)
@@ -422,7 +424,7 @@ def main():
         submit_col1, submit_col2 = st.columns([1, 4])
 
         with submit_col1:
-            submit_button = st.button("🚀 Start Research", width="content")
+            submit_button = st.button("🚀 Start Research", width="stretch", type="secondary")
 
         with submit_col2:
             st.caption("Note: This will start a fully autonomous research process that may take significant time to complete.")
@@ -441,7 +443,8 @@ def main():
             # 加载保存的实验
             with st.spinner("Loading use cases..."):
                 saved_experiments = load_saved_experiments()
-                saved_experiments = random.sample(saved_experiments, min(6, len(saved_experiments)))
+                # saved_experiments = random.sample(saved_experiments, min(6, len(saved_experiments)))
+                saved_experiments = saved_experiments[:6]
 
             # 创建三列用于卡片式展示（添加一列用于Resume Session）
             col1, col2 = st.columns(2)
@@ -459,4 +462,11 @@ def main():
                     with col:
                         # 创建卡片式按钮
                         if st.button(exp.get("question", "No question specified"), key=f"use_case_{i}", help="Click to use this experiment", width="stretch"):
-                            st.session_state.copnfig = exp.get("config", {})
+                            config_path = os.path.join(exp["path"], "config.json")
+                            with open(config_path, "r") as f:
+                                config_data = json.load(f)
+
+                            config = Config(**config_data)
+                            st.session_state.config = config
+                            logger.info(f"Loaded config for experiment: {exp.get('question', 'No question specified')}")
+                            st.rerun()
