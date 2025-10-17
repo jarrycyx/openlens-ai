@@ -8,6 +8,8 @@ dist/
 tmp*
 *.txt
 **/node_modules
+uv.lock
+.venv
 
 # Python相关
 curie/venv

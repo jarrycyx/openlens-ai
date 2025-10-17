@@ -16,7 +16,6 @@ import streamlit_scrollable_textbox as stx
 import glob
 import json
 import traceback
-from streamlit_pdf_viewer import pdf_viewer
 
 from .file_utils import prepare_file_config, collect_files, collect_token_usage
 from .config import Config
@@ -224,14 +223,14 @@ def get_latest_files(config: Config):
     if not all_files:
         st.info("No files generated yet.")
         return
-    
+
     # 按修改时间排序，取最新的几个文件
     all_files.sort(key=lambda x: x[2], reverse=True)
     all_files = [x for x in all_files if x[1].endswith(tuple(all_view_ext))]
     pdf_path = get_paper_path(config)
     if pdf_path:
         all_files.insert(0, (pdf_path, os.path.relpath(pdf_path, workspace_path), os.path.getmtime(pdf_path)))
-    
+
     latest_files = all_files[:10]  # 显示最新的5个文件
 
     return latest_files
@@ -292,7 +291,7 @@ def display_messages_from_file(config: Config):
             st.info(msg["content"])
         elif "file_content" in msg["type"]:
             pass
-                    
+
 
 
 def show_scrollable(content, file_name, height=200):
@@ -355,11 +354,11 @@ def get_plan(config: Config):
     return None
 
 def download_workspace_button(config):
-   
+
     zip_buffer = get_zip(config)
     pdf_buffer = get_pdf(config)
     plan_str = get_plan(config)
-    
+
     st.download_button(
         label="📥 Download Workspace",
         data=zip_buffer,
@@ -367,21 +366,21 @@ def download_workspace_button(config):
         mime="application/zip",
     )
     if pdf_buffer:
-        st.download_button(label="📑 Download Paper", 
-                           data=pdf_buffer, 
+        st.download_button(label="📑 Download Paper",
+                           data=pdf_buffer,
                            mime="application/pdf",
                            file_name="main.pdf")
 
     if plan_str:
-        st.download_button(label="✍️ Download Plan", 
-                           data=plan_str, 
+        st.download_button(label="✍️ Download Plan",
+                           data=plan_str,
                            mime="text/markdown",
                            file_name="plan.md")
 
 
 
 def show_workspace(config):
-    
+
     save_path = config.save_path
     workspace_path = os.path.join(save_path, "workspace")
     # 使用 glob.glob 递归获取所有文件
@@ -404,11 +403,11 @@ def show_workspace(config):
             fp = os.path.join(save_path, extra_f)
             current_files.add(fp)
             current_fils_hash[fp] = hashlib.md5(open(fp, "rb").read()).hexdigest()
-    
+
     with st.container(horizontal=False):
         with st.container(horizontal=True):
             download_workspace_button(config)
-        
+
         # with st.popover("See file list"):
         st.success(f"Click **📥 Download Workspace** button to download all files.")
         st.write("**File List:**")

@@ -3,7 +3,7 @@ workspace_base="/workspace"
 runtime = "local"
 disable_color = true
 search_api_key = "{tavily_key}"
-save_trajectory_path = "/helper/openhands_traj"
+save_trajectory_path = "{openhands_traj_path}"
 run_as_openhands = false
 # debug = true
 
@@ -20,8 +20,8 @@ retry_max_wait=60
 [sandbox]
 user_id = 3407
 timeout = 3600
-runtime_container_image = ""
-
+base_container_image = "{base_container_image}"
+volumes = "{sandbox_volumes}"
 
 [mcp]
 # shttp_servers = [

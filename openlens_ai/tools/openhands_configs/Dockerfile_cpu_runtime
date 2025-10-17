@@ -1,0 +1,42 @@
+# Base image with Python and Conda
+# FROM nvidia/cuda:12.6.2-devel-ubuntu22.04
+
+FROM python:3.12
+USER root
+
+# Set environment variables to avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Set proxy environment variables if needed
+ENV http_proxy="http://127.0.0.1:7890"
+ENV HTTP_PROXY="http://127.0.0.1:7890"
+ENV https_proxy="http://127.0.0.1:7890"
+ENV HTTPS_PROXY="http://127.0.0.1:7890"
+ENV all_proxy="http://127.0.0.1:7890"
+ENV ALL_PROXY="http://127.0.0.1:7890"
+
+# Update package index and install dependencies
+RUN apt-get update
+RUN apt-get install -y --fix-missing \
+    wget \
+    curl \
+    gnupg \
+    lsb-release \
+    build-essential \
+    vim \
+    make \
+    git \
+    openssl \
+    tmux \
+    ruby
+
+
+# Setup basic python environment
+# RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install numpy pandas tqdm omegaconf gpustat einops matplotlib scikit-learn scikit-image matplotlib tensorboard "psycopg[binary]" prettytable xgboost seaborn tabulate psycopg2-binary
+RUN pip install torch torchvision torchaudio
+RUN pip install openai langgraph langchain tensorflow mcp-server-fetch
+
+RUN apt-get install -y texlive-full
+
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh

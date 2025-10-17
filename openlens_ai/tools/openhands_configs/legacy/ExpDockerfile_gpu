@@ -1,17 +1,24 @@
 # Base image with Python and Conda
-# FROM nvidia/cuda:12.6.2-devel-ubuntu22.04
-
-FROM library/ubuntu:20.04
+FROM nvidia/cuda:12.6.2-devel-ubuntu22.04
+# FROM nvidia/cuda:12.2.2-devel-ubuntu20.04
 USER root
 
 # Set environment variables to avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Set proxy environment variables if needed
+ENV http_proxy="http://127.0.0.1:7890"
+ENV HTTP_PROXY="http://127.0.0.1:7890"
+ENV https_proxy="http://127.0.0.1:7890"
+ENV HTTPS_PROXY="http://127.0.0.1:7890"
+ENV all_proxy="http://127.0.0.1:7890"
+ENV ALL_PROXY="http://127.0.0.1:7890"
+
 # Update package index and install dependencies
 RUN apt-get update
 RUN apt-get install -y software-properties-common ca-certificates
 RUN add-apt-repository 'ppa:deadsnakes/ppa'
-RUN apt-get install -y --fix-missing \
+RUN apt-get install -y \
     wget \
     curl \
     gnupg \
@@ -20,7 +27,7 @@ RUN apt-get install -y --fix-missing \
     vim \
     make \
     nvidia-cuda-toolkit \
-    netcat-traditional \
+    netcat \
     git \
     openssl \
     zsh \
@@ -56,7 +63,7 @@ RUN apt-get update && apt-get install -y \
     docker-ce \
     docker-ce-cli \
     containerd.io \
-    docker-compose-plugin 
+    docker-compose-plugin
 
 
 RUN python3 -c "print('Python hello')"
@@ -77,7 +84,7 @@ RUN mkdir -p /workspace
 # setup pip
 RUN cd /helper
 RUN rm -rf /usr/bin/pip3 /usr/bin/pip
-RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py 
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN python get-pip.py
 RUN ln -s /usr/bin/pip /usr/bin/pip3
 
@@ -93,7 +100,6 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Set bashrc
 COPY openlens_ai/tools/openhands_configs/openhands_env.sh /helper/env.sh
-
 
 # # Create a group and user
 # RUN groupadd openlens_ai && useradd -g openlens_ai -m openlens_ai

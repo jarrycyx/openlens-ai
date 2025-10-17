@@ -8,18 +8,16 @@ export all_proxy="http://127.0.0.1:7890"
 export ALL_PROXY="http://127.0.0.1:7890"
 
 
-docker build -t openlens-ai:cpu-latest \
-    -f openlens_ai/tools/openhands_configs/Dockerfile_cpu_runtime \
+docker build -t openlens-ai:gpu-latest \
+    -f openlens_ai/tools/openhands_configs/ExpDockerfile_gpu \
     --network=host \
     --progress=plain \
     .
 
 
-    # --no-cache \
-
 # ### Export docker
 # echo "Exporting docker to tar.gz"
-# docker save openlens-ai:cpu-latest | gzip > exp/docker/openlens-ai:cpu-latest.tar.gz
+# docker save openlens-ai:gpu-latest | gzip > exp/docker/openlens-ai:gpu-latest.tar.gz
 
 # ### Import docker
-# gunzip -c exp/docker/openlens-ai:cpu-latest.tar.gz | docker load
+# gunzip -c exp/docker/openlens-ai:gpu-latest.tar.gz | docker load
