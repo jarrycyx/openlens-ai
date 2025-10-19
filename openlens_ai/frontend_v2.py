@@ -119,12 +119,13 @@ def build_sidebar():
                     st.write(f"Sub: {st.user.sub}")
                 st.button("🚶‍♂️‍➡ Log out", on_click=st.logout, width="content", type="tertiary")
 
-        # 新建项目按钮
-        if st.button("🚀 \+ New project", width="stretch"):
-            st.session_state.config = None
-            st.rerun()
+        st.divider()
         # 用户专属项目列表（移到侧边栏底部）
         st.subheader("📁 Your Projects")
+        # 新建项目按钮
+        if st.button("&nbsp; 🚀&nbsp; \+ New project", width="stretch"):
+            st.session_state.config = None
+            st.rerun()
         if st.user.is_logged_in:
             user_id = st.user.sub if hasattr(st.user, "sub") else st.user.email
             st.session_state.email = st.user.email
@@ -151,6 +152,8 @@ def build_sidebar():
                         st.rerun()
             else:
                 st.info("No projects yet. Create your first project below.")
+        else:
+            st.info("No projects yet. Create your first project below.")
 
 
 
@@ -266,11 +269,16 @@ def main():
         justify-content: flex-start !important; /* Ensures content starts from the left */
     }
     .block-container {
-        padding-top: 4rem;
-        padding-bottom: 2rem;
+        padding-top: 2rem;
+        padding-bottom: 1rem;
         padding-left: 2rem;
         padding-right: 2rem;
+    }                    
+    .stAppHeader {
+        background-color: rgba(255, 255, 255, 0.0);  /* Transparent background */
+        visibility: visible;  /* Ensure the header is visible */
     }
+    .main {overflow: hidden}
     </style>
     """,
         unsafe_allow_html=True,
@@ -301,7 +309,7 @@ def main():
 
             with col1:
                 st.write("💬 **Conversation History**")
-                with st.container(height=1200, border=False):
+                with st.container(height=900, border=False):
                     watch_job(config)
                     
             with col2:
@@ -310,10 +318,10 @@ def main():
                 tab_list = st.tabs(tab_names, default=tab_names[1])
                 for i, (latest_file_path, _, _) in enumerate(latest_files):
                     with tab_list[i+1]:
-                        with st.container(height=1200, border=False):
+                        with st.container(height=900, border=False):
                             display_single_file(config, latest_file_path)
                 with tab_list[0]:
-                    with st.container(height=1200, border=False):
+                    with st.container(height=900, border=False):
                         show_workspace(config)
 
         else:
@@ -334,8 +342,8 @@ def main():
         build_sidebar()
 
         # 主界面设计
-        st.title("🫧 OpenLens AI")
-        st.subheader("Fully Autonomous Research Agent for Health Informatics")
+        # st.title("🫧 OpenLens AI")
+        st.subheader("🫧 OpenLens AI: Fully Autonomous Research Agent for Health Informatics")
 
         # 显示当前进程数量
         process_count = process_manager.get_process_count()
@@ -373,7 +381,7 @@ def main():
             dataset_path = "datasets/eicu-demo"
             # st.text_input("Dataset Path", dataset_path, disabled=True)
         elif dataset_option == "Upload My Own":
-            st.info("Please upload your dataset files below. They will be saved to ./datasets/user_upload/")
+            # st.info("Please upload your dataset files below. They will be saved to ./datasets/user_upload/")
             uploaded_files = st.file_uploader(
                 "Upload Dataset Files", accept_multiple_files=True, type=["csv", "txt", "json", "parquet", "xls", "xlsx"], help="Upload your dataset files"
             )
@@ -399,14 +407,15 @@ def main():
                 st.success(f"Files uploaded successfully to: {upload_subdir}")
                 st.text_input("Dataset Path", dataset_path, disabled=True)
             else:
-                st.warning("Please upload at least one file for your dataset")
+                # st.warning("Please upload at least one file for your dataset")
                 dataset_path = None
 
         # 提交按钮
-        submit_col1, submit_col2 = st.columns([1, 4])
+        submit_col1, submit_col2 = st.columns([1, 3])
 
         with submit_col1:
-            submit_button = st.button("🚀 Start Research", width="stretch", type="secondary")
+            # submit_button = st.button("🚀 Start Research", width="stretch", type="secondary")
+            submit_button = st.button("🚀 Start Research (under maintenance)", width="stretch", type="secondary", disabled=True)
 
         with submit_col2:
             st.caption("Note: This will start a fully autonomous research process that may take significant time to complete.")
@@ -426,7 +435,7 @@ def main():
             with st.spinner("Loading use cases..."):
                 saved_experiments = load_saved_experiments()
                 # saved_experiments = random.sample(saved_experiments, min(6, len(saved_experiments)))
-                saved_experiments = saved_experiments[:6]
+                saved_experiments = saved_experiments[:12]
 
             # 创建三列用于卡片式展示（添加一列用于Resume Session）
             col1, col2 = st.columns(2)
