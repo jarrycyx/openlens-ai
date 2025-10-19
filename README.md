@@ -101,7 +101,7 @@ docker tag <IMAGE_ID> openlens-ai:runtime-latest
 
 1. Clone the repository:
 ```bash
-git clone git@github.com:jarrycyx/openlens-ai.git
+git clone git@github.com:jarrycyx/openlens-ai.git --recurse-submodules
 cd openlens-ai
 ```
 
