@@ -45,8 +45,9 @@ dependencies = [
   "vllm",
 ]
 
-scripts.openlens-cli = "openlens_ai.build_graph:cli_main"
-scripts.openlens-ui = "openlens_ai.frontend:main"
+[project.scripts]
+openlens-cli = "openlens_ai.build_graph:cli_main"
+openlens-ui = "openlens_ai.frontend:main"
 
 [tool.setuptools]
 py-modules = [ "openlens_ai" ]

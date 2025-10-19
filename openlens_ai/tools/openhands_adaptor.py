@@ -8,6 +8,7 @@ from typing import Optional, Type, Dict, Any, Union
 from datetime import datetime
 from loguru import logger
 import random
+import dotenv
 
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
@@ -22,6 +23,8 @@ from ..utils.config import Config
 from ..tools.file_search_keyword import FileSearchTool
 from ..chatbot import chatbot_with_context_manager
 
+dotenv.load_dotenv()
+
 postfix = """
 Reminders: DO NOT mock or simulate results. Only write python files to generate the code and bash shell scripts to execute them.
 """
@@ -35,11 +38,10 @@ Reminders: DO NOT mock or simulate results. Only write python files to generate 
 
 
 def run_openhands(
-        cmd: str,
-        config: Config,
-    ):
+    cmd: str,
+    config: Config,
+):
     """运行Docker容器并实时输出+保存日志"""
-
 
     time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
     save_name = f"openhands_{time_stamp}.log"
@@ -53,7 +55,7 @@ def run_openhands(
     for try_i in range(5):
         try:
             # 启动子进程（实时流处理核心）
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)  # 合并stdout和stderr  # 行缓冲模式
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, shell=True)  # 合并stdout和stderr  # 行缓冲模式
 
             with open(log_save_path, "a") as f:
                 f.write(f"Process pid: {process.pid}\n\n")
@@ -67,7 +69,7 @@ def run_openhands(
 
             # 实时处理输出流
             output_chunk = ""
-            pattern = r"(\d{2}:\d{2}:\d{2} - openhands:)" # 用时间戳拆分日志
+            pattern = r"(\d{2}:\d{2}:\d{2} - openhands:)"  # 用时间戳拆分日志
             frontend_add_tool_call("openhands", {}, config)
             while True:
                 output_line = process.stdout.readline()
@@ -98,8 +100,6 @@ def run_openhands(
             return_code = process.poll()
             if return_code != 0:
                 raise subprocess.CalledProcessError(return_code, docker_cmd)
-
-
 
             logger.info("Docker container executed successfully.")
             return "".join(log_lines)  # 返回完整日志
@@ -171,16 +171,15 @@ def run_openhands_prompt(prompts, config: Config):
     all_results = ""
     for prompt in prompts:
         pwd = os.getcwd()
-        log_save_path = os.path.join(pwd, config.save_path, "openhands_logs", save_name)
         workspace_dir = os.path.join(pwd, config.save_path, "workspace")
         openhands_traj_path = os.path.join(pwd, config.save_path, "openhands_traj")
-        latex_template_path = os.path.join(pwd, "openlens_ai/tools/latex_template/neurips")
+        latex_template_path = os.path.join(pwd, "openlens_ai/tools/latex_template/blank")
         dot_openhands_path = os.path.join(pwd, "openlens_ai/tools/openhands_configs/dot_openhands")
         os.makedirs(os.path.join(workspace_dir, "manuscript"), exist_ok=True)
         os.makedirs(openhands_traj_path, exist_ok=True)
 
         time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        prompt_file = os.path.join(log_save_path, f"prompt_{time_stamp}.txt")
+        prompt_file = os.path.join(pwd, config.save_path, "openhands_logs", f"prompt_{time_stamp}.txt")
         os.makedirs(os.path.dirname(prompt_file), exist_ok=True)
         with open(prompt_file, "w") as f:
             f.write(prompt)
@@ -196,21 +195,25 @@ def run_openhands_prompt(prompts, config: Config):
         oh_config = oh_config.replace("{code_model}", os.getenv("CODE_MODEL"))
         oh_config = oh_config.replace("{tavily_key}", os.getenv("TAVILY_API_KEY", ""))
         oh_config = oh_config.replace("{openhands_traj_path}", openhands_traj_path)
-        oh_config = oh_config.replace("{base_container_image}", docker_name)
+        oh_config = oh_config.replace("{runtime_container_image}", docker_name)
 
         if config.dataset_path:
             dataset_path = os.path.join(pwd, config.dataset_path)
             assert os.path.exists(dataset_path), f"Dataset path {dataset_path} does not exist."
-            oh_config = oh_config.replace("{sandbox_volumes}",
-                                          f"{workspace_dir}:/workspace/:rw,"
-                                          f"{config.dataset_path}:/workspace/datasets/:ro,"
-                                          f"{latex_template_path}:/workspace/latex_template/:ro,"
-                                          f"{dot_openhands_path}:/workspace/.openhands/:ro,")
+            oh_config = oh_config.replace(
+                "{sandbox_volumes}",
+                f"{os.path.abspath(workspace_dir)}:/workspace/:rw,"
+                f"{os.path.abspath(config.dataset_path)}:/workspace/datasets/:ro,"
+                f"{os.path.abspath(latex_template_path)}:/workspace/latex_template/:ro,"
+                f"{os.path.abspath(dot_openhands_path)}:/workspace/.openhands/:ro",
+            )
         else:
-            oh_config = oh_config.replace("{sandbox_volumes}",
-                                          f"{workspace_dir}:/workspace/:rw,"
-                                          f"{latex_template_path}:/workspace/latex_template/:ro,"
-                                          f"{dot_openhands_path}:/workspace/.openhands/:ro,")
+            oh_config = oh_config.replace(
+                "{sandbox_volumes}",
+                f"{os.path.abspath(workspace_dir)}:/workspace/:rw,"
+                f"{os.path.abspath(latex_template_path)}:/workspace/latex_template/:ro,"
+                f"{os.path.abspath(dot_openhands_path)}:/workspace/.openhands/:ro",
+            )
 
         this_config_path = os.path.join(config.save_path, "openhands_config.toml")
         with open(this_config_path, "w") as f:
@@ -219,10 +222,10 @@ def run_openhands_prompt(prompts, config: Config):
         for try_i in range(5):
             # 构建在Docker容器中执行的命令
             cmd = (
-                "source openlens_ai/tools/openhands_configs/openhands_env.sh ; "
-                f"chmod -R 777 {config.save_path};"
+                "source openlens_ai/tools/openhands_configs/openhands_env.sh; "
+                f"chmod -R 777 {os.path.abspath(config.save_path)};"
                 f"cd modules/OpenHands;"
-                f'poetry run python -m openhands.core.main -f "{prompt_file}" -i {max_iter} --config-file {this_config_path};'
+                f'poetry run python -m openhands.core.main -f "{os.path.abspath(prompt_file)}" -i {max_iter} --config-file {os.path.abspath(this_config_path)};'
                 f"cd ../../;"
             )
             results = run_openhands(cmd, config)
@@ -282,8 +285,6 @@ class OpenHandsTool(BaseTool):
         return run_openhands_prompt(prompts, self.config)
 
 
-
-
 def collect_info_and_run_openhands(prompt: str, config: Config, state: State):
     pass
 
@@ -293,7 +294,7 @@ if __name__ == "__main__":
     dataset_path = "data/dataset.jsonl"
     config = Config(
         dataset_path="outputs/test/data",
-        save_path="outputs/test/workspace",
+        save_path="outputs/test",
         thread_id="test",
         question="test",
     )

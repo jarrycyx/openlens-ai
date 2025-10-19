@@ -1,6 +1,6 @@
 [core]
 workspace_base="/workspace"
-runtime = "local"
+runtime = "docker"
 disable_color = true
 search_api_key = "{tavily_key}"
 save_trajectory_path = "{openhands_traj_path}"
@@ -20,8 +20,8 @@ retry_max_wait=60
 [sandbox]
 user_id = 3407
 timeout = 3600
-base_container_image = "{base_container_image}"
-volumes = "{sandbox_volumes}"
+runtime_container_image = "{runtime_container_image}"
+
 
 [mcp]
 # shttp_servers = [

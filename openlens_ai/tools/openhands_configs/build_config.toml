@@ -1,0 +1,35 @@
+[core]
+workspace_base="/workspace"
+runtime = "docker"
+disable_color = true
+run_as_openhands = false
+# debug = true
+
+[llm]
+input_cost_per_token = 1.0
+output_cost_per_token = 1.0
+max_message_chars = 100000
+native_tool_calling = true
+retry_max_wait=60
+
+[sandbox]
+user_id = 3407
+timeout = 3600
+base_container_image = "openlens-ai:cpu-latest"
+# runtime_container_image = "{runtime_container_image}"
+runtime_extra_build_args = ["--network=host"]
+# runtime_extra_deps = "pip install numpy pandas tqdm omegaconf gpustat einops matplotlib scikit-learn scikit-image matplotlib tensorboard \"psycopg[binary]\" prettytable xgboost seaborn tabulate psycopg2-binary && pip install torch torchvision torchaudio && pip install openai langgraph langchain tensorflow mcp-server-fetch && apt-get install -y texlive-full"
+# runtime_extra_deps = "apt-get install -y texlive-full"
+
+
+[mcp]
+# shttp_servers = [
+#     # Streamable HTTP server with API key authentication
+#     {url="https://mcp.tavily.com/mcp/?tavilyApiKey={tavily_key}", api_key="{tavily_key}"}
+# ]
+shttp_servers = []
+stdio_servers = []
+sse_servers = []
+
+[security]
+security_analyzer = "none"
