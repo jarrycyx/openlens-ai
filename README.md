@@ -77,16 +77,26 @@ No installation required! Visit our <a href="https://openlens.icu">project page<
 ### Installation
 
 0. Ensure Docker Installation:
+
+Pull the runtime directly (**recommended**):
 ```bash
 docker --version
 
 # Pull docker
-ALIYUN_REMOTE_DOCKER_NAME=crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs.com/cyx-docker/openlens-ai:cpu-latest
+ALIYUN_REMOTE_DOCKER_NAME=crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs.com/cyx-docker/openlens-ai:runtime-latest
 docker pull $ALIYUN_REMOTE_DOCKER_NAME
-docker tag $ALIYUN_REMOTE_DOCKER_NAME openlens-ai:cpu-latest
-
-# or Build docker image
-bash openlens_ai/tools/openhands_configs/build_docker_cpu.sh
+docker tag $ALIYUN_REMOTE_DOCKER_NAME openlens-ai:runtime-latest
+```
+or build from scratch:
+```bash
+# Build base docker for tex-live, torch, etc
+bash openlens_ai/tools/openhands_configs/build_docker_base.sh 
+# Build runtime docker to meet the requirements of OpenHands
+bash openlens_ai/tools/openhands_configs/build_docker_runtime.sh 
+# Check the ID of the built image
+docker images
+# Tag the image name with openlens-ai:runtime-latest
+docker tag <IMAGE_ID> openlens-ai:runtime-latest
 ```
 
 1. Clone the repository:
@@ -140,7 +150,7 @@ OPENHANDS_MAX_ITER=100  # Maximum number of iterations allowed for OpenHands age
 MAX_SUBTASK_REDO=2  # Maximum number of retries for subtasks
 MAX_LATEX_POLISH_ROUND=2  # Maximum number of rounds for LaTeX document polishing
 
-DOCKER_NAME=agent-med-cpu  # Name of the Docker container used for the agent environment
+DOCKER_NAME=openlens-ai:runtime-latest
 
 
 ### Optional settings

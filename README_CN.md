@@ -65,18 +65,28 @@
 ### 安装
 
 0. 确保已安装 Docker：
+
+Pull the runtime directly (**recommended**):
+直接拉取镜像（**推荐**）：
 ```bash
 docker --version
 
-# 拉取 Docker 镜像
+# Pull docker
 ALIYUN_REMOTE_DOCKER_NAME=crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs.com/cyx-docker/openlens-ai:cpu-latest
 docker pull $ALIYUN_REMOTE_DOCKER_NAME
 docker tag $ALIYUN_REMOTE_DOCKER_NAME openlens-ai:cpu-latest
-
-# 或者构建 Docker 镜像
-bash openlens_ai/tools/openhands_configs/build_docker_cpu.sh
 ```
-
+或者重新build：
+```bash
+# Build base docker for tex-live, torch, etc
+bash openlens_ai/tools/openhands_configs/build_docker_base.sh 
+# Build runtime docker to meet the requirements of OpenHands
+bash openlens_ai/tools/openhands_configs/build_docker_runtime.sh 
+# Check the ID of the built image
+docker images
+# Tag the image name with openlens-ai:runtime-latest
+docker tag <IMAGE_ID> openlens-ai:runtime-latest
+```
 1. 克隆代码库：
 ```bash
 git clone git@github.com:jarrycyx/openlens-ai.git
@@ -128,7 +138,7 @@ OPENHANDS_MAX_ITER=100  # OpenHands 智能体执行允许的最大迭代次数
 MAX_SUBTASK_REDO=2  # 子任务的最大重试次数
 MAX_LATEX_POLISH_ROUND=2  # LaTeX 文档润色的最大轮数
 
-DOCKER_NAME=agent-med-cpu  # 用于智能体环境的 Docker 容器名称
+DOCKER_NAME=openlens-ai:runtime-latest  # 用于智能体环境的 Docker 容器名称
 
 
 ### 可选设置

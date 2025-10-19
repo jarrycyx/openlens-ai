@@ -171,6 +171,9 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
             # event: [("...", "..."), {}]
             if len(list(event.keys())) > 0:
                 state_name = list(event.keys())[0]
+                if state_name == interrupt_after:
+                    logger.info(f"Interrupted after {state_name}")
+                    break
                 frontend_update_node(state_name, config)
                 step_i += 1
                 with open(os.path.join(save_path, "states", f"step_{step_i:04d}_{state_name}.json"), "w") as f:
@@ -225,7 +228,7 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
         sys.exit(0)
 
 
-def main(question=None, dataset_path=None, thread_id=None, email=""):  # 新的执行_流程
+def main(question, dataset_path, thread_id, email, interrupt_after="literature_reviewer"):  # 新的执行_流程
     init_state, config, save_path = prepare_file_config(thread_id, question, dataset_path, email)
     global graph
     graph = build_graph(config, None)
@@ -236,9 +239,9 @@ def main(question=None, dataset_path=None, thread_id=None, email=""):  # 新的�
         recipients=config.email,
         attachments=None,
     )
-    run_graph(config, graph, save_path, init_state)
+    run_graph(config, graph, save_path, init_state, interrupt_after=interrupt_after)
     
-def main_resume(save_dir: str):
+def main_resume(save_dir: str, interrupt_after="literature_reviewer"):
     config, state, last_subgraph, new_save_dir = load_state(save_dir)
     if last_subgraph:
         logger.info(f"Last completed subgraph: {last_subgraph}")
@@ -266,7 +269,7 @@ def main_resume(save_dir: str):
         start_from = all_subgraphs[last_subgraph_index + 1]
         logger.info(f"Resuming from subgraph {start_from}")
         graph = build_graph(config, start_from)
-        run_graph(config, graph, new_save_dir, state)
+        run_graph(config, graph, new_save_dir, state, interrupt_after=interrupt_after)
     
 
 
@@ -282,6 +285,7 @@ def parse_args():
     parser.add_argument("--base-url", type=str, help="Base URL for the chat model")
     parser.add_argument("--code-model", type=str, help="Code model to use")
     parser.add_argument("--vision-model", type=str, help="Vision model to use")
+    parser.add_argument("--interrupt-after", type=str, default="literature_reviewer", help="Interrupt after the specified subgraph, use to limit user trial.")
     
     parser.add_argument("--resume-from", type=str, help="Resume from a specific saved directory")
 
@@ -331,7 +335,7 @@ def cli_main():
             email = args.email
 
         # main(question, dataset_path, thread_id)
-        main(question, dataset_path, thread_id, email)
+        main(question, dataset_path, thread_id, email, interrupt_after=args.interrupt_after)
     
     
 

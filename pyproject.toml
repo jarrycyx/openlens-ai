@@ -1,51 +1,56 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+
+requires = [ "setuptools>=73", "wheel" ]
+
 [project]
-name = "openlens_ai"
+name = "openlens-ai"
 version = "0.0.1"
 description = "Fully Autonomous Research Agent for Health Infomatics"
-authors = [
-    { name = "Yuxiao Cheng", email = "cyx22@mails.tsinghua.edu.cn" },
-]
 readme = "README.md"
-requires-python = ">=3.9"
-dependencies = [
-    "langgraph>=0.2.6",
-    "python-dotenv>=1.0.1",
-    "streamlit",
-    "numpy",
-    "vllm",
-    "litellm",
-    "loguru",
-    "modelscope",
-    "langchain",
-    "typing_extensions",
-    "numpy",
-    "beautifulsoup4",
-    "PyPDF2",
-    "feedparser",
-    "httpx",
-    "mcp",
-    "pydantic",
-    "markdown",
-    "langchain_tavily",
-    "streamlit_scrollable_textbox",
-    "langchain_openai",
-    "langchain_mcp_adapters",
-    "PyMuPDF"
+authors = [
+  { name = "Yuxiao Cheng", email = "cyx22@mails.tsinghua.edu.cn" },
 ]
-
-
-[project.optional-dependencies]
-
-[build-system]
-requires = ["setuptools>=73.0.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires-python = ">=3.11"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+  "beautifulsoup4",
+  "feedparser",
+  "httpx",
+  "langchain",
+  "langchain-mcp-adapters",
+  "langchain-openai",
+  "langchain-tavily",
+  "langgraph>=0.2.6",
+  "litellm",
+  "litellm[proxy]",
+  "loguru",
+  "markdown",
+  "mcp",
+  "modelscope",
+  "numpy",
+  "pydantic",
+  "pymupdf",
+  "pypdf2",
+  "python-dotenv>=1.0.1",
+  "streamlit",
+  "streamlit-pdf-viewer",
+  "streamlit-scrollable-textbox",
+  "typing-extensions",
+  "vllm",
+]
 
 [project.scripts]
 openlens-cli = "openlens_ai.build_graph:cli_main"
 openlens-ui = "openlens_ai.frontend:main"
 
 [tool.setuptools]
-py-modules = ["openlens_ai"]
-packages = ["openlens_ai", "openlens_ai.utils", "openlens_ai.tools", "openlens_ai.agents"]
-package-data = {"openlens_ai" = ["openlens_ai/prompts/*", "openlens_ai/tools/latex_template/neurips/*", "openlens_ai/tools/openhands_configs/*", ]}
+py-modules = [ "openlens_ai" ]
+packages = [ "openlens_ai", "openlens_ai.utils", "openlens_ai.tools", "openlens_ai.agents" ]
+# package-data = {"openlens_ai" = ["openlens_ai/prompts/*", "openlens_ai/tools/latex_template/neurips/*", "openlens_ai/tools/openhands_configs/*", ]}
 include-package-data = true
