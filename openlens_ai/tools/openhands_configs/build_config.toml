@@ -3,7 +3,7 @@ workspace_base="/workspace"
 runtime = "docker"
 disable_color = true
 run_as_openhands = false
-# debug = true
+debug = true
 
 [llm]
 input_cost_per_token = 1.0

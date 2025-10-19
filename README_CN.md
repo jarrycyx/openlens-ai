@@ -89,7 +89,7 @@ docker tag <IMAGE_ID> openlens-ai:runtime-latest
 ```
 1. 克隆代码库：
 ```bash
-git clone git@github.com:jarrycyx/openlens-ai.git
+git clone git@github.com:jarrycyx/openlens-ai.git --recurse-submodules
 cd openlens-ai
 ```
 
