@@ -148,7 +148,7 @@ def get_last_node(graph: CompiledStateGraph, this_node_name: str):
             return b
 
 
-def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_state: State):
+def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_state: State, interrupt_after="none"):
     logger.info(f"Main process is running with PID {os.getpid()}")
     
     # 启动定期发送邮件的线程
@@ -171,15 +171,15 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
             # event: [("...", "..."), {}]
             if len(list(event.keys())) > 0:
                 state_name = list(event.keys())[0]
-                if state_name == interrupt_after:
-                    logger.info(f"Interrupted after {state_name}")
-                    break
                 frontend_update_node(state_name, config)
                 step_i += 1
                 with open(os.path.join(save_path, "states", f"step_{step_i:04d}_{state_name}.json"), "w") as f:
                     json_str = dumps(event, ensure_ascii=False, indent=4)
                     f.write(json_str)
                 
+                if state_name == interrupt_after:
+                    logger.info(f"Interrupted after {state_name}")
+                    break
                 # 发送进度邮件
                 try:
                     zipfile, latest_md = collect_files(config)
@@ -219,7 +219,7 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
         # 停止定期发送邮件
         send_email(
             subject=f"OpenLens Job Successful | {config.thread_id}",
-            content=f"All subgraphs completed successfully.\n\n{latest_md}",
+            content=f"All subgraphs completed successfully.",
             recipients=config.email,
             attachments=zipfile,
         )
@@ -228,7 +228,7 @@ def run_graph(config: Config, graph: CompiledStateGraph, save_path: str, init_st
         sys.exit(0)
 
 
-def main(question, dataset_path, thread_id, email, interrupt_after="literature_reviewer"):  # 新的执行_流程
+def main(question, dataset_path, thread_id, email, interrupt_after="none"):  # 新的执行_流程
     init_state, config, save_path = prepare_file_config(thread_id, question, dataset_path, email)
     global graph
     graph = build_graph(config, None)
@@ -285,7 +285,7 @@ def parse_args():
     parser.add_argument("--base-url", type=str, help="Base URL for the chat model")
     parser.add_argument("--code-model", type=str, help="Code model to use")
     parser.add_argument("--vision-model", type=str, help="Vision model to use")
-    parser.add_argument("--interrupt-after", type=str, default="literature_reviewer", help="Interrupt after the specified subgraph, use to limit user trial.")
+    parser.add_argument("--interrupt-after", type=str, default="none", help="Interrupt after the specified subgraph, use to limit user trial.")
     
     parser.add_argument("--resume-from", type=str, help="Resume from a specific saved directory")
 

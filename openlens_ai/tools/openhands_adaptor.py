@@ -176,6 +176,7 @@ def run_openhands_prompt(prompts, config: Config):
         latex_template_path = os.path.join(pwd, "openlens_ai/tools/latex_template/blank")
         dot_openhands_path = os.path.join(pwd, "openlens_ai/tools/openhands_configs/dot_openhands")
         os.makedirs(os.path.join(workspace_dir, "manuscript"), exist_ok=True)
+        os.makedirs(os.path.join(workspace_dir, "data_analyze"), exist_ok=True)
         os.makedirs(openhands_traj_path, exist_ok=True)
 
         time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -222,7 +223,7 @@ def run_openhands_prompt(prompts, config: Config):
         for try_i in range(5):
             # 构建在Docker容器中执行的命令
             cmd = (
-                "source openlens_ai/tools/openhands_configs/openhands_env.sh; "
+                ". openlens_ai/tools/openhands_configs/openhands_env.sh; "
                 f"chmod -R 777 {os.path.abspath(config.save_path)};"
                 f"cd modules/OpenHands;"
                 f'poetry run python -m openhands.core.main -f "{os.path.abspath(prompt_file)}" -i {max_iter} --config-file {os.path.abspath(this_config_path)};'

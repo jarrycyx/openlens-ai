@@ -9,7 +9,7 @@ export ALL_PROXY="http://127.0.0.1:7890"
 
 
 docker build -t openlens-ai:cpu-latest \
-    -f openlens_ai/tools/openhands_configs/Dockerfile_cpu_runtime \
+    -f openlens_ai/tools/openhands_configs/Dockerfile_cpu_base \
     --network=host \
     --progress=plain \
     .

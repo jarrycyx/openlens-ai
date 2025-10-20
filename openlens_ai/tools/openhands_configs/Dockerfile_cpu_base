@@ -22,11 +22,4 @@ RUN apt-get install -y --fix-missing \
     tmux \
     ruby
 
-
-# Setup basic python environment
-# RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
-RUN pip install numpy pandas tqdm omegaconf gpustat einops matplotlib scikit-learn scikit-image matplotlib tensorboard "psycopg[binary]" prettytable xgboost seaborn tabulate psycopg2-binary
-RUN pip install torch torchvision torchaudio
-RUN pip install openai langgraph langchain tensorflow mcp-server-fetch
-
 RUN apt-get install -y texlive-full

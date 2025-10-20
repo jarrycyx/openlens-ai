@@ -7,13 +7,6 @@ USER root
 # Set environment variables to avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Set proxy environment variables if needed
-ENV http_proxy="http://127.0.0.1:7890"
-ENV HTTP_PROXY="http://127.0.0.1:7890"
-ENV https_proxy="http://127.0.0.1:7890"
-ENV HTTPS_PROXY="http://127.0.0.1:7890"
-ENV all_proxy="http://127.0.0.1:7890"
-ENV ALL_PROXY="http://127.0.0.1:7890"
 
 # Update package index and install dependencies
 RUN apt-get update

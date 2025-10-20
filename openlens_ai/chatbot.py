@@ -19,6 +19,7 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.load.dump import dumps
 from langchain.load.load import loads
+from langgraph.errors import GraphRecursionError
 
 from .state import State, load_state, get_subplan, track_node_call
 from .utils.frontend_utils import frontend_add_message, frontend_add_tool_call
@@ -290,7 +291,7 @@ def chatbot_with_context_manager(
                 if "literature_tool_call_counter" not in state:
                     state["literature_tool_call_counter"] = 0
                 
-                for event in llm.stream({"messages": message_to_llm}, config={"recursion_limit": 100}):
+                for event in llm.stream({"messages": message_to_llm}, config={"recursion_limit": 50}):
                     node_name = list(event.keys())[0]
                     new_state = event[node_name]
                     all_messages = new_state["messages"]
@@ -311,6 +312,9 @@ def chatbot_with_context_manager(
                     if node_name == "tools":
                         state["literature_tool_call_counter"] += 1
                         time.sleep(tool_call_interval)
+            except GraphRecursionError as e:
+                logger.warning(f"React LLM exceeds recursion limit: {e}")
+                break
             except Exception as e:
                 # 有报错，则重试
                 logger.warning(f"React LLM error: {e}")
