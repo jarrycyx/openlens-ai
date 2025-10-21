@@ -76,7 +76,14 @@ No installation required! Visit our <a href="https://openlens.icu">project page<
 
 ### Installation
 
-0. Ensure Docker Installation:
+
+0. Clone the repository:
+```bash
+git clone git@github.com:jarrycyx/openlens-ai.git --recurse-submodules
+cd openlens-ai
+```
+
+1. Ensure Docker Installation:
 
 Pull the runtime directly (**recommended**):
 ```bash
@@ -89,7 +96,7 @@ docker tag $ALIYUN_REMOTE_DOCKER_NAME openlens-ai:runtime-latest
 ```
 or build from scratch:
 ```bash
-# Build base docker for tex-live, torch, etc
+# Build base docker for tex-live, etc
 bash openlens_ai/tools/openhands_configs/build_docker_base.sh 
 # Build runtime docker to meet the requirements of OpenHands
 bash openlens_ai/tools/openhands_configs/build_docker_runtime.sh 
@@ -97,12 +104,6 @@ bash openlens_ai/tools/openhands_configs/build_docker_runtime.sh
 docker images
 # Tag the image name with openlens-ai:runtime-latest
 docker tag <IMAGE_ID> openlens-ai:runtime-latest
-```
-
-1. Clone the repository:
-```bash
-git clone git@github.com:jarrycyx/openlens-ai.git --recurse-submodules
-cd openlens-ai
 ```
 
 2. Install dependencies:

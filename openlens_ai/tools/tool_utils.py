@@ -196,6 +196,8 @@ class BasicToolNode:
             for tool_call in message.tool_calls:
                 if "name" not in tool_call or "args" not in tool_call:
                     raise ValueError(f"Invalid tool call: {tool_call}")
+                if tool_call["name"] not in self.tools_by_name:
+                    raise ValueError(f"Tool {tool_call['name']} not found")
                 this_tool = self.tools_by_name[tool_call["name"]]
                 frontend_add_tool_call(tool_call["name"], tool_call["args"], self.config)
                 # 如果是异步函数，那就阻塞执行
@@ -227,7 +229,7 @@ class BasicToolNode:
             error_str = str(e).replace("\"", "").replace("\\", "").replace("[", "").replace("]", "").replace("{", "").replace("}", "")
             if "id" in tool_call and "name" in tool_call:
                 new_message = ToolMessage(
-                    content=error_str,
+                    content="Tool call error: " + error_str,
                     name=tool_call["name"],
                     tool_call_id=tool_call["id"], 
                     status="error"

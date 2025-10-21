@@ -2,7 +2,7 @@
 export PIP_BREAK_SYSTEM_PACKAGES=1
 
 export RUNTIME=docker
-export DEBUG=true
+# export DEBUG=true
 export SANBOX_USER_ID=3407
 export SANDBOX_TIMEOUT=3600
 export LOG_ALL_EVENTS=true

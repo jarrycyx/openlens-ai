@@ -64,7 +64,13 @@
 
 ### 安装
 
-0. 确保已安装 Docker：
+0. 克隆代码库：
+```bash
+git clone git@github.com:jarrycyx/openlens-ai.git --recurse-submodules
+cd openlens-ai
+```
+
+1. 确保已安装 Docker：
 
 Pull the runtime directly (**recommended**):
 直接拉取镜像（**推荐**）：
@@ -78,7 +84,7 @@ docker tag $ALIYUN_REMOTE_DOCKER_NAME openlens-ai:cpu-latest
 ```
 或者重新build：
 ```bash
-# Build base docker for tex-live, torch, etc
+# Build base docker for tex-live, etc
 bash openlens_ai/tools/openhands_configs/build_docker_base.sh 
 # Build runtime docker to meet the requirements of OpenHands
 bash openlens_ai/tools/openhands_configs/build_docker_runtime.sh 
@@ -86,11 +92,6 @@ bash openlens_ai/tools/openhands_configs/build_docker_runtime.sh
 docker images
 # Tag the image name with openlens-ai:runtime-latest
 docker tag <IMAGE_ID> openlens-ai:runtime-latest
-```
-1. 克隆代码库：
-```bash
-git clone git@github.com:jarrycyx/openlens-ai.git --recurse-submodules
-cd openlens-ai
 ```
 
 2. 安装依赖：
