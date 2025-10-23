@@ -253,7 +253,7 @@ def prepare_files_folders(config: Config) -> Config:
     # os.makedirs(os.path.join("outputs", "log"), exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     logger.remove()
-    logger.add(os.path.join(save_dir, f"logs_{timestamp}_pid{os.getpid()}.log"), 
+    logger.add(os.path.join(save_path, f"logs_{timestamp}_pid{os.getpid()}.log"), 
                format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|"+config.thread_id, 
                colorize=False, rotation="10 MB", level="DEBUG")
     logger.add(sys.stdout, 
