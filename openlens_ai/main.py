@@ -12,7 +12,7 @@ from .utils.file_utils import prepare_files_folders, collect_files
 from .utils.send_email import send_email
 from .utils.config import Config
 from .state import State, load_state  # 从state模块导入load_state函数
-from .build_graph import build_graph, run_graph  # 从build_graph模块导入build_graph函数
+from .build_graph import build_graph, run_graph, all_subgraphs  # 从build_graph模块导入build_graph函数
 
 
 def main(config: Config, interrupt_after="none"):  # 新的执行_流程

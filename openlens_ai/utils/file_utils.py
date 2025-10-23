@@ -251,8 +251,9 @@ def prepare_files_folders(config: Config) -> Config:
     
     
     # os.makedirs(os.path.join("outputs", "log"), exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     logger.remove()
-    logger.add(os.path.join(save_path, f"logs_{os.getpid()}_debug.log"), 
+    logger.add(os.path.join(save_dir, f"logs_{timestamp}_pid{os.getpid()}.log"), 
                format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|"+config.thread_id, 
                colorize=False, rotation="10 MB", level="DEBUG")
     logger.add(sys.stdout, 
@@ -269,8 +270,8 @@ def prepare_files_folders(config: Config) -> Config:
         shutil.copytree("openlens_ai", os.path.join(backup_path, "openlens_ai"), dirs_exist_ok=True)
     
     # 保存config为toml
-    config.save_toml(os.path.join(backup_path, "config.toml"))
-    logger.info(f"Config saved to {os.path.join(backup_path, 'config.toml')}")
+    config.save_toml(os.path.join(save_path, "config.toml"))
+    logger.info(f"Config saved to {os.path.join(save_path, 'config.toml')}")
     
     # 准备openhands_config.toml
     with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:

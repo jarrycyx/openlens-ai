@@ -1,4 +1,4 @@
-import os
+import os, sys
 import json
 import glob
 import shutil
@@ -88,6 +88,7 @@ def load_state(save_dir: str) -> tuple[Config, State]:
     os.system("cp -r " + save_dir + "/* " + new_save_dir)
     save_dir = new_save_dir
     
+    # 加载config并更新save_path和thread_id
     config_path = os.path.join(save_dir, "config.toml")
     config = Config.from_toml(config_path)
     logger.info(f"Config save_path: {config.save_path} -> {save_dir}")
@@ -95,11 +96,16 @@ def load_state(save_dir: str) -> tuple[Config, State]:
     config.thread_id = os.path.basename(save_dir)
     config.save_toml(config_path)
     
+    # 加载logger
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    logger.remove()
     logger.add(os.path.join(save_dir, f"logs_{timestamp}_pid{os.getpid()}.log"), 
                format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|"+config.thread_id, 
                colorize=False, rotation="10 MB", level="DEBUG")
-    
+    logger.add(sys.stdout, 
+               format="<green>{time:YYYYMMDDHHmmss}</green>|<level>{level}</level>|{message}|<yellow>{file}:{line}</yellow>|"+\
+                   f"<cyan>{config.thread_id}</cyan>", 
+                colorize=True, level="INFO")
     
     # 先尝试在state目录下加载state，这个是每个subgraph保存一次
     state_dir = os.path.join(save_dir, "states")
