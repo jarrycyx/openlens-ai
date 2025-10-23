@@ -128,43 +128,62 @@ cp .env.example .env
 
 In your `.env` file, configure the following:
 
-```bash
-MODEL="glm-4.5-air"  # The main language model used for general tasks
-CODE_MODEL="glm-4.5-air"  # The language model specifically used for code-related tasks
-VISION_MODEL="glm-4.1v-9b-thinking"  # The vision model used for image analysis tasks
-OPENAI_API_KEY="<YOUR API KEY>"  # API key for accessing the language models
-BASE_URL="https://cloud.infini-ai.com/maas/v1/"  # Base URL for the model API service
+```yaml
+[llm]
+language = "chs"  # Language setting: "chs" for Chinese, "eng" for English
 
-RERANK_MODEL="bge-reranker-v2-m3"  # The reranking model used to improve search result relevance
-RERANK_API_KEY="<YOUR API KEY>" # API key for accessing the reranking model (infiniai service)
-RERANK_BASE_URL="https://cloud.infini-ai.com/maas/v1/"  # Base URL for the reranking model API service
+[llm.chat]
+model = "glm-4.5-air"  # The main language model used for general tasks
+base_url = "https://cloud.infini-ai.com/maas/v1/"  # Base URL for the model API service
+api_key = "<YOUR API KEY>"  # API key for accessing the language models
 
-TAVILY_API_KEY="<YOUR API KEY>"  # API key for Tavily search service used for web search
+[llm.code]
+model = "glm-4.5-air"  # The language model specifically used for code-related tasks
+base_url = "https://cloud.infini-ai.com/maas/v1/"  # Base URL for the model API service
+api_key = "<YOUR API KEY>"  # API key for accessing the language models
 
-MAX_CONTEXT_TOKEN_CNT=32000  # Maximum number of tokens allowed in the context for normal operations
-MAX_CONTEXT_TOKEN_CNT_LARGE=96000  # Maximum number of tokens allowed in the context for large operations
-LITERATURE_SEARCH_MIN_TOOL_CALL=10  # Minimum number of tool calls for literature search
+[llm.vision]
+model = "glm-4.1v-9b-thinking"  # The vision model used for image analysis tasks
+base_url = "https://open.bigmodel.cn/api/paas/v4/"  # Base URL for the vision model API service
+api_key = "<YOUR API KEY>"  # API key for accessing the vision model
 
-MAX_TOOL_TOKEN_CNT=2000  # Maximum number of tokens allowed in tool responses
+[rerank]
+rerank_model = "bge-reranker-v2-m3"  # The reranking model used to improve search result relevance
+rerank_api_key = "<YOUR API KEY>" # API key for accessing the reranking model (infiniai service)
+rerank_base_url = "https://cloud.infini-ai.com/maas/v1/"  # Base URL for the reranking model API service
 
-OPENHANDS_MAX_ITER=100  # Maximum number of iterations allowed for OpenHands agent execution
-MAX_SUBTASK_REDO=2  # Maximum number of retries for subtasks
-MAX_LATEX_POLISH_ROUND=2  # Maximum number of rounds for LaTeX document polishing
+[tools]
+tavily_api_key = "<YOUR API KEY>"  # API key for Tavily search service used for web search
 
-DOCKER_NAME=openlens-ai:runtime-latest
+### Optional settings if using LangSmith for tracing
+langsmith_tracing = "true"  # Enable or disable LangSmith tracing for monitoring and debugging
+langsmith_endpoint = "https://api.smith.langchain.com"  # Endpoint URL for LangSmith service
+langsmith_project = "openlens"  # Project name in LangSmith for organizing traces
+langsmith_api_key = "<YOUR API KEY>"  # API key for accessing LangSmith service
 
+[context]
+max_context_token_cnt = 32000  # Maximum number of tokens allowed in the context for normal operations
+max_context_token_cnt_large = 96000  # Maximum number of tokens allowed in the context for large operations
+max_tool_token_cnt = 2000  # Maximum number of tokens allowed in tool responses
+literature_search_min_tool_call = 10  # Minimum number of tool calls for literature search
 
-### Optional settings
+[email_server]
+### Optional settings if need to send emails
+smtp_server = "smtpdm.aliyun.com"  # SMTP server address for sending emails
+smtp_port = 25  # Port number for the SMTP server
+email_user = "<YOUR EMAIL>"  # Email address used for sending notifications
+email_password = "<YOUR EMAIL SMTP PASSWORD>"  # Password or app-specific password for the email account
 
-LANGSMITH_TRACING="true"  # Enable or disable LangSmith tracing for monitoring and debugging
-LANGSMITH_ENDPOINT="https://api.smith.langchain.com"  # Endpoint URL for LangSmith service
-LANGSMITH_PROJECT="openlens"  # Project name in LangSmith for organizing traces
-LANGSMITH_API_KEY="<YOUR API KEY>"  # API key for accessing LangSmith service
+[workflow]
+openhands_max_iter = 100  # Maximum number of iterations allowed for OpenHands agent execution
+max_subtask_redo = 2  # Maximum number of retries for subtasks
+max_latex_polish_round = 2  # Maximum number of rounds for LaTeX document polishing
 
-SMTP_SERVER=smtpdm.aliyun.com  # SMTP server address for sending emails
-SMTP_PORT=25  # Port number for the SMTP server
-EMAIL_USER=<YOUR EMAIL>  # Email address used for sending notifications
-EMAIL_PASSWORD=<YOUR EMAIL SMTP PASSWORD>  # Password or app-specific password for the email account
+[docker]
+docker_name = "openlens-ai:runtime-latest"  # Name of the Docker container used for the agent environment
+
+[frontend]
+frontend_admin_email = "<YOUR EMAIL>"  # Admin email address that can access all users' sessions in the frontend
 ```
 
 ### Running the Application

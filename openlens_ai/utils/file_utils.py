@@ -11,9 +11,8 @@ from .config import Config
 import glob
 import zipfile
 import shutil
+import toml
 
-with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
-    oh_config_template = f.read()
 
 
 
@@ -241,12 +240,25 @@ def collect_token_usage(config: Config, overall: bool = True) -> str:
     return output_str, df
 
 
-def prepare_file_config(thread_id: str, question: str, dataset_path: str, email: str = "") -> tuple[dict, Config, str]:
-    save_path = os.path.join("./outputs", thread_id)
+def prepare_files_folders(config: Config) -> Config:
+    save_path = os.path.join("./outputs", config.thread_id)
     if os.path.exists(save_path):
-        thread_id = thread_id + "_" + datetime.now().strftime("%Y%m%d%H%M%S")
-        save_path = os.path.join("./outputs", thread_id)
+        config.thread_id = config.thread_id + "_" + datetime.now().strftime("%Y%m%d%H%M%S")
+        save_path = os.path.join("./outputs", config.thread_id)
+    config.save_path = save_path
     os.makedirs(save_path, exist_ok=True)
+    
+    
+    
+    # os.makedirs(os.path.join("outputs", "log"), exist_ok=True)
+    logger.remove()
+    logger.add(os.path.join(save_path, f"logs_{os.getpid()}_debug.log"), 
+               format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|"+config.thread_id, 
+               colorize=False, rotation="10 MB", level="DEBUG")
+    logger.add(sys.stdout, 
+               format="<green>{time:YYYYMMDDHHmmss}</green>|<level>{level}</level>|{message}|<yellow>{file}:{line}</yellow>|"+\
+                   f"<cyan>{config.thread_id}</cyan>", 
+                colorize=True, level="INFO")
     
     # 创建备份文件夹并复制openlens_ai文件夹和.env文件
     backup_path = os.path.join(save_path, "backup")
@@ -256,44 +268,26 @@ def prepare_file_config(thread_id: str, question: str, dataset_path: str, email:
     if os.path.exists("openlens_ai"):
         shutil.copytree("openlens_ai", os.path.join(backup_path, "openlens_ai"), dirs_exist_ok=True)
     
-    # # 复制.env文件
-    # if os.path.exists(".env"):
-    #     shutil.copy2(".env", os.path.join(backup_path, ".env"))
-    # 保存环境变量
-    with open(os.path.join(backup_path, "env.sh"), "w") as fp:
-        # json.dump(dict(os.environ), fp, indent=4)
-        for key, val in dict(os.environ).items():
-            fp.write(f"{key}=\"{val}\"\n")
+    # 保存config为toml
+    config.save_toml(os.path.join(backup_path, "config.toml"))
+    logger.info(f"Config saved to {os.path.join(backup_path, 'config.toml')}")
     
-    oh_config = oh_config_template.replace("{api_key}", os.getenv("OPENAI_API_KEY"))
-    oh_config = oh_config.replace("{base_url}", os.getenv("BASE_URL"))
-    oh_config = oh_config.replace("{code_model}", os.getenv("CODE_MODEL"))
-    oh_config = oh_config.replace("{tavily_key}", os.getenv("TAVILY_API_KEY", ""))
+    # 准备openhands_config.toml
+    with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
+        oh_config_template = f.read()
+    oh_config = oh_config_template.replace("{api_key}", config.llm.code.api_key)
+    oh_config = oh_config.replace("{base_url}", config.llm.code.base_url)
+    oh_config = oh_config.replace("{code_model}", config.llm.code.model)
+    oh_config = oh_config.replace("{tavily_key}", config.tools.tavily_api_key)
     this_config_path = os.path.join(save_path, "openhands_config.toml")
     with open(this_config_path, "w") as f:
         f.write(oh_config)
-    logger.info(f"Using OpenHands config: {oh_config}")
+    logger.debug(f"Using OpenHands config: {oh_config}")
 
-    init_state = {"question": question, "messages": [], "thread_id": thread_id, "save_path": save_path}
-    config = Config(
-        save_path=save_path,
-        thread_id=thread_id,
-        question=question,
-        dataset_path=dataset_path,
-        email=email
-    )
+    init_state = {"question": config.question, "messages": [], "thread_id": config.thread_id, "save_path": save_path}
+    os.makedirs(os.path.join(save_path, "states"), exist_ok=True)
 
-    # os.makedirs(os.path.join("outputs", "log"), exist_ok=True)
-    logger.add(os.path.join(save_path, f"logs_{os.getpid()}.log"), 
-               format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|"+thread_id, 
-               colorize=False, rotation="10 MB", level="DEBUG")
-    # logger.configure(handlers=[{"sink": sys.stderr, "level": "INFO"}])
 
-    # 保存config
-    with open(os.path.join(save_path, "config.json"), "w") as f:
-        json.dump(config.model_dump(), f, indent=4, ensure_ascii=False)
-    logger.info("Config saved to" + os.path.join(config.save_path, "config.json"))
-    logger.info(f"Config: {config}")
 
     # 创建workdir
     os.makedirs(os.path.join(save_path, "workspace"), exist_ok=True)
@@ -302,4 +296,4 @@ def prepare_file_config(thread_id: str, question: str, dataset_path: str, email:
     os.makedirs(os.path.join(save_path, "openhands_traj"))
     
 
-    return init_state, config, save_path
+    return init_state, config

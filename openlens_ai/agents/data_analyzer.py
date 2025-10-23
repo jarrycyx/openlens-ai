@@ -1,6 +1,6 @@
 import os
 import json
-import dotenv
+
 import glob
 from loguru import logger
 import traceback
@@ -8,23 +8,17 @@ import traceback
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
 from langchain_tavily import TavilySearch
-from langchain.load.dump import dumps
-from langgraph.checkpoint.memory import InMemorySaver
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
-from langchain_openai import ChatOpenAI
 
-from ..chatbot import vector_search
 from ..tools.tool_utils import BasicToolNode, route_tools, route_by_tool_call, route_by_file_existence, route_by_keywords
 from ..tools.openhands_adaptor import OpenHandsTool
 from ..tools.reports import ReportReaderTool, ReportWriterTool
 from ..state import State
 from ..chatbot import chatbot_with_context_manager
 from ..state import load_state, track_node_call
-from ..utils.file_utils import prepare_file_config
 from ..utils.config import Config
-from ..utils.vision_feedback import collect_fig_files, get_fig_base64, get_vision_feedback
 
-dotenv.load_dotenv()
+
 
 
 with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "data_analyzer.md")) as f:
@@ -48,13 +42,15 @@ IMPORTANT: Unexpected/broken characters are typically chinese, korean, or japane
 """
 
 def build_data_analyzer(config: Config) -> StateGraph:
-    llm = init_chat_model(os.environ.get("MODEL", "deepseek-chat"), 
-                          base_url=os.environ.get("BASE_URL", ""), 
+    llm = init_chat_model(config.llm.chat.model, 
+                          base_url=config.llm.chat.base_url, 
                           model_provider="openai",
+                                            openai_api_key=config.llm.chat.api_key,
                           extra_body={"chat_template_kwargs": {"enable_thinking": False}})
-    router_llm = init_chat_model(os.environ.get("MODEL", "deepseek-chat"),
-                                 base_url=os.environ.get("BASE_URL", ""),
+    router_llm = init_chat_model(config.llm.chat.model,
+                                 base_url=config.llm.chat.base_url,
                                  model_provider="openai",
+                                                          openai_api_key=config.llm.chat.api_key,
                                  extra_body={"chat_template_kwargs": {"enable_thinking": True}})
     search_tool = TavilySearch(max_results=5, search_depth="advanced")
     code_tool = OpenHandsTool(config)

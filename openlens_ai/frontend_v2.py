@@ -19,11 +19,12 @@ from streamlit.runtime.scriptrunner import add_script_run_ctx, get_script_run_ct
 
 from .build_graph import build_graph, run_graph
 from .utils.frontend_utils import show_workspace, display_messages_from_file, get_zip, display_multiple_file_preview, display_single_file, get_latest_files
+from .utils.frontend_messages import _get_messages_file_path, _message_remove_duplicates
 from .utils.config import Config
 from .utils.process_manager import process_manager
 
-os.environ["STREAMLIT_RUNNING"] = "True"
 logger.configure(handlers=[{"sink": sys.stderr, "level": "INFO"}])
+config = Config.from_toml("config.toml")
 
 @st.cache_data()
 def load_saved_experiments():
@@ -71,7 +72,7 @@ def load_user_projects(email: str) -> List[Dict[str, Any]]:
 
     projects = []
     # 根据用户ID查找项目
-    admin_email = os.environ.get("FRONTEND_ADMIN_EMAIL", "")
+    admin_email = config.frontend_admin_email
 
     if email == admin_email:
         pattern = os.path.join("./outputs", "*")
@@ -159,6 +160,8 @@ def build_sidebar():
 
 def start_job(question, dataset_path, email):
     if question and dataset_path and (len(email) > 5):
+        # 获取配置
+        
         # 生成线程ID
         question_show = re.sub(r"[^\w]", "_", question.strip())
         thread_id = (
@@ -195,15 +198,15 @@ def start_job(question, dataset_path, email):
                     "--email",
                     email,
                     "--chat-model",
-                    os.environ.get("MODEL", ""),
+                    config.llm.chat.model,
                     "--api-key",
-                    os.environ.get("OPENAI_API_KEY", ""),
+                    config.llm.chat.api_key,
                     "--base-url",
-                    os.environ.get("BASE_URL", ""),
+                    config.llm.base_url,
                     "--code-model",
-                    os.environ.get("CODE_MODEL", ""),
+                    config.llm.code_model,
                     "--vision-model",
-                    os.environ.get("VISION_MODEL", ""),
+                    config.llm.vision_model,
                 ]
             )
 
@@ -230,7 +233,7 @@ def start_job(question, dataset_path, email):
 
 def watch_job(config):
     thread_id = config.thread_id
-    email = config.email
+    email = config.notify_email
     st.caption(f"Thread ID: {thread_id}")
     st.warning(f"Job progress and results will be sent to {email}, please make sure the address is correct.")
 

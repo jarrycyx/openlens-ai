@@ -1,6 +1,6 @@
 import os
 import glob
-import dotenv
+
 from typing import List
 from loguru import logger
 import traceback
@@ -10,7 +10,7 @@ from langchain.chat_models import init_chat_model
 from langchain.load.dump import dumps
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
-from ..tools.tool_utils import BasicToolNode, route_by_tool_call, route_by_keywords, route_by_latex_polish_counter
+from ..tools.tool_utils import BasicToolNode, route_by_tool_call, route_by_keywords, route_by_latex_polish_counter_wrapper
 from ..tools.openhands_adaptor import OpenHandsTool
 from ..tools.reports import ReportReaderTool, ReportWriterTool
 from ..state import State, load_state, track_node_call
@@ -18,7 +18,7 @@ from ..utils.config import Config
 from ..chatbot import chatbot_with_context_manager
 from ..utils.vision_feedback import collect_fig_files, get_fig_base64, get_vision_feedback, get_vision_classification, get_latex_vision_feedback
 
-dotenv.load_dotenv()
+
 
 results_files_extensions = [".png", ".jpg", ".jpeg", ".pdf", ".svg"]
 
@@ -46,21 +46,17 @@ with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_figure
 
 def build_latex_writer(config: Config) -> StateGraph:
     concluder_llm = init_chat_model(
-        os.environ.get("MODEL", "deepseek-chat"),
-        base_url=os.environ.get("BASE_URL", ""),
+        config.llm.chat.model,
+        base_url=config.llm.chat.base_url,
         model_provider="openai",
+        openai_api_key=config.llm.chat.api_key,
         extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
     router_llm = init_chat_model(
-        os.environ.get("MODEL", "deepseek-chat"),
-        base_url=os.environ.get("BASE_URL", ""),
+        config.llm.chat.model,
+        base_url=config.llm.chat.base_url,
         model_provider="openai",
-        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
-    )
-    vlm = init_chat_model(
-        os.environ.get("VISION_MODEL", "deepseek-chat"),
-        base_url=os.environ.get("BASE_URL", ""),
-        model_provider="openai",
+        openai_api_key=config.llm.chat.api_key,
         extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
     
@@ -310,7 +306,7 @@ def build_latex_writer(config: Config) -> StateGraph:
     
     graph_builder.add_conditional_edges(
         "validator_node",
-        route_by_latex_polish_counter,
+        route_by_latex_polish_counter_wrapper(config),
         {"MAX_REDO_REACHED": END, "NOT_REACHED": "conclude_chatbot"},
     )
     # graph_builder.add_edge("validator_node", "conclude_chatbot")

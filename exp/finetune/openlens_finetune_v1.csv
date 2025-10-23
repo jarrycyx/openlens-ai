@@ -1,0 +1,19 @@
+Difficulty,Question,lang
+Easy,"What are the temporal trends of heart rate and respiratory rate during the first 48 hours after ICU admission, and how do they differ by survival outcome?",eng
+Easy,"Which laboratory measurements show the largest variability within the first day of admission, and are they associated with higher illness severity?",eng
+Medium,"Can early trends in urine output and creatinine levels predict the onset of acute kidney injury within 72 hours?",eng
+Medium,"How does combining demographic information with vital sign dynamics improve the prediction of cardiovascular complications?",eng
+Medium,"Do patients with abnormal coagulation profiles have distinct trajectories in organ function recovery compared to those with normal profiles?",eng
+Hard,"Can we infer potential causal pathways linking early vasopressor use to subsequent renal dysfunction using time-series causal discovery?",eng
+Hard,"How does the inclusion or exclusion of rare comorbidities affect the fairness and calibration of mortality prediction models?",eng
+Hard,"What are the latent clinical phenotypes that explain heterogeneous responses to mechanical ventilation, and how do they evolve over time?",eng
+Easy,"What are the temporal trends of heart rate and respiratory rate during the first 48 hours after ICU admission, and how do they differ by survival outcome?",chs
+Easy,"Which laboratory measurements show the largest variability within the first day of admission, and are they associated with higher illness severity?",chs
+Medium,"Can early trends in urine output and creatinine levels predict the onset of acute kidney injury within 72 hours?",chs
+Medium,"How does combining demographic information with vital sign dynamics improve the prediction of cardiovascular complications?",chs
+Medium,"Do patients with abnormal coagulation profiles have distinct trajectories in organ function recovery compared to those with normal profiles?",chs
+Hard,"Can we infer potential causal pathways linking early vasopressor use to subsequent renal dysfunction using time-series causal discovery?",chs
+Hard,"How does the inclusion or exclusion of rare comorbidities affect the fairness and calibration of mortality prediction models?",chs
+Hard,"What are the latent clinical phenotypes that explain heterogeneous responses to mechanical ventilation, and how do they evolve over time?",chs
+,,
+,,

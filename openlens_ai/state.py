@@ -88,19 +88,15 @@ def load_state(save_dir: str) -> tuple[Config, State]:
     os.system("cp -r " + save_dir + "/* " + new_save_dir)
     save_dir = new_save_dir
     
-    config_path = os.path.join(save_dir, "config.json")
+    config_path = os.path.join(save_dir, "config.toml")
+    config = Config.from_toml(config_path)
+    logger.info(f"Config save_path: {config.save_path} -> {save_dir}")
+    config.save_path = save_dir
+    config.thread_id = os.path.basename(save_dir)
+    config.save_toml(config_path)
     
-    with open(config_path, "r") as f:
-        config = json.load(f)
-        config = Config(**config)
-        logger.info(f"Config save_path: {config.save_path} -> {save_dir}")
-        config.save_path = save_dir
-        config.thread_id = os.path.basename(save_dir)
-    
-    with open(config_path, "w") as f:
-        json.dump(config.model_dump(), f, indent=2, ensure_ascii=False)
-        
-    logger.add(os.path.join(save_dir, f"logs_{os.getpid()}.log"), 
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    logger.add(os.path.join(save_dir, f"logs_{timestamp}_pid{os.getpid()}.log"), 
                format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|"+config.thread_id, 
                colorize=False, rotation="10 MB", level="DEBUG")
     
@@ -157,14 +153,6 @@ def load_state(save_dir: str) -> tuple[Config, State]:
     if os.path.exists("openlens_ai"):
         shutil.copytree("openlens_ai", os.path.join(backup_path, "openlens_ai"), dirs_exist_ok=True)
     
-    # # 复制.env文件
-    # if os.path.exists(".env"):
-    #     shutil.copy2(".env", os.path.join(backup_path, ".env"))
-    # 保存环境变量
-    with open(os.path.join(backup_path, "env.sh"), "w") as fp:
-        # json.dump(dict(os.environ), fp, indent=4)
-        for key, val in dict(os.environ).items():
-            fp.write(f"{key}=\"{val}\"\n")
         
-    return config, state, last_subgraph, save_dir
+    return config, state, last_subgraph
      

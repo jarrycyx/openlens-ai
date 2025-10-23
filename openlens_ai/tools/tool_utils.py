@@ -2,7 +2,7 @@ import os
 import json
 from typing import Annotated
 from typing_extensions import TypedDict
-import dotenv
+
 from loguru import logger
 import asyncio
 import traceback
@@ -13,11 +13,11 @@ from langgraph.graph.message import add_messages
 from langchain_core.messages import ToolMessage
 from langchain_core.messages.utils import count_tokens_approximately, get_buffer_string
 
-from ..utils.frontend_utils import frontend_add_message, frontend_add_tool_call
+from ..utils.frontend_messages import frontend_add_message, frontend_add_tool_call
 from ..state import State
 from ..utils.config import Config
 
-dotenv.load_dotenv()
+
 
 
 def route_tools(
@@ -110,31 +110,35 @@ def route_by_file_existence(file_path: str):
     return route_file_check
 
 
+def route_by_subtask_redo_counter_wrapper(config: Config):
+    def route_by_subtask_redo_counter(state: State):
+        max_subtask_redo = config.workflow.max_subtask_redo if hasattr(config, 'max_subtask_redo') else 3
+        if "return_subtask_counter" not in state:
+            state["return_subtask_counter"] = 0
+        logger.info(f"MAX_SUBTASK_REDO: {max_subtask_redo}, current redo: {state['return_subtask_counter']}")
+        
+        if state["return_subtask_counter"] >= int(max_subtask_redo):
+            logger.info("Return: MAX_REDO_REACHED")
+            return "MAX_REDO_REACHED"
+    
+        logger.info("Return: NOT_REACHED")
+        return "NOT_REACHED"
+    return route_by_subtask_redo_counter
 
-def route_by_subtask_redo_counter(state: State):
-    max_subtask_redo = os.getenv("MAX_SUBTASK_REDO", 3)
-    if "return_subtask_counter" not in state:
-        state["return_subtask_counter"] = 0
-    logger.info(f"MAX_SUBTASK_REDO: {max_subtask_redo}, current redo: {state['return_subtask_counter']}")
-    
-    if state["return_subtask_counter"] >= int(max_subtask_redo):
-        logger.info("Return: MAX_REDO_REACHED")
-        return "MAX_REDO_REACHED"
-    
-    logger.info("Return: NOT_REACHED")
-    return "NOT_REACHED"
-def route_by_latex_polish_counter(state: State):
-    max_latex_redo = os.getenv("MAX_LATEX_POLISH_ROUND", 10)
-    if "polish_latex_counter" not in state:
-        state["polish_latex_counter"] = 0
-    logger.info(f"MAX_LATEX_POLISH_ROUND: {max_latex_redo}, current redo: {state['polish_latex_counter']}")
-    
-    if state["polish_latex_counter"] >= int(max_latex_redo):
-        logger.info("Return: MAX_REDO_REACHED")
-        return "MAX_REDO_REACHED"
-    
-    logger.info("Return: NOT_REACHED")
-    return "NOT_REACHED"
+def route_by_latex_polish_counter_wrapper(config: Config):
+    def route_by_latex_polish_counter(state: State):
+        max_latex_redo = config.workflow.max_latex_polish_round if hasattr(config, 'max_latex_polish_round') else 10
+        if "polish_latex_counter" not in state:
+            state["polish_latex_counter"] = 0
+        logger.info(f"MAX_LATEX_POLISH_ROUND: {max_latex_redo}, current redo: {state['polish_latex_counter']}")
+        
+        if state["polish_latex_counter"] >= int(max_latex_redo):
+            logger.info("Return: MAX_REDO_REACHED")
+            return "MAX_REDO_REACHED"
+        
+        logger.info("Return: NOT_REACHED")
+        return "NOT_REACHED"
+    return route_by_latex_polish_counter
     
 
 def route_by_keywords(keywords: list):

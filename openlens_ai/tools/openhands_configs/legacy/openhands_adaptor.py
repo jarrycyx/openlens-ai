@@ -229,7 +229,7 @@ def run_openhands_prompt(prompts, config: Config):
         # 转义引号和换行符以避免命令执行问题
         prompt = prompt.replace('"', '\\"').replace("\n", "\\n").replace("`", " ")
         prompt += postfix
-        max_iter = os.environ.get("OPENHANDS_MAX_ITER", 20)
+        max_iter = config.max_iter
 
 
         oh_config = oh_config_template.replace("{api_key}", os.getenv("OPENAI_API_KEY"))

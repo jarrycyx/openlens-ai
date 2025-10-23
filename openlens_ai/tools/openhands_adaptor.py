@@ -8,7 +8,7 @@ from typing import Optional, Type, Dict, Any, Union
 from datetime import datetime
 from loguru import logger
 import random
-import dotenv
+
 
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
@@ -18,12 +18,12 @@ from langchain.load.dump import dumps
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 
 from ..state import State
-from ..utils.frontend_utils import frontend_add_message, frontend_add_tool_call
-from ..utils.config import Config
+from ..utils.frontend_messages import frontend_add_message, frontend_add_tool_call
+from ..utils.config import Config, get_lang_prompt
 from ..tools.file_search_keyword import FileSearchTool
 from ..chatbot import chatbot_with_context_manager
 
-dotenv.load_dotenv()
+
 
 postfix = """
 Reminders: DO NOT mock or simulate results. Only write python files to generate the code and bash shell scripts to execute them.
@@ -183,18 +183,18 @@ def run_openhands_prompt(prompts, config: Config):
         prompt_file = os.path.join(pwd, config.save_path, "openhands_logs", f"prompt_{time_stamp}.txt")
         os.makedirs(os.path.dirname(prompt_file), exist_ok=True)
         with open(prompt_file, "w") as f:
-            f.write(prompt)
+            f.write(prompt + get_lang_prompt(config.llm.language))
 
-        max_iter = os.environ.get("OPENHANDS_MAX_ITER", 20)
-        docker_name = os.getenv("DOCKER_NAME", "openlens-ai:cpu-latest")
+        max_iter = config.workflow.openhands_max_iter
+        docker_name = config.docker.docker_name
         logger.info(f"Runtime docker: {docker_name}")
 
         with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
             oh_config_template = f.read()
-        oh_config = oh_config_template.replace("{api_key}", os.getenv("OPENAI_API_KEY"))
-        oh_config = oh_config.replace("{base_url}", os.getenv("BASE_URL"))
-        oh_config = oh_config.replace("{code_model}", os.getenv("CODE_MODEL"))
-        oh_config = oh_config.replace("{tavily_key}", os.getenv("TAVILY_API_KEY", ""))
+        oh_config = oh_config_template.replace("{api_key}", config.llm.code.api_key)
+        oh_config = oh_config.replace("{base_url}", config.llm.code.base_url)
+        oh_config = oh_config.replace("{code_model}", config.llm.code.model)
+        oh_config = oh_config.replace("{tavily_key}", config.tools.tavily_api_key)
         oh_config = oh_config.replace("{openhands_traj_path}", openhands_traj_path)
         oh_config = oh_config.replace("{runtime_container_image}", docker_name)
 
@@ -219,7 +219,7 @@ def run_openhands_prompt(prompts, config: Config):
         this_config_path = os.path.join(config.save_path, "openhands_config.toml")
         with open(this_config_path, "w") as f:
             f.write(oh_config)
-        logger.info(f"Using OpenHands config: {oh_config}")
+        logger.debug(f"Using OpenHands config: {oh_config}")
         for try_i in range(5):
             # 构建在Docker容器中执行的命令
             cmd = (
@@ -228,6 +228,7 @@ def run_openhands_prompt(prompts, config: Config):
                 f"cd modules/OpenHands;"
                 f'poetry run python -m openhands.core.main -f "{os.path.abspath(prompt_file)}" -i {max_iter} --config-file {os.path.abspath(this_config_path)};'
                 f"cd ../../;"
+                f"chmod -R 777 {os.path.abspath(config.save_path)};"
             )
             results = run_openhands(cmd, config)
             # 移除ANSI转义序列（颜色代码等）

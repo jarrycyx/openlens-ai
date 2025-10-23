@@ -1,5 +1,5 @@
-import dotenv
-dotenv.load_dotenv()
+
+
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -10,21 +10,11 @@ from typing import List, Optional, Union
 from datetime import datetime
 from loguru import logger
 import markdown
-import json
-
-# 从环境变量读取邮件配置
-SMTP_SERVER = os.getenv('SMTP_SERVER', '')  # SMTP服务器地址
-SMTP_PORT = int(os.getenv('SMTP_PORT', ''))  # SMTP端口号
-EMAIL_USER = os.getenv('EMAIL_USER', '')  # 发件人邮箱
-EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD', '')  # 发件人邮箱密码
-EMAIL_TO = os.getenv('EMAIL_TO', '')
-logger.info(f"SMTP_SERVER: {SMTP_SERVER}")
-logger.info(f"SMTP_PORT: {SMTP_PORT}")
-logger.info(f"EMAIL_USER: {EMAIL_USER}")
-logger.info(f"EMAIL_PASSWORD: {EMAIL_PASSWORD}")
 
 
-def send_email(subject: str, content: str, recipients: Union[str, List[str]], attachments: Optional[Union[str, List[str]]] = None):
+from .config import Config
+
+def send_email(config: Config, subject: str, content: str, recipients: Union[str, List[str]], attachments: Optional[Union[str, List[str]]] = None):
     """
     发送邮件，支持任意主题、内容和附件
     
@@ -34,16 +24,25 @@ def send_email(subject: str, content: str, recipients: Union[str, List[str]], at
         attachments (List[str], optional): 附件文件路径列表
         recipients (List[str], optional): 收件人列表，默认使用环境变量中的EMAIL_TO
     """
+    
+    SMTP_SERVER = config.email_server.smtp_server  # SMTP服务器地址
+    SMTP_PORT = config.email_server.smtp_port  # SMTP端口号
+    EMAIL_USER = config.email_server.email_user  # 发件人邮箱
+    EMAIL_PASSWORD = config.email_server.email_password  # 发件人邮箱密码
+    logger.debug(f"SMTP_SERVER: {SMTP_SERVER}")
+    logger.debug(f"SMTP_PORT: {SMTP_PORT}")
+    logger.debug(f"EMAIL_USER: {EMAIL_USER}")
+    logger.debug(f"EMAIL_PASSWORD: {EMAIL_PASSWORD}")
+    
+    
     if not SMTP_SERVER:
         logger.warning("SMTP server not configured, please check environment variables SMTP_SERVER and SMTP_PORT")
         return
     
     # 如果没有提供收件人，则使用环境变量中的默认收件人
-    if recipients is None:
-        recipients = [EMAIL_TO] if EMAIL_TO else []
-        if not recipients:
-            logger.warning("Email recipients not configured, please check environment variable EMAIL_TO or pass argument --email")
-            return
+    if not recipients:
+        logger.warning("Email recipients not configured, please check environment variable EMAIL_TO or pass argument --email")
+        return
         
     if isinstance(recipients, str):
         recipients = [recipients]
@@ -82,7 +81,7 @@ def send_email(subject: str, content: str, recipients: Union[str, List[str]], at
         server.starttls()
         server.login(EMAIL_USER, EMAIL_PASSWORD)
         result = server.sendmail(EMAIL_USER, recipients, msg.as_string())
-        logger.info(f"邮件发送结果: {result}")
+        logger.debug(f"邮件发送结果: {result}")
         server.quit()
         logger.info(f"邮件已发送至 {', '.join(recipients)}")
     except Exception as e:
@@ -95,4 +94,5 @@ if __name__ == "__main__":
     content = "这是一封测试邮件，请忽略。"
     recipients = ["dzdzzd@126.com"]
     attachments = ["openlens_ai/utils/send_email.py"]
-    send_email(subject, content, recipients, attachments)
+    config = Config.from_toml("config.toml")
+    send_email(config, subject, content, recipients, attachments)

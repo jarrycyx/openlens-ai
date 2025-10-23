@@ -1,11 +1,10 @@
 [core]
-volumes="{sandbox_volumes}"
 runtime = "docker"
 disable_color = true
 search_api_key = "{tavily_key}"
 save_trajectory_path = "{openhands_traj_path}"
 run_as_openhands = false
-# debug = true
+debug = true
 
 [llm]
 model="openai/{code_model}" # openai means openai-compatible endpoint, not OpenAI models

@@ -2,7 +2,7 @@ import os
 import json
 from typing import Annotated
 from typing_extensions import TypedDict
-import dotenv
+
 
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
@@ -15,7 +15,7 @@ from ..state import State, load_state, track_node_call
 from ..chatbot import chatbot_with_context_manager
 from ..utils.config import Config
 
-dotenv.load_dotenv()
+
 
 
 with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "supervisor_plan.md")) as f:
@@ -39,9 +39,10 @@ def build_supervisor(config: Config) -> StateGraph:
         return state
 
     llm = init_chat_model(
-        os.environ.get("MODEL", "deepseek-chat"),
-        base_url=os.environ.get("BASE_URL", ""),
+        config.llm.chat.model,
+        base_url=config.llm.chat.base_url,
         model_provider="openai",
+        openai_api_key=config.llm.chat.api_key,
         extra_body={"chat_template_kwargs": {"enable_thinking": False}},
     )
     llm_with_tools = llm.bind_tools(tools)
@@ -53,7 +54,7 @@ def build_supervisor(config: Config) -> StateGraph:
     # def chatbot(state: State):
     #     this_prompt = prompt.format(question=state["question"])
     #     state["messages"].append({"role": "user", "content": this_prompt})
-    #     max_context = int(os.environ.get("MAX_CONTEXT", 10))
+    #     max_context = int(config.max_context) if hasattr(config, 'max_context') else 10
     #     state["messages"] = [thinking_llm_with_tools.invoke(state["messages"][-max_context:])]
     #     return state
 

@@ -1,6 +1,6 @@
 import os
 import json
-import dotenv
+
 import traceback
 import time
 from loguru import logger
@@ -13,30 +13,25 @@ from langchain.load.dump import dumps
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
-from ..utils.config import Config
-
-dotenv.load_dotenv()
+from ..utils.config import Config, get_lang_prompt
 
 
 
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_feedback.md")) as f:
-    vision_feedback_prompt = f.read()
 
 
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_classify.md")) as f:
-    vision_classify_prompt = f.read()
 
 
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_latex_feedback.md")) as f:
-    vision_latex_feedback_prompt = f.read()
+
     
-    
-vlm = init_chat_model(
-    os.environ.get("VISION_MODEL", "deepseek-chat"),
-    base_url=os.environ.get("BASE_URL", ""),
-    model_provider="openai",
-    extra_body={"chat_template_kwargs": {"enable_thinking": True}},
-)
+def get_vlm():
+    config = get_config()
+    return init_chat_model(
+        config.llm.vision.model,
+        base_url=config.llm.vision.base_url,
+        model_provider="openai",
+        openai_api_key=config.llm.vision.api_key,
+        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
+    )
 def collect_fig_files(config: Config, fig_files_extensions: list = [".png", ".jpg", ".jpeg", ".pdf", ".svg"], base_dir=None):
     fig_file_list = []
     if base_dir is None:
@@ -129,12 +124,12 @@ def get_vision_feedback(image_base64: str, config: Config) -> str:
             ])
         return image_feedback_message
  
-    vlm = init_chat_model(
-        os.environ.get("VISION_MODEL", "deepseek-chat"),
-        base_url=os.environ.get("BASE_URL", ""),
-        model_provider="openai",
-        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
-    )
+    vlm = get_vlm()
+    
+    
+
+    with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_feedback.md")) as f:
+        vision_feedback_prompt = f.read() + get_lang_prompt(config.llm.language)
     
     for try_i in range(10):
         for this_formatter in [formatter_a, formatter_b]:
@@ -156,6 +151,9 @@ def get_vision_feedback(image_base64: str, config: Config) -> str:
 
 
 def get_latex_vision_feedback(image_base64: str, config: Config) -> str:
+    vlm = get_vlm()
+    with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_latex_feedback.md")) as f:
+        vision_latex_feedback_prompt = f.read() + get_lang_prompt(config.llm.language)
     for try_i in range(10):
         try:
             # Call VLM to evaluate the image
@@ -184,7 +182,10 @@ def get_latex_vision_feedback(image_base64: str, config: Config) -> str:
 
 
 def get_vision_classification(image_base64: str, config: Config) -> str:
+    vlm = get_vlm()
     # Call VLM to classify the image
+    with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_classify.md")) as f:
+        vision_classify_prompt = f.read() + get_lang_prompt(config.llm.language)
     for try_i in range(10):
         try:
             image_classification_message = HumanMessage(content=[

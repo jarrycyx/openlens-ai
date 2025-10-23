@@ -1,7 +1,7 @@
 from typing import Annotated, Sequence
 import json
 import os
-import dotenv
+
 from loguru import logger
 import asyncio
 
@@ -29,11 +29,11 @@ from ..tools.paper_search_tool import (
     SearchSemanticTool,
     ReadSemanticPaperTool,
 )
-from ..utils.file_utils import prepare_file_config
+from ..utils.file_utils import prepare_files_folders
 from ..utils.config import Config
 
 
-dotenv.load_dotenv()
+
 
 
 # 加载提示模板
@@ -51,15 +51,17 @@ def build_literature_review_subgraph(config: Config):
 
     # 初始化语言模型
     search_llm = init_chat_model(
-        os.environ.get("MODEL", "glm-4.5"),
-        base_url=os.environ.get("BASE_URL", ""),
+        config.llm.chat.model,
+        base_url=config.llm.chat.base_url,
         model_provider="openai",
+        openai_api_key=config.llm.chat.api_key,
         extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
     write_llm = init_chat_model(
-        os.environ.get("MODEL", "glm-4.5"),
-        base_url=os.environ.get("BASE_URL", ""),
+        config.llm.chat.model,
+        base_url=config.llm.chat.base_url,
         model_provider="openai",
+        openai_api_key=config.llm.chat.api_key,
         extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
     search_tools = [
@@ -73,7 +75,7 @@ def build_literature_review_subgraph(config: Config):
         TavilySearch(max_results=10)
     ]
 
-    llm_react = create_react_agent(search_llm, search_tools, pre_model_hook=react_pre_model_wrapper(config.question))
+    llm_react = create_react_agent(search_llm, search_tools, pre_model_hook=react_pre_model_wrapper(config.question, config))
 
     report_tools = [ReportWriterTool(config, file_name="literature_review.md")]
     llm_report_writer = write_llm.bind_tools(report_tools)
@@ -98,7 +100,7 @@ def build_literature_review_subgraph(config: Config):
     # 创建文献调研子图
     graph = StateGraph(State)
 
-    min_react_tool_call = int(os.environ.get("LITERATURE_SEARCH_MIN_TOOL_CALL", 10))
+    min_react_tool_call = config.workflow.literature_search_min_tool_call
     route_by_tool_counter = lambda state: "REACHED_TOOL_LIMIT" if (state["literature_tool_call_counter"] >= min_react_tool_call) else "CONTINUE"
     route_by_report = route_by_file_existence(os.path.join(config.save_path, "workspace", "literature_review.md"))
     report_tool_node = BasicToolNode(report_tools, config)
@@ -122,7 +124,7 @@ def build_literature_review_subgraph(config: Config):
 
 
 if __name__ == "__main__":
-    init_state, config, save_path = prepare_file_config(
+    init_state, config, save_path = prepare_files_folders(
         "literature_search_test_20250813", 
         "What are the latest advancements in medical AI agents that can analyze multi-format datasets, answer research questions, and produce experimental reports?", 
         ""

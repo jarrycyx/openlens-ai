@@ -1,6 +1,6 @@
 import os
 import json
-import dotenv
+
 import shutil
 from loguru import logger
 import traceback
@@ -9,7 +9,7 @@ from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
-from ..tools.tool_utils import BasicToolNode, route_tools, route_by_keywords, route_by_tool_call, route_by_subtask_redo_counter
+from ..tools.tool_utils import BasicToolNode, route_tools, route_by_keywords, route_by_tool_call, route_by_subtask_redo_counter_wrapper
 from ..tools.openhands_adaptor import OpenHandsTool
 from ..tools.exp_plan import PlanReaderTool, PlanWriterTool, subtask_route_tools
 from ..tools.reports import ReportReaderTool, ReportWriterTool
@@ -18,7 +18,7 @@ from ..chatbot import chatbot_with_context_manager
 from ..utils.config import Config
 from ..utils.vision_feedback import collect_fig_files, get_fig_base64, get_vision_feedback
 
-dotenv.load_dotenv()
+
 
 fig_files_extensions = [".png", ".jpg", ".jpeg", ".pdf", ".svg"]
 
@@ -34,15 +34,17 @@ with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "coder_router
 
 def build_coder(config: Config) -> StateGraph:
     concluder_llm = init_chat_model(
-        os.environ.get("MODEL", "deepseek-chat"),
-        base_url=os.environ.get("BASE_URL", ""),
+        config.llm.chat.model,
+        base_url=config.llm.chat.base_url,
         model_provider="openai",
+        openai_api_key=config.llm.chat.api_key,
         extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
     router_llm = init_chat_model(
-        os.environ.get("MODEL", "deepseek-chat"),
-        base_url=os.environ.get("BASE_URL", ""),
+        config.llm.chat.model,
+        base_url=config.llm.chat.base_url,
         model_provider="openai",
+        openai_api_key=config.llm.chat.api_key,
         extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
     
@@ -185,7 +187,7 @@ def build_coder(config: Config) -> StateGraph:
     graph_builder.add_edge("coder_openhands", "validation_openhands")
     graph_builder.add_conditional_edges(
         "validation_openhands",
-        route_by_subtask_redo_counter,
+        route_by_subtask_redo_counter_wrapper(config),
         {"MAX_REDO_REACHED": "subtask_continue", "NOT_REACHED": "conclude_openhands_chatbot"},
     )
     graph_builder.add_edge("conclude_openhands_chatbot", "concluder_tool_node")
