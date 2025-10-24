@@ -11,6 +11,7 @@ import json
 import glob
 import subprocess
 import time
+import toml
 from typing import List, Dict, Any, Optional
 
 from loguru import logger
@@ -44,23 +45,30 @@ def load_saved_experiments():
                 dir_path = os.path.join(root, dir_name)
                 config_path = os.path.join(dir_path, "config.json")
 
-                if os.path.exists(config_path):
-                    try:
+                try:
+                    # TODO: remove config.json because it is not used anymore
+                    if os.path.exists(os.path.join(dir_path, "config.json")):
                         with open(config_path, "r") as f:
                             config = json.load(f)
+                    elif os.path.exists(os.path.join(dir_path, "config.toml")):
+                        with open(os.path.join(dir_path, "config.toml"), "r") as f:
+                            config = toml.load(f)
+                    else:
+                        raise FileNotFoundError("No config.json or config.toml found in experiment directory")
 
-                        preset_experiments.append(
-                            {
-                                "question": config.get("question", ""),
-                                "dataset_path": config.get("dataset_path", ""),
-                                "dir_name": dir_name,
-                                "path": dir_path,
-                                "thread_id": config.get("thread_id", ""),
-                                "email": config.get("email", ""),
-                            }
-                        )
-                    except Exception as e:
-                        logger.warning(f"Failed to load config from {config_path}: {e}")
+                    preset_experiments.append(
+                        {
+                            "question": config.get("question", ""),
+                            "dataset_path": config.get("dataset_path", ""),
+                            "dir_name": dir_name,
+                            "path": dir_path,
+                            "thread_id": config.get("thread_id", ""),
+                            "email": config.get("email", ""),
+                        }
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to load config from {config_path}: {e}")
+                    continue
 
     return preset_experiments
 
@@ -72,7 +80,7 @@ def load_user_projects(email: str) -> List[Dict[str, Any]]:
 
     projects = []
     # 根据用户ID查找项目
-    admin_email = config.frontend_admin_email
+    admin_email = config.frontend.frontend_admin_email
 
     if email == admin_email:
         pattern = os.path.join("./outputs", "*")
@@ -82,26 +90,31 @@ def load_user_projects(email: str) -> List[Dict[str, Any]]:
 
     for path in glob.glob(pattern):
         if os.path.isdir(path):
-            config_path = os.path.join(path, "config.json")
-            if os.path.exists(config_path):
-                try:
+            try:
+                # TODO: Remove config.json because it is not used anymore
+                if os.path.exists(os.path.join(path, "config.json")):
                     with open(config_path, "r") as f:
                         config_data = json.load(f)
+                elif os.path.exists(os.path.join(path, "config.toml")):
+                    with open(os.path.join(path, "config.toml"), "r") as f:
+                        config_data = toml.load(f)
+                else:
+                    raise FileNotFoundError("No config.json or config.toml found in project directory")
+            except Exception as e:
+                logger.info(f"Failed to load project from {path}: {e}")
+                continue
 
-                    projects.append(
-                        {
-                            "thread_id": config_data.get("thread_id", ""),
-                            "title": config_data.get("question", "Untitled Project")[:100] + ("..." if len(config_data.get("question", "")) > 100 else ""),
-                            "question": config_data.get("question", ""),
-                            "dataset": config_data.get("dataset_path", ""),
-                            "path": path,
-                            "created_at": os.path.getctime(path),
-                            "last_modified": os.path.getmtime(path),
-                        }
-                    )
-                except Exception as e:
-                    logger.warning(f"Failed to load project from {path}: {e}")
-
+            projects.append(
+                {
+                    "thread_id": config_data.get("thread_id", ""),
+                    "title": config_data.get("question", "Untitled Project")[:100] + ("..." if len(config_data.get("question", "")) > 100 else ""),
+                    "question": config_data.get("question", ""),
+                    "dataset": config_data.get("dataset_path", ""),
+                    "path": path,
+                    "created_at": os.path.getctime(path),
+                    "last_modified": os.path.getmtime(path),
+                }
+            )
     # 按最后修改时间排序
     return sorted(projects, key=lambda x: x["last_modified"], reverse=True)
 
@@ -124,7 +137,7 @@ def build_sidebar():
         # 用户专属项目列表（移到侧边栏底部）
         st.subheader("📁 Your Projects")
         # 新建项目按钮
-        if st.button("&nbsp; 🚀&nbsp; \+ New project", width="stretch"):
+        if st.button("&nbsp; 🚀&nbsp; + New project", width="stretch"):
             st.session_state.config = None
             st.rerun()
         if st.user.is_logged_in:
@@ -139,9 +152,18 @@ def build_sidebar():
 
                     if st.button(project_title, key=project_key, width="stretch", type="tertiary"):
                         # 加载项目配置
-                        config_path = os.path.join(project["path"], "config.json")
-                        with open(config_path, "r") as f:
-                            config_data = json.load(f)
+                        try:
+                            if os.path.exists(os.path.join(project["path"], "config.json")):
+                                with open(config_path, "r") as f:
+                                    config_data = json.load(f)
+                            elif os.path.exists(os.path.join(project["path"], "config.toml")):
+                                with open(os.path.join(project["path"], "config.toml"), "r") as f:
+                                    config_data = toml.load(f)
+                            else:
+                                raise FileNotFoundError("No config.json or config.toml found in project directory")
+                        except Exception as e:
+                            logger.warning(f"Failed to load config from {project['path']}: {e}")
+                            continue
 
                         config = Config(**config_data)
                         st.session_state.config = config

@@ -68,7 +68,7 @@ class DockerConfig(BaseModel):
 class FrontendConfig(BaseModel):
     """Frontend configuration"""
     # Currently empty, but can be extended as needed
-    pass
+    frontend_admin_email: str = Field(default="none", description="Admin email for frontend access")
 
 
 class Config(BaseModel):
@@ -132,7 +132,7 @@ def get_lang_prompt(lang: str) -> str:
         Language-specific prompt suffix string
     """
     if lang == "chs":
-        return "确保使用中文书写所有的论文文字、程序注释、思考过程、执行报告、文献综述，但不要强行翻译专有名词和引用文献的标题、人名、期刊名（例如LSTM，RCT，ICU，Lucas，Schmidgall）"
+        return "\n\n确保使用中文书写所有的论文文字、程序注释、思考过程、执行报告、文献综述，但不要强行翻译专有名词和引用文献的标题、人名、期刊名（例如LSTM，RCT，ICU，Lucas，Schmidgall）"
     elif lang == "eng":
         return ""
     else:

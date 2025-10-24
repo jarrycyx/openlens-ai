@@ -13,6 +13,7 @@ import json
 import traceback
 
 from .file_utils import prepare_files_folders, collect_files, collect_token_usage
+from .frontend_messages import _get_messages_file_path, _message_remove_duplicates
 from .config import Config
 
 

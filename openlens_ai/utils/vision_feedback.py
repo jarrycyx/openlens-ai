@@ -14,17 +14,8 @@ from langchain.chat_models import init_chat_model
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
 from ..utils.config import Config, get_lang_prompt
-
-
-
-
-
-
-
-
     
-def get_vlm():
-    config = get_config()
+def get_vlm(config: Config):
     return init_chat_model(
         config.llm.vision.model,
         base_url=config.llm.vision.base_url,
@@ -86,7 +77,7 @@ def save_llm_call(messages: list, config: Config):
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
     with open(save_path, "w") as f:
-        f.write(dumps(messages, indent=4))
+        f.write(dumps(messages, indent=4, ensure_ascii=False))
 
 def get_vision_feedback(image_base64: str, config: Config) -> str:
     
@@ -124,7 +115,7 @@ def get_vision_feedback(image_base64: str, config: Config) -> str:
             ])
         return image_feedback_message
  
-    vlm = get_vlm()
+    vlm = get_vlm(config)
     
     
 
@@ -151,7 +142,7 @@ def get_vision_feedback(image_base64: str, config: Config) -> str:
 
 
 def get_latex_vision_feedback(image_base64: str, config: Config) -> str:
-    vlm = get_vlm()
+    vlm = get_vlm(config)
     with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_latex_feedback.md")) as f:
         vision_latex_feedback_prompt = f.read() + get_lang_prompt(config.llm.language)
     for try_i in range(10):
@@ -182,7 +173,7 @@ def get_latex_vision_feedback(image_base64: str, config: Config) -> str:
 
 
 def get_vision_classification(image_base64: str, config: Config) -> str:
-    vlm = get_vlm()
+    vlm = get_vlm(config)
     # Call VLM to classify the image
     with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_classify.md")) as f:
         vision_classify_prompt = f.read() + get_lang_prompt(config.llm.language)

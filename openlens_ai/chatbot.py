@@ -447,7 +447,7 @@ def chatbot_with_context_manager(
 
         with open(save_path, "w") as f:
             # f.write(get_buffer_string(message_to_llm))
-            f.write(dumps(message_to_llm, indent=4))
+            f.write(dumps(message_to_llm, indent=4, ensure_ascii=False))
 
         with open(save_path, "r") as f:
             message_to_llm = loads(f.read())

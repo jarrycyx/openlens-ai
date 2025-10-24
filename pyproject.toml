@@ -39,8 +39,7 @@ dependencies = [
   "pypdf2",
   "python-dotenv>=1.0.1",
   "streamlit",
-  "streamlit-pdf-viewer",
-  "streamlit-scrollable-textbox",
+  "streamlit[pdf]",
   "typing-extensions",
   "vllm",
 ]

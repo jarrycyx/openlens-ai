@@ -224,11 +224,11 @@ def run_openhands_prompt(prompts, config: Config):
             # 构建在Docker容器中执行的命令
             cmd = (
                 ". openlens_ai/tools/openhands_configs/openhands_env.sh; "
-                f"chmod -R 777 {os.path.abspath(config.save_path)};"
+                # f"chmod -R 777 {os.path.abspath(config.save_path)};"
                 f"cd modules/OpenHands;"
                 f'poetry run python -m openhands.core.main -f "{os.path.abspath(prompt_file)}" -i {max_iter} --config-file {os.path.abspath(this_config_path)};'
                 f"cd ../../;"
-                f"chmod -R 777 {os.path.abspath(config.save_path)};"
+                # f"chmod -R 777 {os.path.abspath(config.save_path)};"
             )
             results = run_openhands(cmd, config)
             # 移除ANSI转义序列（颜色代码等）
