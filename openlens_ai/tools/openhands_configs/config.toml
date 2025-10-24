@@ -6,15 +6,30 @@ save_trajectory_path = "{openhands_traj_path}"
 run_as_openhands = false
 debug = true
 
+
 [llm]
 model="openai/{code_model}" # openai means openai-compatible endpoint, not OpenAI models
 api_key="{api_key}"
 base_url="{base_url}"
 input_cost_per_token = 1.0
 output_cost_per_token = 1.0
-max_message_chars = 100000
+max_message_chars = 30000
 native_tool_calling = true
-retry_max_wait=60
+retry_max_wait = 60
+log_completions_folder = "{log_completions_folder}"
+log_completions = true
+
+[llm.condenser]
+model="openai/{code_condenser_model}" # openai means openai-compatible endpoint, not OpenAI models
+api_key="{condenser_api_key}"
+base_url="{condenser_base_url}"
+
+
+[condenser]
+type = "llm"
+llm_config = "condenser"
+keep_first = 1
+max_size = 20
 
 [sandbox]
 volumes="{sandbox_volumes}"

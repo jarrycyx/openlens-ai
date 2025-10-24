@@ -132,8 +132,8 @@ def monitor_process(pid: int, line_count: dict):
     last_line_count = 0
     # 每隔30分钟检查是否卡住
     while True:
-        time.sleep(300)
-        logger.info(f"Process {pid} has been running for 60 minutes, current line count: {line_count['count']}, last line count: {last_line_count}")
+        time.sleep(1800)
+        logger.info(f"Process {pid} has been running for 30 minutes, current line count: {line_count['count']}, last line count: {last_line_count}")
         if line_count["count"] == last_line_count:
             try:
                 # 结束进程
@@ -173,12 +173,14 @@ def run_openhands_prompt(prompts, config: Config):
         pwd = os.getcwd()
         workspace_dir = os.path.join(pwd, config.save_path, "workspace")
         openhands_traj_path = os.path.join(pwd, config.save_path, "openhands_traj")
+        openhands_llm_log_path = os.path.join(pwd, config.save_path, "openhands_llm_log")
         latex_template_path = os.path.join(pwd, "openlens_ai/tools/latex_template/blank")
         dot_openhands_path = os.path.join(pwd, "openlens_ai/tools/openhands_configs/dot_openhands")
         os.makedirs(os.path.join(workspace_dir, "manuscript"), exist_ok=True)
         os.makedirs(os.path.join(workspace_dir, "data_analyze"), exist_ok=True)
         os.makedirs(openhands_traj_path, exist_ok=True)
-
+        os.makedirs(openhands_llm_log_path, exist_ok=True)
+        
         time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
         prompt_file = os.path.join(pwd, config.save_path, "openhands_logs", f"prompt_{time_stamp}.txt")
         os.makedirs(os.path.dirname(prompt_file), exist_ok=True)
@@ -191,11 +193,16 @@ def run_openhands_prompt(prompts, config: Config):
 
         with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
             oh_config_template = f.read()
-        oh_config = oh_config_template.replace("{api_key}", config.llm.code.api_key)
-        oh_config = oh_config.replace("{base_url}", config.llm.code.base_url)
-        oh_config = oh_config.replace("{code_model}", config.llm.code.model)
+        oh_config = oh_config_template.replace("{api_key}", config.llm.chat.api_key)
+        oh_config = oh_config.replace("{base_url}", config.llm.chat.base_url)
+        oh_config = oh_config.replace("{code_model}", config.llm.chat.model)
+        oh_config = oh_config.replace("{condenser_api_key}", config.llm.condenser.api_key)
+        oh_config = oh_config.replace("{condenser_base_url}", config.llm.condenser.base_url)
+        oh_config = oh_config.replace("{code_condenser_model}", config.llm.condenser.model)
+        
         oh_config = oh_config.replace("{tavily_key}", config.tools.tavily_api_key)
         oh_config = oh_config.replace("{openhands_traj_path}", openhands_traj_path)
+        oh_config = oh_config.replace("{log_completions_folder}", openhands_llm_log_path)
         oh_config = oh_config.replace("{runtime_container_image}", docker_name)
 
         if config.dataset_path:

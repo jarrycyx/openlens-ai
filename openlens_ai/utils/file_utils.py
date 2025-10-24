@@ -7,11 +7,12 @@ from loguru import logger
 from pathlib import Path
 from typing import Any, Dict
 from pydantic import BaseModel
-from .config import Config
 import glob
 import zipfile
 import shutil
 import toml
+
+from .config import Config
 
 
 
@@ -136,7 +137,7 @@ def collect_token_usage(config: Config, overall: bool = True) -> str:
     # Model usage statistics
     model_stats = {}
     
-    def recursive_search_token_usage(data: Any, model_stats: Dict) -> None:
+    def recursive_search_token_usage(data: Any) -> None:
         """
         Recursively search for token_usage and model_name fields in JSON data.
         """
@@ -167,30 +168,47 @@ def collect_token_usage(config: Config, overall: bool = True) -> str:
             
             # Continue searching recursively
             for value in data.values():
-                recursive_search_token_usage(value, model_stats)
+                recursive_search_token_usage(value)
                 
         elif isinstance(data, list):
             # Continue searching recursively in list items
             for item in data:
-                recursive_search_token_usage(item, model_stats)
+                recursive_search_token_usage(item)
 
-    # Process each directory
-    for dir_name in search_dirs:
-        dir_path = save_path / dir_name
-        
-        if not dir_path.exists():
-            continue
-            
+    # Process Openhands traj directory
+    dir_name = "openhands_traj"
+    dir_path = save_path / dir_name
+    if dir_path.exists():
         # Process all JSON files in the directory
         for json_file in dir_path.glob("*.json"):
             try:
                 with open(json_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                    # logger.info(f"Processing {json_file}")
-                    recursive_search_token_usage(data, model_stats)
+                    logger.debug(f"Processing {json_file}")
+                if isinstance(data, list):
+                    for data_item in data:
+                        if isinstance(data_item, dict) and "action" in data_item:
+                            # WARNING: In Openhand traj, both action and observation have token_usage, collect only action, otherwise may double count
+                            recursive_search_token_usage(data_item)  
             except (json.JSONDecodeError, IOError) as e:
                 logger.warning(f"Could not read {json_file}: {e}")
                 continue
+            
+    # Process llm_calls directory
+    dir_name = "llm_calls"
+    dir_path = save_path / dir_name
+    if dir_path.exists():
+        # Process all JSON files in the directory
+        for json_file in dir_path.glob("*.json"):
+            try:
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                recursive_search_token_usage(data)  
+            except (json.JSONDecodeError, IOError) as e:
+                logger.warning(f"Could not read {json_file}: {e}")
+                continue
+    
+    
     
     # Format the output
     output_lines = ["## Token Usage Summary:"]
@@ -276,9 +294,13 @@ def prepare_files_folders(config: Config) -> Config:
     # 准备openhands_config.toml
     with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
         oh_config_template = f.read()
-    oh_config = oh_config_template.replace("{api_key}", config.llm.code.api_key)
-    oh_config = oh_config.replace("{base_url}", config.llm.code.base_url)
-    oh_config = oh_config.replace("{code_model}", config.llm.code.model)
+    oh_config = oh_config_template.replace("{api_key}", config.llm.chat.api_key)
+    oh_config = oh_config.replace("{base_url}", config.llm.chat.base_url)
+    oh_config = oh_config.replace("{code_model}", config.llm.chat.model)
+    oh_config = oh_config.replace("{api_key}", config.llm.chat.api_key)
+    oh_config = oh_config.replace("{condenser_api_key}", config.llm.condenser.api_key)
+    oh_config = oh_config.replace("{condenser_base_url}", config.llm.condenser.base_url)
+    oh_config = oh_config.replace("{code_condenser_model}", config.llm.condenser.model)
     oh_config = oh_config.replace("{tavily_key}", config.tools.tavily_api_key)
     this_config_path = os.path.join(save_path, "openhands_config.toml")
     with open(this_config_path, "w") as f:
@@ -298,3 +320,9 @@ def prepare_files_folders(config: Config) -> Config:
     
 
     return init_state, config
+
+
+
+if __name__ == "__main__":
+    config = Config(save_path="outputs/pred_aki_trend_eicu_demo")
+    collect_token_usage(config)
