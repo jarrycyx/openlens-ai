@@ -4,6 +4,7 @@ import subprocess
 import traceback
 import threading
 import time
+import toml
 from typing import Optional, Type, Dict, Any, Union
 from datetime import datetime
 from loguru import logger
@@ -35,6 +36,25 @@ Reminders: DO NOT mock or simulate results. Only write python files to generate 
 # At last checks if the results/outputs includes wrong codeces or unexpected/broken characters.
 # If the code fails, fix the code and try again.
 # """
+
+
+def fix_permissions_in_docker_container(oh_config_str: str):
+    """在docker中运行sudo chmod -R 777指令"""
+    try:
+        oh_config = toml.loads(oh_config_str)
+        image_name = oh_config["sandbox"]["runtime_container_image"]
+        volumes = oh_config["sandbox"]["volumes"]
+        all_volumes = [v.strip() for v in volumes.split(",")]
+        cmd = ["docker", "run", "--rm", "-it",]
+        for v in all_volumes:
+            cmd += ["-v", f"{v}"]
+        cmd += [image_name, "bash", "-c", f"sudo chmod -R 777 /workspace"]
+        logger.debug(f"Fix permissions command: {' '.join(cmd)}")
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        logger.debug(f"Fix permissions output: {result.stdout} \n {result.stderr}")
+        logger.info(f"Fixed permissions in docker container {image_name} with volumes {volumes}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to fix permissions in docker container {image_name} with volumes {volumes}: {e}")
 
 
 def run_openhands(
@@ -103,7 +123,6 @@ def run_openhands(
 
             logger.info("Docker container executed successfully.")
             return "".join(log_lines)  # 返回完整日志
-            break
         except Exception as e:
             error_log = "".join(log_lines) + f"\nERROR: {str(e)}"
             # traceback.print_exc()
@@ -196,9 +215,16 @@ def run_openhands_prompt(prompts, config: Config):
         oh_config = oh_config_template.replace("{api_key}", config.llm.chat.api_key)
         oh_config = oh_config.replace("{base_url}", config.llm.chat.base_url)
         oh_config = oh_config.replace("{code_model}", config.llm.chat.model)
-        oh_config = oh_config.replace("{condenser_api_key}", config.llm.condenser.api_key)
-        oh_config = oh_config.replace("{condenser_base_url}", config.llm.condenser.base_url)
-        oh_config = oh_config.replace("{code_condenser_model}", config.llm.condenser.model)
+        
+        if config.llm.condenser.model:
+            oh_config = oh_config.replace("{condenser_api_key}", config.llm.condenser.api_key)
+            oh_config = oh_config.replace("{condenser_base_url}", config.llm.condenser.base_url)
+            oh_config = oh_config.replace("{code_condenser_model}", config.llm.condenser.model)
+        else:
+            logger.warning("Condenser model not specified, using chat model as condenser model.")
+            oh_config = oh_config.replace("{condenser_api_key}", config.llm.chat.api_key)
+            oh_config = oh_config.replace("{condenser_base_url}", config.llm.chat.base_url)
+            oh_config = oh_config.replace("{code_condenser_model}", config.llm.chat.model)
         
         oh_config = oh_config.replace("{tavily_key}", config.tools.tavily_api_key)
         oh_config = oh_config.replace("{openhands_traj_path}", openhands_traj_path)
@@ -238,6 +264,7 @@ def run_openhands_prompt(prompts, config: Config):
                 # f"chmod -R 777 {os.path.abspath(config.save_path)};"
             )
             results = run_openhands(cmd, config)
+            fix_permissions_in_docker_container(oh_config)
             # 移除ANSI转义序列（颜色代码等）
             results = re.sub(r"\033\[[\d;]*m", "", results)
             results = split_and_clean_log(results)
@@ -299,18 +326,23 @@ def collect_info_and_run_openhands(prompt: str, config: Config, state: State):
 
 
 if __name__ == "__main__":
-    prompt = "Write a python script to print hello world! Then execute it."
-    dataset_path = "data/dataset.jsonl"
+    # prompt = "Write a python script to print hello world! Then execute it."
+    # dataset_path = "data/dataset.jsonl"
+    # config = Config(
+    #     dataset_path="outputs/test/data",
+    #     save_path="outputs/test",
+    #     thread_id="test",
+    #     question="test",
+    # )
+    # result = run_openhands_prompt(prompt, config)
+    # with open("result.txt", "w") as f:
+    #     f.write(result)
+
     config = Config(
-        dataset_path="outputs/test/data",
-        save_path="outputs/test",
+        dataset_path="datasets/eicu-demo",
+        save_path="outputs/pred_aki_trend_eicu_demo_20251024143113_resume_20251024152546",
         thread_id="test",
         question="test",
     )
-    result = run_openhands_prompt(prompt, config)
-    with open("result.txt", "w") as f:
-        f.write(result)
-    # with open("result.txt", "r") as f:
-    #     result = f.read()
-    # result = split_and_clean_log(result)
-    # logger.info(result)
+    oh_config_str = open(os.path.join(config.save_path, "openhands_config.toml"), "r").read()
+    fix_permissions_in_docker_container(oh_config_str)

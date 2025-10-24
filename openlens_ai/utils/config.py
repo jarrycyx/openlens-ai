@@ -39,9 +39,9 @@ class ToolsConfig(BaseModel):
 
 class ContextConfig(BaseModel):
     """Context configuration"""
-    max_context_token_cnt: int = Field(default=8000, description="Maximum context token count")
-    max_context_token_cnt_large: int = Field(default=16000, description="Maximum context token count for large models")
-    max_tool_token_cnt: int = Field(default=5000, description="Maximum token count for tool responses")
+    max_context_token_cnt: int = Field(default=32000, description="Maximum context token count")
+    max_context_token_cnt_large: int = Field(default=96000, description="Maximum context token count for large models")
+    max_tool_token_cnt: int = Field(default=2000, description="Maximum token count for tool responses")
 
 
 class EmailServerConfig(BaseModel):
@@ -57,7 +57,7 @@ class WorkflowConfig(BaseModel):
     openhands_max_iter: int = Field(default=10, description="Maximum iterations for OpenHands")
     max_subtask_redo: int = Field(default=3, description="Maximum subtask redo attempts")
     max_latex_polish_round: int = Field(default=5, description="Maximum LaTeX polish rounds")
-    literature_search_min_tool_call: int = Field(default=3, description="Minimum tool calls for literature search")
+    literature_search_min_tool_call: int = Field(default=10, description="Minimum tool calls for literature search")
 
 
 class DockerConfig(BaseModel):

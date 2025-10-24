@@ -131,9 +131,6 @@ def collect_token_usage(config: Config, overall: bool = True) -> str:
     """
     save_path = Path(config.save_path)
     
-    # Directories to search
-    search_dirs = ["openhands_traj", "llm_calls"]
-    
     # Model usage statistics
     model_stats = {}
     
@@ -175,38 +172,39 @@ def collect_token_usage(config: Config, overall: bool = True) -> str:
             for item in data:
                 recursive_search_token_usage(item)
 
-    # Process Openhands traj directory
-    dir_name = "openhands_traj"
-    dir_path = save_path / dir_name
-    if dir_path.exists():
-        # Process all JSON files in the directory
-        for json_file in dir_path.glob("*.json"):
-            try:
-                with open(json_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    logger.debug(f"Processing {json_file}")
-                if isinstance(data, list):
-                    for data_item in data:
-                        if isinstance(data_item, dict) and "action" in data_item:
-                            # WARNING: In Openhand traj, both action and observation have token_usage, collect only action, otherwise may double count
-                            recursive_search_token_usage(data_item)  
-            except (json.JSONDecodeError, IOError) as e:
-                logger.warning(f"Could not read {json_file}: {e}")
-                continue
+    # TODO: delete this block because openhands_llm_log is now available
+    # # Process Openhands traj directory
+    # dir_name = "openhands_traj"
+    # dir_path = save_path / dir_name
+    # if dir_path.exists():
+    #     # Process all JSON files in the directory
+    #     for json_file in dir_path.glob("*.json"):
+    #         try:
+    #             with open(json_file, 'r', encoding='utf-8') as f:
+    #                 data = json.load(f)
+    #                 logger.debug(f"Processing {json_file}")
+    #             if isinstance(data, list):
+    #                 for data_item in data:
+    #                     if isinstance(data_item, dict) and "action" in data_item:
+    #                         # WARNING: In Openhand traj, both action and observation have token_usage, collect only action, otherwise may double count
+    #                         recursive_search_token_usage(data_item)  
+    #         except (json.JSONDecodeError, IOError) as e:
+    #             logger.warning(f"Could not read {json_file}: {e}")
+    #             continue
             
-    # Process llm_calls directory
-    dir_name = "llm_calls"
-    dir_path = save_path / dir_name
-    if dir_path.exists():
-        # Process all JSON files in the directory
-        for json_file in dir_path.glob("*.json"):
-            try:
-                with open(json_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                recursive_search_token_usage(data)  
-            except (json.JSONDecodeError, IOError) as e:
-                logger.warning(f"Could not read {json_file}: {e}")
-                continue
+    # Process llm_calls and openhands_llm_log directory
+    for dir_name in ["llm_calls", "openhands_llm_log"]:
+        dir_path = save_path / dir_name
+        if dir_path.exists():
+            # Process all JSON files in the directory
+            for json_file in dir_path.glob("*.json"):
+                try:
+                    with open(json_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    recursive_search_token_usage(data)  
+                except (json.JSONDecodeError, IOError) as e:
+                    logger.warning(f"Could not read {json_file}: {e}")
+                    continue
     
     
     
@@ -298,9 +296,17 @@ def prepare_files_folders(config: Config) -> Config:
     oh_config = oh_config.replace("{base_url}", config.llm.chat.base_url)
     oh_config = oh_config.replace("{code_model}", config.llm.chat.model)
     oh_config = oh_config.replace("{api_key}", config.llm.chat.api_key)
-    oh_config = oh_config.replace("{condenser_api_key}", config.llm.condenser.api_key)
-    oh_config = oh_config.replace("{condenser_base_url}", config.llm.condenser.base_url)
-    oh_config = oh_config.replace("{code_condenser_model}", config.llm.condenser.model)
+    
+    if config.llm.condenser.model:
+        oh_config = oh_config.replace("{condenser_api_key}", config.llm.condenser.api_key)
+        oh_config = oh_config.replace("{condenser_base_url}", config.llm.condenser.base_url)
+        oh_config = oh_config.replace("{code_condenser_model}", config.llm.condenser.model)
+    else:
+        logger.warning("Condenser model not specified, using chat model as condenser model.")
+        oh_config = oh_config.replace("{condenser_api_key}", config.llm.chat.api_key)
+        oh_config = oh_config.replace("{condenser_base_url}", config.llm.chat.base_url)
+        oh_config = oh_config.replace("{code_condenser_model}", config.llm.chat.model)
+        
     oh_config = oh_config.replace("{tavily_key}", config.tools.tavily_api_key)
     this_config_path = os.path.join(save_path, "openhands_config.toml")
     with open(this_config_path, "w") as f:
@@ -324,5 +330,5 @@ def prepare_files_folders(config: Config) -> Config:
 
 
 if __name__ == "__main__":
-    config = Config(save_path="outputs/pred_aki_trend_eicu_demo")
+    config = Config(save_path="outputs/pred_aki_trend_eicu_demo_20251024143113_resume_20251024152546")
     collect_token_usage(config)

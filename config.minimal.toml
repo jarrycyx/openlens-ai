@@ -1,0 +1,23 @@
+[llm]
+language = "chs"  # Language setting: "chs" for Chinese, "eng" for English
+
+[llm.chat] # Main language model used for general tasks and coding
+model = "glm-4.5-air"  # The main language model used for general tasks
+base_url = "https://cloud.infini-ai.com/maas/v1/"  # Base URL for the model API service
+api_key = "<YOUR API KEY>"  # API key for accessing the language models
+
+[llm.vision]
+model = "glm-4.1v-9b-thinking"  # The vision model used for image analysis tasks
+base_url = "https://open.bigmodel.cn/api/paas/v4/"  # Base URL for the vision model API service
+api_key = "<YOUR API KEY>"  # API key for accessing the vision model
+
+[rerank]
+rerank_model = "bge-reranker-v2-m3"  # The reranking model used to improve search result relevance
+rerank_api_key = "<YOUR API KEY>" # API key for accessing the reranking model (infiniai service)
+rerank_base_url = "https://cloud.infini-ai.com/maas/v1/"  # Base URL for the reranking model API service
+
+[tools]
+tavily_api_key = "<YOUR API KEY>"  # API key for Tavily search service used for web search
+
+[docker]
+docker_name = "openlens-ai:runtime-latest"  # Name of the Docker container used for the agent environment
