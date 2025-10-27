@@ -11,6 +11,10 @@ tmp*
 uv.lock
 .venv
 
+# 字体
+openlens_ai/tools/openhands_configs/windows-fonts/*
+openlens_ai/tools/openhands_configs/windows-fonts.tar.gz
+
 # Python相关
 curie/venv
 curie.egg-info/
@@ -66,3 +70,4 @@ debug
 curie/setup/*
 modules/OpenHands/docs
 modules/OpenHands/evaluation
+*.iso

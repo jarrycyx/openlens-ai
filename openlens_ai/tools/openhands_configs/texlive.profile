@@ -1,0 +1,20 @@
+# texlive.profile - non-interactive TeX Live installation
+selected_scheme scheme-small
+TEXDIR /usr/local/texlive/2025
+TEXMFCONFIG ~/.texlive2025/texmf-config
+TEXMFHOME ~/texmf
+TEXMFLOCAL /usr/local/texlive/texmf-local
+TEXMFSYSCONFIG /usr/local/texlive/2025/texmf-config
+TEXMFSYSVAR /usr/local/texlive/2025/texmf-var
+TEXMFVAR ~/.texlive2025/texmf-var
+binary_x86_64-linux 1
+collection-basic 1
+collection-latex 1
+collection-fontsrecommended 1
+collection-xetex 1
+option_doc 0
+option_src 0
+option_autobackup 0
+option_desktop_integration 0
+option_path 1
+portable 0

@@ -253,7 +253,7 @@ def run_openhands_prompt(prompts, config: Config):
         with open(this_config_path, "w") as f:
             f.write(oh_config)
         logger.debug(f"Using OpenHands config: {oh_config}")
-        for try_i in range(5):
+        for try_i in range(2): # 最多尝试2次
             # 构建在Docker容器中执行的命令
             cmd = (
                 ". openlens_ai/tools/openhands_configs/openhands_env.sh; "

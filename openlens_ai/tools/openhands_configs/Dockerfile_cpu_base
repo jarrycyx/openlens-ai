@@ -20,6 +20,36 @@ RUN apt-get install -y --fix-missing \
     git \
     openssl \
     tmux \
-    ruby
+    perl \
+    xz-utils \
+    fontconfig \
+    libarchive-tools
 
-RUN apt-get install -y texlive-full
+# 拷贝 ISO 文件到容器
+COPY openlens_ai/tools/openhands_configs/texlive2025-20250308.iso /tmp/texlive2025.iso
+
+# 解开 ISO 到 /tmp/texlive
+RUN mkdir /tmp/texlive && \
+    bsdtar -C /tmp/texlive -xf /tmp/texlive2025.iso && \
+    rm /tmp/texlive2025.iso
+
+# 拷贝 profile 文件（非交互配置）
+COPY openlens_ai/tools/openhands_configs/texlive.profile /tmp/texlive/texlive.profile
+
+# 自动安装
+RUN /tmp/texlive/install-tl --profile=/tmp/texlive/texlive.profile
+
+# 配置环境变量
+ENV PATH=/usr/local/texlive/2025/bin/x86_64-linux:$PATH \
+    MANPATH=/usr/local/texlive/2025/texmf-dist/doc/man:$MANPATH \
+    INFOPATH=/usr/local/texlive/2025/texmf-dist/doc/info:$INFOPATH
+
+RUN tex --version
+
+RUN apt-get install -y xfonts-utils
+COPY openlens_ai/tools/openhands_configs/windows-fonts/* /usr/share/fonts/msfonts/
+RUN cd /usr/share/fonts/msfonts && chmod 744 * && mkfontscale && mkfontdir && fc-cache -f
+
+SHELL ["/bin/bash", "-c"]
+ENV SHELL=/bin/bash
+CMD ["/bin/bash"]

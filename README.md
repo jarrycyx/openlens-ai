@@ -94,8 +94,11 @@ ALIYUN_REMOTE_DOCKER_NAME=crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs
 docker pull $ALIYUN_REMOTE_DOCKER_NAME
 docker tag $ALIYUN_REMOTE_DOCKER_NAME openlens-ai:runtime-latest
 ```
-or build from scratch:
+or build from scratch (if needing to support Chinese paper writing, download [windows-fonts.tar.gz](https://github.com/jarrycyx/openlens-ai/releases/download/v0.1.0/windows-fonts.tar.gz) or collect fonts in ```C://windows/Fonts/```):
 ```bash
+# Optional: Collect Chinese fonts
+cd openlens_ai/tools/openhands_configs/ && tar -xzvf windows-fonts.tar.gz
+
 # Build base docker for tex-live, etc
 bash openlens_ai/tools/openhands_configs/build_docker_base.sh 
 # Build runtime docker to meet the requirements of OpenHands
@@ -126,19 +129,14 @@ cp .env.example .env
 
 ### Configuration
 
-In your `.env` file, configure the following:
+In your `config.toml` file, configure the following:
 
 ```yaml
 [llm]
 language = "chs"  # Language setting: "chs" for Chinese, "eng" for English
 
-[llm.chat]
+[llm.chat] # Main language model used for general tasks and coding
 model = "glm-4.5-air"  # The main language model used for general tasks
-base_url = "https://cloud.infini-ai.com/maas/v1/"  # Base URL for the model API service
-api_key = "<YOUR API KEY>"  # API key for accessing the language models
-
-[llm.code]
-model = "glm-4.5-air"  # The language model specifically used for code-related tasks
 base_url = "https://cloud.infini-ai.com/maas/v1/"  # Base URL for the model API service
 api_key = "<YOUR API KEY>"  # API key for accessing the language models
 
@@ -155,36 +153,12 @@ rerank_base_url = "https://cloud.infini-ai.com/maas/v1/"  # Base URL for the rer
 [tools]
 tavily_api_key = "<YOUR API KEY>"  # API key for Tavily search service used for web search
 
-### Optional settings if using LangSmith for tracing
-langsmith_tracing = "true"  # Enable or disable LangSmith tracing for monitoring and debugging
-langsmith_endpoint = "https://api.smith.langchain.com"  # Endpoint URL for LangSmith service
-langsmith_project = "openlens"  # Project name in LangSmith for organizing traces
-langsmith_api_key = "<YOUR API KEY>"  # API key for accessing LangSmith service
-
-[context]
-max_context_token_cnt = 32000  # Maximum number of tokens allowed in the context for normal operations
-max_context_token_cnt_large = 96000  # Maximum number of tokens allowed in the context for large operations
-max_tool_token_cnt = 2000  # Maximum number of tokens allowed in tool responses
-literature_search_min_tool_call = 10  # Minimum number of tool calls for literature search
-
-[email_server]
-### Optional settings if need to send emails
-smtp_server = "smtpdm.aliyun.com"  # SMTP server address for sending emails
-smtp_port = 25  # Port number for the SMTP server
-email_user = "<YOUR EMAIL>"  # Email address used for sending notifications
-email_password = "<YOUR EMAIL SMTP PASSWORD>"  # Password or app-specific password for the email account
-
-[workflow]
-openhands_max_iter = 100  # Maximum number of iterations allowed for OpenHands agent execution
-max_subtask_redo = 2  # Maximum number of retries for subtasks
-max_latex_polish_round = 2  # Maximum number of rounds for LaTeX document polishing
-
 [docker]
 docker_name = "openlens-ai:runtime-latest"  # Name of the Docker container used for the agent environment
 
-[frontend]
-frontend_admin_email = "<YOUR EMAIL>"  # Admin email address that can access all users' sessions in the frontend
 ```
+
+See [config.full-example.toml](config.full-example.toml) for more detailed configuration options.
 
 ### Running the Application
 

@@ -29,7 +29,7 @@ base_url="{condenser_base_url}"
 type = "llm"
 llm_config = "condenser"
 keep_first = 1
-max_size = 20
+max_size = 50
 
 [sandbox]
 volumes="{sandbox_volumes}"

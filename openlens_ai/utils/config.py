@@ -9,7 +9,7 @@ import toml
 
 class ModelConfig(BaseModel):
     """Chat model configuration"""
-    model: str = Field(default="glm-4.5-air", description="Chat model name")
+    model: str = Field(default="", description="Chat model name")
     base_url: Optional[str] = Field(default=None, description="Base URL for API")
     api_key: Optional[str] = Field(default=None, description="API key for chat service")
 

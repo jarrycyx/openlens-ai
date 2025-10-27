@@ -330,5 +330,5 @@ def prepare_files_folders(config: Config) -> Config:
 
 
 if __name__ == "__main__":
-    config = Config(save_path="outputs/pred_aki_trend_eicu_demo_20251024143113_resume_20251024152546")
+    config = Config(save_path="outputs/pred_aki_trend_eicu_demo_20251024184352")
     collect_token_usage(config)

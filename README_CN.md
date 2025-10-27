@@ -1,3 +1,5 @@
+**[English Version](README.md)**
+
 # OpenLens AI：面向健康信息学的全自动研究智能体
 
 <p align="center">
@@ -72,15 +74,14 @@ cd openlens-ai
 
 1. 确保已安装 Docker：
 
-Pull the runtime directly (**recommended**):
-直接拉取镜像（**推荐**）：
+直接拉取运行时镜像（**推荐**）：
 ```bash
 docker --version
 
 # Pull docker
-ALIYUN_REMOTE_DOCKER_NAME=crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs.com/cyx-docker/openlens-ai:cpu-latest
+ALIYUN_REMOTE_DOCKER_NAME=crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs.com/cyx-docker/openlens-ai:runtime-latest
 docker pull $ALIYUN_REMOTE_DOCKER_NAME
-docker tag $ALIYUN_REMOTE_DOCKER_NAME openlens-ai:cpu-latest
+docker tag $ALIYUN_REMOTE_DOCKER_NAME openlens-ai:runtime-latest
 ```
 或者重新build：
 ```bash
@@ -114,46 +115,36 @@ cp .env.example .env
 
 ### 配置
 
-在您的 `.env` 文件中，配置以下内容：
+在您的 `config.toml` 文件中，配置以下内容：
 
-```bash
-MODEL="glm-4.5-air"  # 用于通用任务的主要语言模型
-CODE_MODEL="glm-4.5-air"  # 专门用于代码相关任务的语言模型
-VISION_MODEL="glm-4.1v-9b-thinking"  # 用于图像分析任务的视觉模型
-OPENAI_API_KEY="<您的 API 密钥>"  # 用于访问语言模型的 API 密钥
-BASE_URL="https://cloud.infini-ai.com/maas/v1/"  # 模型 API 服务的基础 URL
+```yaml
+[llm]
+language = "chs"  # 语言设置："chs" 表示中文，"eng" 表示英文
 
-RERANK_MODEL="bge-reranker-v2-m3"  # 用于提高搜索结果相关性的重排序模型
-RERANK_API_KEY="<您的 API 密钥>" # 用于访问重排序模型的 API 密钥 (infiniai 服务)
-RERANK_BASE_URL="https://cloud.infini-ai.com/maas/v1/"  # 重排序模型 API 服务的基础 URL
+[llm.chat] # 用于通用任务和编码的主要语言模型
+model = "glm-4.5-air"  # 用于通用任务的主要语言模型
+base_url = "https://cloud.infini-ai.com/maas/v1/"  # 模型 API 服务的基础 URL
+api_key = "<您的 API 密钥>"  # 用于访问语言模型的 API 密钥
 
-TAVILY_API_KEY="<您的 API 密钥>"  # 用于 Tavily 搜索服务（网络搜索）的 API 密钥
+[llm.vision]
+model = "glm-4.1v-9b-thinking"  # 用于图像分析任务的视觉模型
+base_url = "https://open.bigmodel.cn/api/paas/v4/"  # 视觉模型 API 服务的基础 URL
+api_key = "<您的 API 密钥>"  # 用于访问视觉模型的 API 密钥
 
-MAX_CONTEXT_TOKEN_CNT=32000  # 正常操作中上下文允许的最大令牌数
-MAX_CONTEXT_TOKEN_CNT_LARGE=96000  # 大型操作中上下文允许的最大令牌数
-LITERATURE_SEARCH_MIN_TOOL_CALL=10  # 文献搜索所需的最小工具调用次数
+[rerank]
+rerank_model = "bge-reranker-v2-m3"  # 用于提高搜索结果相关性的重排序模型
+rerank_api_key = "<您的 API 密钥>" # 用于访问重排序模型的 API 密钥 (infiniai 服务)
+rerank_base_url = "https://cloud.infini-ai.com/maas/v1/"  # 重排序模型 API 服务的基础 URL
 
-MAX_TOOL_TOKEN_CNT=2000  # 工具响应中允许的最大令牌数
+[tools]
+tavily_api_key = "<您的 API 密钥>"  # 用于 Tavily 搜索服务（网络搜索）的 API 密钥
 
-OPENHANDS_MAX_ITER=100  # OpenHands 智能体执行允许的最大迭代次数
-MAX_SUBTASK_REDO=2  # 子任务的最大重试次数
-MAX_LATEX_POLISH_ROUND=2  # LaTeX 文档润色的最大轮数
+[docker]
+docker_name = "openlens-ai:runtime-latest"  # 用于智能体环境的 Docker 容器名称
 
-DOCKER_NAME=openlens-ai:runtime-latest  # 用于智能体环境的 Docker 容器名称
-
-
-### 可选设置
-
-LANGSMITH_TRACING="true"  # 启用或禁用 LangSmith 追踪以进行监控和调试
-LANGSMITH_ENDPOINT="https://api.smith.langchain.com"  # LangSmith 服务的端点 URL
-LANGSMITH_PROJECT="openlens"  # LangSmith 中用于组织追踪的项目名称
-LANGSMITH_API_KEY="<您的 API 密钥>"  # 用于访问 LangSmith 服务的 API 密钥
-
-SMTP_SERVER=smtpdm.aliyun.com  # 用于发送邮件的 SMTP 服务器地址
-SMTP_PORT=25  # SMTP 服务器的端口号
-EMAIL_USER=<您的邮箱>  # 用于发送通知的电子邮件地址
-EMAIL_PASSWORD=<您的邮箱 SMTP 密码>  # 邮箱密码或应用专用密码
 ```
+
+更多详细的配置选项，请参见 [config.full-example.toml](config.full-example.toml)。
 
 ### 运行应用
 
@@ -209,14 +200,14 @@ openlens_ai/
 │   ├── data_analyzer.py
 │   ├── latex_writer.py   # LaTeX 文档生成智能体
 │   ├── literature_reviewer.py
-│   └└── supervisor.py
+│   └── supervisor.py
 ├── prompts/             # LLM 提示词模板
 ├── tools/               # 自定义工具和实用程序
 ├── utils/               # 辅助函数
 ├── build_graph.py       # 主图构建
 ├── chatbot.py           # 聊天机器人接口
 ├── frontend.py          # Streamlit 前端
-└└── state.py             # 状态管理
+└── state.py             # 状态管理
 ```
 
 ## 🛠🛠🛠️ 自定义
