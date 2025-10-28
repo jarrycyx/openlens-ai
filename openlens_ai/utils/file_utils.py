@@ -11,6 +11,7 @@ import glob
 import zipfile
 import shutil
 import toml
+import tqdm
 
 from .config import Config
 
@@ -26,10 +27,13 @@ def collect_files(config: Config, max_size: int = 10 * 1024 * 1024, compressed_d
     # file_patterns = ['*.py', '*.json', '*.md', '*.txt', '*.tex', '*.bib', '*.sty', '*.log', '*.pdf', '*']
     
     # 收集所有匹配的文件
+    exclude_path = ["backup/openlens_ai"]
     files = []
     for pattern in file_patterns:
         this_pattern_files = glob.glob(os.path.join(save_path, '**', pattern), recursive=True)
         for f in this_pattern_files:
+            if any(exclude in f for exclude in exclude_path):
+                continue
             if f not in files and os.path.isfile(f):
                 files.append(f)
     
@@ -45,7 +49,7 @@ def collect_files(config: Config, max_size: int = 10 * 1024 * 1024, compressed_d
     # 将文件打包成zip
     with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
         total_size = 0
-        for file in files:
+        for file in tqdm.tqdm(files, desc="压缩文件"):
             if "compressed" in file:
                 continue
             try:

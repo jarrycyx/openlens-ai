@@ -26,7 +26,7 @@ If the user wants to display Chinese characters in Matplotlib plots:
 Example:
 ```python
 import matplotlib.pyplot as plt
-plt.rcParams['font.sans-serif'] = ['SimHei']  # 设置中文字体
+plt.rcParams['font.sans-serif'] = ['SimSun']  # 设置中文字体
 plt.rcParams['axes.unicode_minus'] = False    # 正常显示负号
 plt.title("中文标题示例")
 plt.xlabel("横轴")
