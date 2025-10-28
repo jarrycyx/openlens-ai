@@ -78,7 +78,10 @@ def get_latest_files(config: Config):
             if not file.startswith(".") and not file.endswith(".pyc"):
                 file_path = os.path.join(root, file)
                 rel_path = os.path.relpath(file_path, workspace_path)
-                all_files.append((file_path, rel_path, os.path.getmtime(file_path)))
+                try:
+                    all_files.append((file_path, rel_path, os.path.getmtime(file_path)))
+                except Exception as e:
+                    logger.warning(f"Failed to get mtime for {file_path}: {e}")
 
     if not all_files:
         st.info("No files generated yet.")
