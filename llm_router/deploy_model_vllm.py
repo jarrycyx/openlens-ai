@@ -4,21 +4,23 @@ import time
 import psutil
 import argparse
 
-def start_vllm_process(model_path, max_len="64000", enforce_eager=True, port="8000", gpu="0", quant4bit=False, memory_utilization=0.75, log_to_file=False):
+def start_vllm_process(model_path, max_len="64000", port="8000", gpu="0", log_to_file=False, extra_args=""):
     gpu_per_process = len(gpu.split(","))
     
     cmd = [
         "vllm", "serve", model_path, 
         "--max-model-len", max_len, 
-        "--tensor-parallel-size", f"{gpu_per_process}", 
+        # "--tensor-parallel-size", f"{gpu_per_process}", 
+        "--pipeline-parallel-size", f"{gpu_per_process}", 
         "--port", port,
-        "--enable-expert-parallel",
-        "--gpu-memory-utilization", str(memory_utilization),
+        # "--enable-expert-parallel",
+        # "--gpu-memory-utilization", 0.9,
         "--enable-auto-tool-choice",
         "--served-model-name", "llm"
     ]
-    if enforce_eager:
-        cmd += ["--enforce-eager"]
+    
+    if extra_args:
+        cmd += extra_args.split(" ")
     
     if "glm" in model_path.lower():
         tool_parser = "glm45"
@@ -39,9 +41,6 @@ def start_vllm_process(model_path, max_len="64000", enforce_eager=True, port="80
     if "AWQ" not in model_path:
         cmd += ["--config-format", "hf"]
     
-    if quant4bit:
-        cmd += ["--quantization", "bitsandbytes"]
-        print("Quantization enabled.")
         
     this_os_env = os.environ.copy()
     this_os_env["CUDA_VISIBLE_DEVICES"] = str(gpu)
@@ -78,12 +77,15 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--model", type=str, required=True, help="Model path")
     parser.add_argument("-p", "--port", type=str, default="8000", help="API port")
     parser.add_argument("-g", "--gpu", type=str, default="0", help="GPU IDs to use")
-    parser.add_argument("--mem-ut", type=str, default="0.9", help="GPU memory utilization")
-    parser.add_argument("-q", "--quant4bit", action="store_true", help="Enable 4-bit quantization")
     parser.add_argument("--max-len", type=str, default="64000", help="Maximum length of input")
     parser.add_argument("--log-to-file", action="store_true", help="Log to file")
     parser.add_argument("--enforce-eager", action="store_true", help="Enable eager mode")
+    # 后面可以附加更多参数，比如--dtype
+    parser.add_argument("extra", nargs=argparse.REMAINDER, type=str, help="Additional arguments for vLLM")
+    
     args = parser.parse_args()
+    
+    print(f"All args: {args}")
     
     gpu_list = str(args.gpu).split(",")
     port_list = str(args.port).split(",")
@@ -98,12 +100,10 @@ if __name__ == "__main__":
         p = start_vllm_process(
             model_path=args.model,
             port=port,
-            enforce_eager=args.enforce_eager,
             max_len=args.max_len,
             gpu=",".join(gpu_group),
-            quant4bit=args.quant4bit,
-            memory_utilization=args.mem_ut,
-            log_to_file=args.log_to_file
+            log_to_file=args.log_to_file,
+            extra_args=" ".join(args.extra),
         )
         proc_list.append(p)
     

@@ -34,16 +34,23 @@ all_subgraphs = ["literature_reviewer", "data_analyzer", "supervisor", "coder", 
 def send_periodic_emails(config: Config):
     """每60分钟发送一次进度邮件"""
     logger.info("Starting to send periodic emails...")
-    while not stop_sending_emails.wait(18000):  # 600秒 = 10分钟
+    
+    cnt = 0
+    while not stop_sending_emails.wait(600):
+        # 每10分钟更新一次文件压缩包和token usage
         try:
             zipfile, latest_md = collect_files(config)
-            send_email(
-                config=config,
-                subject=f"OpenLens Job Progress | {config.thread_id}",
-                content=f"Job is still running. Current progress:\n\n{latest_md}",
-                recipients=config.notify_email,
-                attachments=zipfile,
-            )
+            cnt += 1
+            # 每30*10分钟发送一次邮件
+            if cnt % 30 == 0:
+                send_email(
+                    config=config,
+                    subject=f"OpenLens Job Progress | {config.thread_id}",
+                    content=f"Job is still running. Current progress:\n\n{latest_md}",
+                    recipients=config.notify_email,
+                    attachments=zipfile,
+                )
+                cnt = 0
         except Exception as e:
             logger.error(f"Error sending periodic email: {e}")
 
