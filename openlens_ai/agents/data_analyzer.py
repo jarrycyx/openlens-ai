@@ -94,7 +94,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
         return state
 
     def router_node(state: State):
-        router_chatbot = chatbot_with_context_manager(config, router_llm, data_router_prompt, context_manage="token_cnt", calling_subgraph="data_analyzer")
+        router_chatbot = chatbot_with_context_manager(config, router_llm, data_router_prompt, context_manage="token_cnt_large", calling_subgraph="data_analyzer")
         state = router_chatbot(state)
         return state
 

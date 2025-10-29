@@ -22,11 +22,11 @@ def load_questions(csv_file):
 def run_test(question, dataset_path, thread_id, email):
     """运行单个测试"""
     cmd = [
-        'python', '-m', 'openlens_ai.build_graph',
+        'python', '-m', 'openlens_ai.main',
         '--question', question,
         '--dataset-path', dataset_path,
-        '--thread-id', thread_id,
-        '--email', email
+        '--thread-id', thread_id,,
+        '--notify-email', email
     ]
     
     print(f"Running: {' '.join(cmd)}")

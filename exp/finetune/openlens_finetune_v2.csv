@@ -1,0 +1,7 @@
+Difficulty,Question,Dataset,Lang
+Medium,"What are the temporal patterns of vital sign deterioration preceding cardiac arrest events in critical care settings?",datasets/mimic-iv-icu,chs
+Easy,"Which medications are most commonly associated with adverse drug reactions in elderly patients?",datasets/eicu-demo,eng
+Hard,"Can machine learning models identify early warning signs of acute kidney injury before traditional clinical thresholds are reached?",datasets/mimic-iv-icu,chs
+Medium,"How do different ventilation strategies impact length of stay and mortality in patients with acute respiratory distress syndrome?",datasets/eicu-demo,eng
+Easy,"What are the most common comorbidities associated with readmission within 30 days of discharge?",datasets/mimic-iv-icu,chs
+Hard,"Can we develop a fair predictive model for ICU mortality that performs consistently across different racial and socioeconomic groups?",datasets/eicu-demo,eng

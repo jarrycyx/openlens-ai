@@ -1,9 +1,10 @@
 python -m openlens_ai.main \
-    --question "Can early trends in urine output and creatinine levels predict the onset of acute kidney injury within 72 hours?" \
+    --question "What are the temporal patterns of vital sign deterioration preceding cardiac arrest events in critical care settings?" \
     --dataset-path "datasets/eicu-demo" \
     --thread-id "pred_aki_trend_eicu_demo" \
     --notify-email "dzdzzd@126.com" \
-    --interrupt-after "none"
+    --interrupt-after "none" \
+    --language "chs"
 
 python -m openlens_ai.main \
     --question "What is the prediction precision of AKI in ICU patients when dynamically predicting each day based on the past two days of historical data?" \

@@ -242,10 +242,19 @@ def chatbot_with_context_manager(
         token_cnt = 0
         context_messages = []
         for message in messages[::-1]:
-            token_cnt += count_tokens_approximately([message])
-            if token_cnt > max_token_cnt:
+            this_token_cnt = count_tokens_approximately([message])
+            if token_cnt + this_token_cnt > max_token_cnt:
+                message_clamped = message.copy()
+                try:
+                    message_clamped.content = message_clamped.content[:(max_token_cnt - token_cnt)*4]
+                    context_messages.insert(0, message_clamped)
+                except Exception as e:
+                    logger.debug(f"Error clamping message content: {e}")
+                    pass
                 break
-            context_messages.insert(0, message)
+            else:
+                context_messages.insert(0, message)
+                token_cnt += this_token_cnt
         return context_messages
 
     def call_react(state: State, message_to_llm: list):

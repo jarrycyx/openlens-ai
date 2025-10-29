@@ -278,8 +278,8 @@ def build_latex_writer(config: Config) -> StateGraph:
         return state
        
     concluder_tools_node = BasicToolNode(tools, config)
-    conclude_chatbot = chatbot_with_context_manager(config, concluder_llm_with_tools, latex_concluder_prompt, calling_subgraph="latex_writer", context_manage="token_cnt")
-    router_chatbot = chatbot_with_context_manager(config, router_llm, latex_router_prompt, calling_subgraph="latex_writer", context_manage="token_cnt")
+    conclude_chatbot = chatbot_with_context_manager(config, concluder_llm_with_tools, latex_concluder_prompt, calling_subgraph="latex_writer", context_manage="token_cnt_large")
+    router_chatbot = chatbot_with_context_manager(config, router_llm, latex_router_prompt, calling_subgraph="latex_writer", context_manage="token_cnt_large")
     write_plan_router = route_by_tool_call("report_writer_tool")
     keywords_router = route_by_keywords(["DECISION: POLISH", "DECISION: END"])
 
