@@ -167,7 +167,8 @@ def route_by_keywords(keywords: list):
                 logger.info(f"Keyword found: {keyword}")
                 return keyword  # Keyword found, end the process
 
-        return "NONE"  # Keyword not found, return to caller
+        # raise ValueError(f"Keyword not found. The returning keyword must be in the following list {keywords}")
+        return "NONE" 
 
     return route_keyword_check
 

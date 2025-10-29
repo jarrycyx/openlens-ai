@@ -10,7 +10,7 @@ First, as an expert evaluator, assess the current data analysis results by check
 
 After quality assessment, choose from the following actions:
 
-1) **CONTINUE** (if):  
+1) DECISION: CONTINUE (if):  
    - All verification checks pass  
    - Data fully matches experiment plan requirements  
    - No abnormalities detected  
@@ -18,7 +18,7 @@ After quality assessment, choose from the following actions:
    - Quality assessment shows sufficient and reliable results
    *Reason example*: "All outputs validated against plan criteria. Proceeding as scheduled."  
 
-2) **RETURN** (if):  
+2) DECISION: RETURN (if):  
    - Minor errors in execution/output (fixable without plan changes)  
    - Partial/incomplete but recoverable results  
    - Isolated data anomalies requiring reprocessing  
@@ -29,6 +29,8 @@ After quality assessment, choose from the following actions:
 
 **Output format (strictly follow):**  
 ```  
-DECISION: [SELECTED_ACTION]  
-REASON: [Concise technical justification referencing specific subtask findings]  
+DECISION: SELECTED_ACTION
+REASON: Concise technical justification referencing specific subtask findings  
 ```  
+
+Make sure to return exactly "DECISION: CONTINUE" or "DECISION: RETURN" and do not include any other symbols before writting the reason.
