@@ -268,7 +268,7 @@ def run_openhands_prompt(prompts, config: Config):
             # 移除ANSI转义序列（颜色代码等）
             results = re.sub(r"\033\[[\d;]*m", "", results)
             results = split_and_clean_log(results)
-            results = results[-40000:]
+            results = results[-10000:]
             if "AgentState.FINISHED" in results:
                 logger.info(f"Docker container executed successfully.")
                 break

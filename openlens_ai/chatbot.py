@@ -194,7 +194,7 @@ def chatbot_with_context_manager(
     llm: BaseChatModel,
     prompt: str,
     context_manage: Literal["token_cnt", "token_cnt_large", "last_message", "last_tool_message", "vector_search"] = "vector_search",
-    only_last_human_message: bool = True,
+    only_last_human_message: bool = False,
     calling_subgraph: str = "",
 ):
     """
@@ -247,9 +247,10 @@ def chatbot_with_context_manager(
                 message_clamped = message.copy()
                 try:
                     message_clamped.content = message_clamped.content[:(max_token_cnt - token_cnt)*4]
+                    logger.debug(f"Clamped message content from {len(message.content)} to {len(message_clamped.content)}")
                     context_messages.insert(0, message_clamped)
                 except Exception as e:
-                    logger.debug(f"Error clamping message content: {e}")
+                    logger.warning(f"Error clamping message content: {e}")
                     pass
                 break
             else:
@@ -279,6 +280,16 @@ def chatbot_with_context_manager(
                     node_name = list(event.keys())[0]
                     new_state = event[node_name]
                     all_messages = new_state["messages"]
+                    
+                    
+                    time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                    save_path = os.path.join(config.save_path, "llm_calls", f"{time_stamp}.json")
+                    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+                    with open(save_path, "w") as f:
+                        # f.write(get_buffer_string(message_to_llm))
+                        f.write(dumps(all_messages, indent=4, ensure_ascii=False))
+                    
                     if len(all_messages) > 0:
                         show_message = all_messages[-1]
                         frontend_add_message(show_message, config)

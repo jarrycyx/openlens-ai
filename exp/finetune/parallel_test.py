@@ -71,7 +71,7 @@ def main():
                         help='包含问题的CSV文件路径 (默认: exp/finetune/openlens_finetune_v2.csv)')
     parser.add_argument('--email', default='dzdzzd@126.com', 
                         help='接收通知的邮箱')
-    parser.add_argument('--max-workers', type=int, default=2, 
+    parser.add_argument('--max-workers', type=int, default=4, 
                         help='并行执行的最大工作线程数')
     parser.add_argument('--difficulty', choices=['Easy', 'Medium', 'Hard'], 
                         help='只运行指定难度的问题')

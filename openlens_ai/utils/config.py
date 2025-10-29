@@ -82,7 +82,6 @@ class Config(BaseModel):
     question: str = Field(default="", description="Research question")
     dataset_path: str = Field(default="", description="Path to the dataset")
     notify_email: str = Field(default="", description="Email for notifications")
-    lang: str = Field(default="eng", description="Language for prompts (eng or chs)")
     
     # Configuration sections
     llm: LLMConfig = Field(default_factory=LLMConfig, description="LLM configuration")
