@@ -1,4 +1,5 @@
 Difficulty,Question,Dataset,Lang
+Medium,"What are the temporal patterns of vital sign deterioration preceding cardiac arrest events in critical care settings?",datasets/eicu-demo,chs
 Easy,"Which medications are most commonly associated with adverse drug reactions in elderly patients?",datasets/eicu-demo,eng
 Hard,"Can machine learning models identify early warning signs of acute kidney injury before traditional clinical thresholds are reached?",datasets/mimic-iv-icu,chs
 Medium,"How do different ventilation strategies impact length of stay and mortality in patients with acute respiratory distress syndrome?",datasets/eicu-demo,eng

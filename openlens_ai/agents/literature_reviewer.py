@@ -85,7 +85,7 @@ def build_literature_review_subgraph(config: Config):
         config, llm_react, search_prompt_template, context_manage="vector_search", calling_subgraph="literature_review"
     )
     write_report_chatbot = chatbot_with_context_manager(
-        config, llm_report_writer, report_prompt_template, context_manage="vector_search", calling_subgraph="literature_review"
+        config, llm_report_writer, report_prompt_template, context_manage="token_cnt_large", calling_subgraph="literature_review", force_stringify_context=True
     )
     
     @track_node_call("literature_review")

@@ -12,16 +12,30 @@ import uuid
 LOGGED_CALLS_DIR = "outputs/logged_calls"
 os.makedirs(LOGGED_CALLS_DIR, exist_ok=True)
 
-def convert_to_dict(obj):
-    """Recursively convert objects to dictionaries"""
+def convert_to_dict(obj, max_depth=10, current_depth=0):
+    """Recursively convert objects to dictionaries with maximum recursion depth control
+    
+    Args:
+        obj: The object to convert
+        max_depth: Maximum recursion depth to prevent infinite recursion (default: 10)
+        current_depth: Current recursion depth (used internally)
+    
+    Returns:
+        Converted dictionary or the original object if max depth is reached
+    """
+    # Check if we've reached the maximum recursion depth
+    if current_depth >= max_depth:
+        # Return a string representation instead of recursing further
+        return str(obj)
+    
     if isinstance(obj, dict):
-        return {k: convert_to_dict(v) for k, v in obj.items()}
+        return {k: convert_to_dict(v, max_depth, current_depth + 1) for k, v in obj.items()}
     elif isinstance(obj, (list, tuple)):
-        return [convert_to_dict(item) for item in obj]
+        return [convert_to_dict(item, max_depth, current_depth + 1) for item in obj]
     elif hasattr(obj, '__dict__'):
-        return convert_to_dict(obj.__dict__)
+        return convert_to_dict(obj.__dict__, max_depth, current_depth + 1)
     elif hasattr(obj, '_asdict'):  # namedtuple
-        return convert_to_dict(obj._asdict())
+        return convert_to_dict(obj._asdict(), max_depth, current_depth + 1)
     else:
         return obj
 

@@ -196,6 +196,7 @@ def chatbot_with_context_manager(
     context_manage: Literal["token_cnt", "token_cnt_large", "last_message", "last_tool_message", "vector_search"] = "vector_search",
     only_last_human_message: bool = False,
     calling_subgraph: str = "",
+    force_stringify_context: bool = False,
 ):
     """
     创建一个带上下文管理功能的聊天机器人
@@ -438,6 +439,10 @@ def chatbot_with_context_manager(
             max_context_token_cnt = config.context.max_context_token_cnt
             logger.info(f"Use max_context_token_cnt: {max_context_token_cnt}")
             message_to_llm = clamp_token_cnt(state["messages"], max_context_token_cnt)
+            
+        if force_stringify_context:
+            logger.warning("Force stringify context, this may cause loss of information.")
+            message_to_llm = [HumanMessage(content=str(message_to_llm))]
 
         last_error_message = detect_error_message(state)
         if last_error_message:
@@ -450,6 +455,7 @@ def chatbot_with_context_manager(
             if not isinstance(llm, CompiledStateGraph):
                 frontend_add_message(state["messages"][-1], config)
             logger.info(f"Prompt: {this_prompt[:1000]}...")
+            
 
         # 只保留最后一条HumanMessage
         if only_last_human_message:
