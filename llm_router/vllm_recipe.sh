@@ -1,0 +1,1 @@
+python llm_router/deploy_model_vllm.py -m /data/models/QuantTrio/GLM-4.6-AWQ -p 8000 -g 0,1,2,3 --max-len 100000 --extra="--enable-expert-parallel --gpu-memory-utilization 0.75 --enforce-eager"

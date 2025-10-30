@@ -1,0 +1,30 @@
+litellm_settings:
+  num_retries: 3
+  callbacks:
+    - litellm_logger.proxy_handler_instance
+model_list:
+  - litellm_params:
+      api_base: https://cloud.infini-ai.com/maas/v1/
+      api_key: sk-hk6ffavo5o3hctbi
+      model: openai/glm-4.5-air
+    model_name: glm-4.5-air
+  - litellm_params:
+      api_base: https://cloud.infini-ai.com/maas/v1/
+      api_key: sk-hk6ffavo5o3hctbi
+      model: openai/glm-4.1v-thinking-flash
+    model_name: glm-4.1v-9b-thinking
+  - litellm_params:
+      api_base: https://cloud.infini-ai.com/maas/v1/
+      api_key: sk-hk6ffavo5o3hctbi
+      model: openai/glm-4.5v
+    model_name: glm-4.5v
+  - litellm_params:
+      api_base: http://166.111.74.47:8000/v1/
+      api_key: "0"
+      model: openai/llm
+    model_name: local-llm
+router_settings:
+  fallbacks:
+    - local-llm:
+        - glm-4.5-air
+  routing_strategy: simple-shuffle
