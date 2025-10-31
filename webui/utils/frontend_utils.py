@@ -70,7 +70,7 @@ def get_latest_files(config: Config):
     workspace_path = os.path.join(config.save_path, "workspace")
 
     if not os.path.exists(workspace_path):
-        st.info(t("no_files_generated_yet"))
+        # st.info(t("no_files_generated_yet"))
         return
 
     # 获取所有文件并按修改时间排序
@@ -86,7 +86,7 @@ def get_latest_files(config: Config):
                     logger.warning(f"Failed to get mtime for {file_path}: {e}")
 
     if not all_files:
-        st.info(t("no_files_generated_yet"))
+        # st.info(t("no_files_generated_yet"))
         return
 
     # 按修改时间排序，取最新的几个文件
@@ -118,6 +118,10 @@ def display_multiple_file_preview(config: Config):
 def display_messages_from_file(config: Config):
     # 从文件中读取并显示最新的消息
 
+    question = t(config.question)
+    dataset_path = config.dataset_path
+    language = t(config.llm.language)
+    st.chat_message("human").write(f"**{t('question_label')}** " + question + f"\n\n**{t('dataset_path_label')}** " + dataset_path + f"\n\n**{t('language')}** " + language)
     messages_file = _get_messages_file_path(config)
     if not messages_file or not os.path.exists(messages_file):
         return

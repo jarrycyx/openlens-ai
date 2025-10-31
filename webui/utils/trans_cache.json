@@ -17,6 +17,10 @@
     "Can we discover causal drivers of prolonged ICU stay (>14 days) using structural causal models?": "我们能否使用结构因果模型来发现延长的ICU住院时间（超过14天）的因果驱动因素？",
     "How do predictive models trained generalize to older patients (>75 years) compared to younger ones?": "训练好的预测模型在老年患者（75岁以上）中的泛化能力如何，与年轻患者相比？",
     "Unknown dataset": "未知数据集",
-    "en": "英语"
+    "en": "英语",
+    "language": "语言",
+    "测试": "测试",
+    "男性乳腺癌患者的预后相对于女性患者如何": "男性乳腺癌患者的预后相对于女性患者如何",
+    "datasets/mimic-iv-icu": "datasets/mimic-iv-icu"
   }
 }

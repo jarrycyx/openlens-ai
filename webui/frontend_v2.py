@@ -158,7 +158,7 @@ def build_sidebar():
                     st.button(f"🚶‍♂️‍➡ {t('logout')}", on_click=st.logout, width="content", type="tertiary")
             with col2:
                 current_lang = get_current_language()
-                lang_button_text = "🌐 中" if current_lang == "en" else "🌐 En"
+                lang_button_text = "🌐 中" if current_lang == "zh" else "🌐 En"
                 with st.popover(lang_button_text, width="content"):
                     st.write("**选择语言 / Select Language**")
                     with st.container(horizontal=True):
@@ -218,7 +218,7 @@ def build_sidebar():
 
 
 
-def start_job(question, dataset_path, email):
+def start_job(question, dataset_path, email, language="chs"):
     if question and dataset_path and (len(email) > 5):
         # 获取配置
         
@@ -240,33 +240,22 @@ def start_job(question, dataset_path, email):
             st.error(t("max_processes_reached", max=process_manager.MAX_PROCESSES))
             return
 
-        st.chat_message("human").write(f"**{t('question_label')}** " + question + f"\n\n**{t('dataset_path_label')}** " + dataset_path)
-
         if not process_manager.is_full():
+            # 将语言选择映射到main.py期望的值
+            language_code = "chs" if language == "中文" else "eng"
+            
             # 启动新进程运行任务
             process = subprocess.Popen(
                 [
                     "python",
                     "-m",
                     "openlens_ai.main",
-                    "--question",
-                    question,
-                    "--dataset-path",
-                    dataset_path,
-                    "--thread-id",
-                    thread_id,
-                    "--email",
-                    email,
-                    "--chat-model",
-                    config.llm.chat.model,
-                    "--api-key",
-                    config.llm.chat.api_key,
-                    "--base-url",
-                    config.llm.base_url,
-                    "--code-model",
-                    config.llm.code_model,
-                    "--vision-model",
-                    config.llm.vision_model,
+                    "--question", question,
+                    "--dataset-path", dataset_path,
+                    "--thread-id", thread_id,
+                    "--notify-email", email,
+                    "--language", language_code,
+                    "--interrupt-after", "literature_reviewer"
                 ]
             )
 
@@ -277,16 +266,30 @@ def start_job(question, dataset_path, email):
                 return
 
         with st.spinner(t("creating_job")):
+            error_cnt = 0
             while True:
                 try:
-                    time.sleep(5)
-                    config = open(os.path.join("outputs", thread_id, "config.json"), "r").read()
-                    config = json.loads(config)
+                    time.sleep(10)                   
+                    dir_path = os.path.join("outputs", thread_id)
+                    # TODO: remove config.json because it is not used anymore
+                    if os.path.exists(os.path.join(dir_path, "config.json")):
+                        with open(config_path, "r") as f:
+                            config = json.load(f)
+                    elif os.path.exists(os.path.join(dir_path, "config.toml")):
+                        with open(os.path.join(dir_path, "config.toml"), "r") as f:
+                            config = toml.load(f)
+                    else:
+                        raise FileNotFoundError("No config.json or config.toml found in experiment directory")
+                    
                     config = Config(**config)
                     st.session_state.config = config
                     st.rerun()
                     break
                 except Exception as e:
+                    error_cnt += 1
+                    if error_cnt > 5:
+                        st.error(t("failed_to_start_process", max=process_manager.MAX_PROCESSES))
+                        return
                     logger.error(f"Error loading config: {e}")
                     continue
 
@@ -326,6 +329,9 @@ def main():
     # 初始化语言设置
     if "language" not in st.session_state:
         st.session_state.language = "zh"
+    # 初始化语言选择
+    if "language_selected" not in st.session_state:
+        st.session_state.language_selected = "中文"
     st.markdown(
     """
     <style>
@@ -352,7 +358,6 @@ def main():
     # 如果有当前项目，显示项目界面
     if st.session_state.config:
         
-
         st.set_page_config(
             page_title="OpenLens AI",
             layout="wide",
@@ -434,14 +439,26 @@ def main():
         show_use_cases = not question.strip()
 
         # 数据集选择/上传功能区
-        dataset_option = st.selectbox(
-            t("dataset_source"),
-            ["MIMIC-IV-ICU", "eICU-Demo", "Upload My Own"],
-            index=["MIMIC-IV-ICU", "eICU-Demo", "Upload My Own"].index(st.session_state.dataset_selected),
-            key="dataset_select",
-        )
-
-        st.session_state.dataset_selected = dataset_option
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            dataset_option = st.selectbox(
+                t("dataset_source"),
+                ["MIMIC-IV-ICU", "eICU-Demo", "Upload My Own"],
+                index=["MIMIC-IV-ICU", "eICU-Demo", "Upload My Own"].index(st.session_state.dataset_selected),
+                key="dataset_select",
+            )
+            st.session_state.dataset_selected = dataset_option
+        
+        with col2:
+            # 语言选择框
+            language_option = st.selectbox(
+                t("language"),
+                ["中文", "English"],
+                index=["中文", "English"].index(st.session_state.get("language_selected", "中文")),
+                key="language_select",
+            )
+            st.session_state.language_selected = language_option
 
         dataset_path = ""
 
@@ -486,8 +503,8 @@ def main():
         submit_col1, submit_col2 = st.columns([1, 3])
 
         with submit_col1:
-            # submit_button = st.button("🚀 Start Research", width="stretch", type="secondary")
-            submit_button = st.button(f"🚀 {t('start_research')}", width="stretch", type="secondary", disabled=True)
+            submit_button = st.button(f"🚀 {t('start_research')}", width="stretch", type="secondary")
+            # submit_button = st.button(f"🚀 {t('start_research_maintenance')}", width="stretch", type="secondary", disabled=True)
 
         with submit_col2:
             st.caption(t("start_research_note"))
@@ -495,7 +512,7 @@ def main():
         # 处理提交
         if submit_button:
             if st.user.is_logged_in:
-                start_job(question, dataset_path, st.session_state.email)
+                start_job(question, dataset_path, st.session_state.email, st.session_state.language_selected)
             else:
                 st.login()
 

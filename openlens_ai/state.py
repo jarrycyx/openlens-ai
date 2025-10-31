@@ -81,24 +81,28 @@ def get_subplan(state: State) -> str:
         logger.warning(f"No subplan found. Error: {e}")
     return subplan
 
-def load_state(save_dir: str) -> tuple[Config, State]:
+def load_state(save_dir: str, copy_to_new: bool = False) -> tuple[Config, State]:
     # 复制一遍save_dir，加上_resume
     config_path = os.path.join(save_dir, "config.toml")
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found: {config_path}")
     
-    
-    new_save_dir = save_dir + "_resume_" + datetime.now().strftime("%Y%m%d%H%M%S")
-    os.makedirs(new_save_dir, exist_ok=True)
-    os.system("cp -r " + save_dir + "/* " + new_save_dir)
-    save_dir = new_save_dir
+    if copy_to_new:
+        # 复制一遍save_dir，加上_resume_时间戳
+        new_save_dir = save_dir + "_resume_" + datetime.now().strftime("%Y%m%d%H%M%S")
+        os.makedirs(new_save_dir, exist_ok=True)
+        os.system("cp -r " + save_dir + "/* " + new_save_dir)
+        save_dir = new_save_dir
     
     # 加载config并更新save_path和thread_id
     config = Config.from_toml(config_path)
-    logger.info(f"Config save_path: {config.save_path} -> {save_dir}")
-    config.save_path = save_dir
-    config.thread_id = os.path.basename(save_dir)
-    config.save_toml(config_path)
+    
+    if copy_to_new:
+        logger.info(f"Config save_path: {config.save_path} -> {save_dir}")
+        config.save_path = save_dir
+        config.resume_from_id = config.thread_id
+        config.thread_id = os.path.basename(save_dir)
+        config.save_toml(config_path)
     
     # 加载logger
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

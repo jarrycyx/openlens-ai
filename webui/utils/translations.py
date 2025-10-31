@@ -58,7 +58,8 @@ TRANSLATIONS = {
         "upload_dataset_files": "Upload Dataset Files",
         "upload_dataset_help": "Upload your dataset files",
         "files_uploaded_successfully": "Files uploaded successfully to: {path}",
-        "start_research": "Start Research (under maintenance)",
+        "start_research": "Start Research",
+        "start_research_maintenance": "Start Research (under maintenance)", 
         "start_research_note": "Note: This will start a fully autonomous research process that may take significant time to complete.",
         "explore_use_cases": "Explore use cases",
         "loading_use_cases": "Loading use cases...",
@@ -118,13 +119,14 @@ TRANSLATIONS = {
         "all_files": "所有文件",
         
         # 应用标题和描述
-        "app_title": "OpenLens AI: 医学信息学全自主研究代理",
+        "app_title": "OpenLens AI: 全自主医学科研智能体",
         "research_question": "研究问题",
         "dataset_source": "数据集来源",
         "upload_dataset_files": "上传数据集文件",
         "upload_dataset_help": "上传您的数据集文件",
         "files_uploaded_successfully": "文件已成功上传至: {path}",
-        "start_research": "开始研究 (维护中)",
+        "start_research": "开始研究",
+        "start_research_maintenance": "开始研究 (维护中)",
         "start_research_note": "注意：这将启动一个完全自主的研究过程，可能需要较长时间完成。",
         "explore_use_cases": "探索用例",
         "loading_use_cases": "正在加载用例...",
@@ -382,7 +384,7 @@ def get_text(key: str, lang: str = "en", **kwargs) -> str:
         # 检查缓存中是否有翻译
         if cache_key in cache[lang]:
             translated_text = cache[lang][cache_key]
-            logger.info(f"Used cached translation for key '{key}' in {lang}")
+            # logger.info(f"Used cached translation for key '{key}' in {lang}")
             
             # 如果提供了格式化参数，进行格式化
             if kwargs:
