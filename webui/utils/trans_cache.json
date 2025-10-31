@@ -1,0 +1,22 @@
+{
+  "zh": {
+    "What is the prediction precision of AKI in ICU patients when dynamically predicting each day based on the past two days of historical data?": "在ICU患者中，基于过去两天的历史数据动态预测每日AKI时，预测精度如何？",
+    "Which medications are most commonly associated with adverse drug reactions in elderly patients?": "哪些药物最常与老年患者的不良药物反应相关？",
+    "What are the most common comorbidities associated with readmission within 30 days of discharge?": "出院后30天内再入院最常见的合并症有哪些？",
+    "Can we develop a fair predictive model for ICU mortality that performs consistently across different racial and socioeconomic groups?": "我们能否开发一个公平的ICU死亡率预测模型，在不同种族和社会经济群体中表现一致？",
+    "What is the effect of age and comorbidity count on sepsis mortality?": "年龄和合并症数量对脓毒症死亡率的影响是什么？",
+    "What are the temporal patterns of vital sign deterioration preceding cardiac arrest events in critical care settings?": "在重症监护环境中，心脏骤停事件发生前生命体征恶化的时序模式是什么？",
+    "How do hospital-level differences (staff ratio, region) confound predictive modeling of mortality in eICU?": "医院层面的差异（员工比例、地区）如何干扰eICU中的死亡率预测模型？",
+    "How do missingness patterns in lab tests influence the bias of sepsis prediction models?": "实验室检测中的缺失模式如何影响脓毒症预测模型的偏差？",
+    "How accurately can 30-day mortality be predicted using vital signs and lab values recorded in the first 24 hours of ICU stay?": "在ICU住院的前24小时内记录的生命体征和实验室指标能多准确地预测30天内的死亡率？",
+    "What is the predictive accuracy of using the first 24 hours of ICU stay to forecast AKI within the subsequent 7 days?": "使用ICU住院前24小时的数据预测随后7天内发生AKI的预测准确性如何？",
+    "What is the in-hospital mortality rate for patients admitted with pneumonia?": "肺炎患者院内死亡率是多少？",
+    "What is the most common primary diagnosis at ICU admission?": "ICU入院时最常见的主要诊断是什么？",
+    "What is the distribution of patient ages, and how does it differ between male and female patients?": "患者年龄的分布情况如何？男性和女性患者的年龄分布有何差异？",
+    "What is the average ICU length of stay for patients with sepsis?": "脓毒症患者的平均ICU住院天数是多少？",
+    "Can we discover causal drivers of prolonged ICU stay (>14 days) using structural causal models?": "我们能否使用结构因果模型来发现延长的ICU住院时间（超过14天）的因果驱动因素？",
+    "How do predictive models trained generalize to older patients (>75 years) compared to younger ones?": "训练好的预测模型在老年患者（75岁以上）中的泛化能力如何，与年轻患者相比？",
+    "Unknown dataset": "未知数据集",
+    "en": "英语"
+  }
+}

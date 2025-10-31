@@ -12,9 +12,11 @@ import glob
 import json
 import traceback
 
-from .file_utils import prepare_files_folders, collect_files, collect_token_usage
-from .frontend_messages import _get_messages_file_path, _message_remove_duplicates
-from .config import Config
+from openlens_ai.utils.file_utils import prepare_files_folders, collect_files, collect_token_usage
+from openlens_ai.utils.frontend_messages import _get_messages_file_path, _message_remove_duplicates
+from openlens_ai.utils.config import Config
+
+from .translations import t
 
 
 
@@ -39,7 +41,7 @@ def display_single_file(config: Config, file_path: str):
 
         # 限制显示内容长度
         if len(content) > 4000:
-            content = content[:4000] + "\n\n... (content truncated)"
+            content = content[:4000] + "\n\n" + t("content_truncated")
 
         if rel_path.endswith(".md"):
             st.markdown(content)
@@ -52,7 +54,7 @@ def display_single_file(config: Config, file_path: str):
     with open(file_path, "rb") as f:
         file_data = f.read()
 
-    st.download_button(label="⬇️ Download", data=file_data, file_name=rel_path, key=f"download_{rel_path}_{random.randint(1000, 9999)}")
+    st.download_button(label=f"⬇️ {t('download')}", data=file_data, file_name=rel_path, key=f"download_{rel_path}_{random.randint(1000, 9999)}")
 
 def get_paper_path(config: Config):
     if os.path.exists(os.path.join(config.save_path, "workspace", "manuscript", "main.pdf")):
@@ -68,7 +70,7 @@ def get_latest_files(config: Config):
     workspace_path = os.path.join(config.save_path, "workspace")
 
     if not os.path.exists(workspace_path):
-        st.info("No files generated yet.")
+        st.info(t("no_files_generated_yet"))
         return
 
     # 获取所有文件并按修改时间排序
@@ -84,7 +86,7 @@ def get_latest_files(config: Config):
                     logger.warning(f"Failed to get mtime for {file_path}: {e}")
 
     if not all_files:
-        st.info("No files generated yet.")
+        st.info(t("no_files_generated_yet"))
         return
 
     # 按修改时间排序，取最新的几个文件
@@ -107,10 +109,10 @@ def display_multiple_file_preview(config: Config):
         try:
             expand = i == 0
 
-            with st.expander(f"📄 {rel_path}", expanded=expand):
+            with st.expander(t("file_preview", rel_path=rel_path), expanded=expand):
                 display_single_file(config, file_path)
         except Exception as e:
-            st.error(f"Error reading file {rel_path}: {e}")
+            st.error(t("error_reading_file", rel_path=rel_path, error=e))
 
 
 def display_messages_from_file(config: Config):
@@ -142,7 +144,7 @@ def display_messages_from_file(config: Config):
                 if len(content) > 300:
                     # with st.container(height=150):
                     #     st.write(content)
-                    content = content[:300] + "\n\n... (content truncated)"
+                    content = content[:300] + "\n\n" + t("content_truncated")
                     st.write(content)
                 else:
                     st.write(content)
@@ -206,19 +208,19 @@ def download_workspace_button(config):
     plan_str = get_plan(config)
 
     st.download_button(
-        label="📥 Download Workspace",
+        label=f"📥 {t('download_workspace')}",
         data=zip_buffer,
         file_name=f"workspace_{os.path.basename(config.save_path)}.zip",
         mime="application/zip",
     )
     if pdf_buffer:
-        st.download_button(label="📑 Download Paper",
+        st.download_button(label=f"📑 {t('download_paper')}",
                            data=pdf_buffer,
                            mime="application/pdf",
                            file_name="main.pdf")
 
     if plan_str:
-        st.download_button(label="✍️ Download Plan",
+        st.download_button(label=f"✍️ {t('download_plan')}",
                            data=plan_str,
                            mime="text/markdown",
                            file_name="plan.md")
@@ -255,8 +257,8 @@ def show_workspace(config):
             download_workspace_button(config)
 
         # with st.popover("See file list"):
-        st.success(f"Click **📥 Download Workspace** button to download all files.")
-        st.write("**File List:**")
+        st.success(t("click_download_workspace"))
+        st.write(f"**{t('file_list')}**")
         with st.container(horizontal=True):
             # 显示文件列表
             if current_files:
@@ -265,9 +267,9 @@ def show_workspace(config):
                     try:
                         file_name = os.path.basename(file_path)
                         rel_path = os.path.relpath(file_path, workspace_path)
-                        st.caption(f"- {rel_path}")
+                        st.caption(t("file_list_item", rel_path=rel_path))
                     except Exception as e:
                         logger.error(f"Error previewing file {file_path}: {e}")
                     # show_file_in_dialog(file)
             else:
-                st.info("No files in workspace yet.")
+                st.info(t("no_files_in_workspace"))

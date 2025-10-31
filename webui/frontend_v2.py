@@ -18,11 +18,15 @@ from loguru import logger
 import streamlit as st
 from streamlit.runtime.scriptrunner import add_script_run_ctx, get_script_run_ctx
 
-from .build_graph import build_graph, run_graph
+from openlens_ai.build_graph import build_graph, run_graph
+from openlens_ai.main import main, main_resume
+from openlens_ai.utils.frontend_messages import _get_messages_file_path, _message_remove_duplicates
+from openlens_ai.utils.config import Config
+
+
 from .utils.frontend_utils import show_workspace, display_messages_from_file, get_zip, display_multiple_file_preview, display_single_file, get_latest_files
-from .utils.frontend_messages import _get_messages_file_path, _message_remove_duplicates
-from .utils.config import Config
 from .utils.process_manager import process_manager
+from .utils.translations import t, set_language, get_current_language
 
 logger.configure(handlers=[{"sink": sys.stderr, "level": "INFO"}])
 config = Config.from_toml("config.toml")
@@ -59,11 +63,12 @@ def load_saved_experiments():
                     preset_experiments.append(
                         {
                             "question": config.get("question", ""),
-                            "dataset_path": config.get("dataset_path", ""),
+                            "dataset": config.get("dataset_path", ""),
                             "dir_name": dir_name,
                             "path": dir_path,
                             "thread_id": config.get("thread_id", ""),
                             "email": config.get("email", ""),
+                            "language": config.get("llm", {}).get("language", "eng"),
                         }
                     )
                 except Exception as e:
@@ -104,10 +109,12 @@ def load_user_projects(email: str) -> List[Dict[str, Any]]:
                 logger.info(f"Failed to load project from {path}: {e}")
                 continue
 
+            question_translated = t(config_data.get("question", "Untitled Project"))
             projects.append(
                 {
                     "thread_id": config_data.get("thread_id", ""),
-                    "title": config_data.get("question", "Untitled Project")[:100] + ("..." if len(config_data.get("question", "")) > 100 else ""),
+                    "language": config_data.get("llm", {}).get("language", "en"),
+                    "title": question_translated[:100] + ("..." if len(question_translated) > 100 else ""),
                     "question": config_data.get("question", ""),
                     "dataset": config_data.get("dataset_path", ""),
                     "path": path,
@@ -123,21 +130,41 @@ def build_sidebar():
     with st.sidebar:
         # 登录/登出功能
         if not st.user.is_logged_in:
-            st.button("Log in", width="stretch", on_click=st.login)
+            # 未登录时显示登录按钮和语言切换按钮
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.button(t("log_in"), width="stretch", on_click=st.login)
+            with col2:
+                current_lang = get_current_language()
+                lang_button_text = "中文" if current_lang == "en" else "Eng"
+                if st.button(lang_button_text, width="stretch", key="lang_switch_logout"):
+                    new_lang = "zh" if current_lang == "en" else "en"
+                    set_language(new_lang)
+                    st.rerun()
             # st.stop()  # 未登录时停止执行
         else:
+            # 已登录时显示用户信息和语言切换按钮
             user_info = st.user.to_dict()
-            with st.popover(f"😀 {user_info.get('email', 'Unknown')}", width="stretch"):
-                st.write(f"Email: {user_info.get('email', 'Unknown')}")
-                if hasattr(st.user, "sub"):
-                    st.write(f"Sub: {st.user.sub}")
-                st.button("🚶‍♂️‍➡ Log out", on_click=st.logout, width="content", type="tertiary")
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                with st.popover(f"😀 {user_info.get('email', 'Unknown')}", width="stretch"):
+                    st.write(f"{t('email')}: {user_info.get('email', 'Unknown')}")
+                    if hasattr(st.user, "sub"):
+                        st.write(f"Sub: {st.user.sub}")
+                    st.button(f"🚶‍♂️‍➡ {t('logout')}", on_click=st.logout, width="content", type="tertiary")
+            with col2:
+                current_lang = get_current_language()
+                lang_button_text = "中" if current_lang == "en" else "En"
+                if st.button(lang_button_text, width="content", key="lang_switch_login"):
+                    new_lang = "zh" if current_lang == "en" else "en"
+                    set_language(new_lang)
+                    st.rerun()
 
         st.divider()
         # 用户专属项目列表（移到侧边栏底部）
-        st.subheader("📁 Your Projects")
+        st.subheader(f"📁 {t('your_projects')}")
         # 新建项目按钮
-        if st.button("&nbsp; 🚀&nbsp; + New project", width="stretch"):
+        if st.button(f"&nbsp; 🚀&nbsp; {t('new_project')}", width="stretch"):
             st.session_state.config = None
             st.rerun()
         if st.user.is_logged_in:
@@ -148,9 +175,11 @@ def build_sidebar():
             if user_projects:
                 for project in user_projects:
                     project_title = project["title"]
+                    project_language = t(project["language"])
                     project_key = f"project_{project['thread_id']}"
+                    dataset_name = t(project["dataset"].split("/")[-1] if project["dataset"] else "Unknown dataset")
 
-                    if st.button(project_title, key=project_key, width="stretch", type="tertiary"):
+                    if st.button(f"**{project_language}** | {project_title} | *{dataset_name}*", key=project_key, width="stretch", type="tertiary"):
                         # 加载项目配置
                         try:
                             if os.path.exists(os.path.join(project["path"], "config.json")):
@@ -174,9 +203,9 @@ def build_sidebar():
 
                         st.rerun()
             else:
-                st.info("No projects yet. Create your first project below.")
+                st.info(t("no_projects_yet"))
         else:
-            st.info("No projects yet. Create your first project below.")
+            st.info(t("no_projects_yet"))
 
 
 
@@ -199,10 +228,10 @@ def start_job(question, dataset_path, email):
 
         # 检查进程数量是否已满
         if process_manager.is_full():
-            st.error(f"Maximum number of processes ({process_manager.MAX_PROCESSES}) reached. Please wait for some processes to finish.")
+            st.error(t("max_processes_reached", max=process_manager.MAX_PROCESSES))
             return
 
-        st.chat_message("human").write("**Question:** " + question + "\n\n**Dataset Path:** " + dataset_path)
+        st.chat_message("human").write(f"**{t('question_label')}** " + question + f"\n\n**{t('dataset_path_label')}** " + dataset_path)
 
         if not process_manager.is_full():
             # 启动新进程运行任务
@@ -210,7 +239,7 @@ def start_job(question, dataset_path, email):
                 [
                     "python",
                     "-m",
-                    "openlens_ai.build_graph",
+                    "openlens_ai.main",
                     "--question",
                     question,
                     "--dataset-path",
@@ -235,10 +264,10 @@ def start_job(question, dataset_path, email):
             # 将进程信息添加到进程管理器
             if not process_manager.add_process(process.pid, thread_id):
                 process.terminate()  # 如果添加失败，终止进程
-                st.error(f"Failed to start process. Maximum number of processes ({process_manager.MAX_PROCESSES}) reached.")
+                st.error(t("failed_to_start_process", max=process_manager.MAX_PROCESSES))
                 return
 
-        with st.spinner("Creating job..."):
+        with st.spinner(t("creating_job")):
             while True:
                 try:
                     time.sleep(5)
@@ -256,8 +285,8 @@ def start_job(question, dataset_path, email):
 def watch_job(config):
     thread_id = config.thread_id
     email = config.notify_email
-    st.caption(f"Thread ID: {thread_id}")
-    st.warning(f"Job progress and results will be sent to {email}, please make sure the address is correct.")
+    st.caption(t("thread_id", thread_id=thread_id))
+    st.warning(t("job_progress_notification", email=email))
 
     # 保存 config 到 session state
     st.session_state.config = config
@@ -267,7 +296,7 @@ def watch_job(config):
         logger.info("Stopping old monitor thread")
         st.session_state.monitor_thread.stop()
 
-    st.success("Graph built successfully!")
+    st.success(t("graph_built_successfully"))
     display_messages_from_file(config)
 
 
@@ -285,6 +314,9 @@ def main():
         st.session_state.question_input = ""
     if "dataset_selected" not in st.session_state:
         st.session_state.dataset_selected = "MIMIC-IV-ICU"
+    # 初始化语言设置
+    if "language" not in st.session_state:
+        st.session_state.language = "zh"
     st.markdown(
     """
     <style>
@@ -332,19 +364,19 @@ def main():
             # 分割为左右两栏
             with st.container(horizontal=True):
                 # show_question = 
-                st.button("🙋 **Question:** " + config.question, type="tertiary", key="question_button")
-                st.button("🔄 Refresh", type="secondary", key="refresh_button")
+                st.button(f"🙋 **{t('question_label')}** " + config.question, type="tertiary", key="question_button")
+                st.button(f"🔄 {t('refresh')}", type="secondary", key="refresh_button")
             # st.divider()
             
             col1, col2 = st.columns([1, 2])
 
             with col1:
-                st.write("💬 **Conversation History**")
+                st.write(f"💬 **{t('conversation_history')}**")
                 with st.container(height=900, border=False):
                     watch_job(config)
                     
             with col2:
-                tab_names = ["**All files**"]
+                tab_names = [f"**{t('all_files')}**"]
                 tab_names += [os.path.basename(fp) for fp, _, _ in latest_files]
                 tab_list = st.tabs(tab_names, default=tab_names[1])
                 for i, (latest_file_path, _, _) in enumerate(latest_files):
@@ -374,18 +406,18 @@ def main():
 
         # 主界面设计
         # st.title("🫧 OpenLens AI")
-        st.subheader("🫧 OpenLens AI: Fully Autonomous Research Agent for Health Informatics")
+        st.subheader(f"🫧 {t('app_title')}")
 
         # 显示当前进程数量
         process_count = process_manager.get_process_count()
-        st.caption(f"Current Running Jobs: {process_count}/{process_manager.MAX_PROCESSES}")
+        st.caption(t("current_running_jobs", current=process_count, max=process_manager.MAX_PROCESSES))
 
         # 主要输入框
         question = st.text_area(
-            "Research Question",
+            t("research_question"),
             value=st.session_state.question_input,
             height=150,
-            placeholder="What is the prediction precision of AKI in ICU patients when dynamically predicting each day based on the past two days of historical data?",
+            placeholder=t("question_placeholder"),
             key="question_input_main",
         )
 
@@ -394,7 +426,7 @@ def main():
 
         # 数据集选择/上传功能区
         dataset_option = st.selectbox(
-            "Dataset Source",
+            t("dataset_source"),
             ["MIMIC-IV-ICU", "eICU-Demo", "Upload My Own"],
             index=["MIMIC-IV-ICU", "eICU-Demo", "Upload My Own"].index(st.session_state.dataset_selected),
             key="dataset_select",
@@ -414,7 +446,7 @@ def main():
         elif dataset_option == "Upload My Own":
             # st.info("Please upload your dataset files below. They will be saved to ./datasets/user_upload/")
             uploaded_files = st.file_uploader(
-                "Upload Dataset Files", accept_multiple_files=True, type=["csv", "txt", "json", "parquet", "xls", "xlsx"], help="Upload your dataset files"
+                t("upload_dataset_files"), accept_multiple_files=True, type=["csv", "txt", "json", "parquet", "xls", "xlsx"], help=t("upload_dataset_help")
             )
 
             # 创建用户上传目录
@@ -435,8 +467,8 @@ def main():
                         f.write(uploaded_file.getbuffer())
 
                 dataset_path = upload_subdir
-                st.success(f"Files uploaded successfully to: {upload_subdir}")
-                st.text_input("Dataset Path", dataset_path, disabled=True)
+                st.success(t("files_uploaded_successfully", path=upload_subdir))
+                st.text_input(t("dataset_path_label"), dataset_path, disabled=True)
             else:
                 # st.warning("Please upload at least one file for your dataset")
                 dataset_path = None
@@ -446,10 +478,10 @@ def main():
 
         with submit_col1:
             # submit_button = st.button("🚀 Start Research", width="stretch", type="secondary")
-            submit_button = st.button("🚀 Start Research (under maintenance)", width="stretch", type="secondary", disabled=True)
+            submit_button = st.button(f"🚀 {t('start_research')}", width="stretch", type="secondary", disabled=True)
 
         with submit_col2:
-            st.caption("Note: This will start a fully autonomous research process that may take significant time to complete.")
+            st.caption(t("start_research_note"))
 
         # 处理提交
         if submit_button:
@@ -460,10 +492,10 @@ def main():
 
         # Use Cases选项卡（仅在没有输入问题时显示）
         if show_use_cases:
-            st.subheader("Explore use cases")
+            st.subheader(t("explore_use_cases"))
 
             # 加载保存的实验
-            with st.spinner("Loading use cases..."):
+            with st.spinner(t("loading_use_cases")):
                 saved_experiments = load_saved_experiments()
                 # saved_experiments = random.sample(saved_experiments, min(6, len(saved_experiments)))
                 saved_experiments = saved_experiments[:12]
@@ -483,7 +515,10 @@ def main():
 
                     with col:
                         # 创建卡片式按钮
-                        if st.button(exp.get("question", "No question specified"), key=f"use_case_{i}", help="Click to use this experiment", width="stretch"):
+                        question = t(exp.get("question", "No question specified"))
+                        dataset = t(exp.get("dataset", "Unknown dataset").split("/")[-1])
+                        language = t(exp.get("language", "eng"))
+                        if st.button(f"**{language}** | {question} | *{dataset}*", key=f"use_case_{i}", help=t("click_to_use_experiment"), width="stretch"):
                             config_path = os.path.join(exp["path"], "config.json")
                             with open(config_path, "r") as f:
                                 config_data = json.load(f)

@@ -40,6 +40,7 @@ curie/setup/env.sh
 .streamlit/openlens.icu.pem
 .streamlit/app.openlens.icu.key
 .streamlit/app.openlens.icu.pem
+webui/utils/translation_llm.json
 
 # 缓存和临时文件
 code_logging

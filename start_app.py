@@ -1,3 +1,3 @@
-from openlens_ai.frontend_v2 import main
+from webui.frontend_v2 import main
 
 main()
