@@ -330,6 +330,12 @@ def main():
             latest_file_path, _, _ = latest_files[0]
             file_path = st.session_state.preview_file if st.session_state.preview_file else latest_file_path
             # 分割为左右两栏
+            with st.container(horizontal=True):
+                # show_question = 
+                st.button("🙋 **Question:** " + config.question, type="tertiary", key="question_button")
+                st.button("🔄 Refresh", type="secondary", key="refresh_button")
+            # st.divider()
+            
             col1, col2 = st.columns([1, 2])
 
             with col1:

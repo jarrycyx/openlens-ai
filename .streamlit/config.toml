@@ -3,7 +3,7 @@ sslCertFile = '.streamlit/app.openlens.icu.pem'
 sslKeyFile = '.streamlit/app.openlens.icu.key'
 
 [theme]
-font = "serif"
+font = "sans-serif"
 borderColor = "#e1e1e1"
 baseFontSize = 15
 
