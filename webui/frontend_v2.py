@@ -136,11 +136,15 @@ def build_sidebar():
                 st.button(t("log_in"), width="stretch", on_click=st.login)
             with col2:
                 current_lang = get_current_language()
-                lang_button_text = "中文" if current_lang == "en" else "Eng"
-                if st.button(lang_button_text, width="stretch", key="lang_switch_logout"):
-                    new_lang = "zh" if current_lang == "en" else "en"
-                    set_language(new_lang)
-                    st.rerun()
+                lang_button_text = "🌐 中" if current_lang == "en" else "🌐 En"
+                with st.popover(lang_button_text, width="content"):
+                    st.write("**选择语言 / Select Language**")
+                    if st.button("🇨🇳 中文", key="lang_zh_logout"):
+                        set_language("zh")
+                        st.rerun()
+                    if st.button("🇺🇸 English", key="lang_en_logout"):
+                        set_language("en")
+                        st.rerun()
             # st.stop()  # 未登录时停止执行
         else:
             # 已登录时显示用户信息和语言切换按钮
@@ -154,11 +158,16 @@ def build_sidebar():
                     st.button(f"🚶‍♂️‍➡ {t('logout')}", on_click=st.logout, width="content", type="tertiary")
             with col2:
                 current_lang = get_current_language()
-                lang_button_text = "中" if current_lang == "en" else "En"
-                if st.button(lang_button_text, width="content", key="lang_switch_login"):
-                    new_lang = "zh" if current_lang == "en" else "en"
-                    set_language(new_lang)
-                    st.rerun()
+                lang_button_text = "🌐 中" if current_lang == "en" else "🌐 En"
+                with st.popover(lang_button_text, width="content"):
+                    st.write("**选择语言 / Select Language**")
+                    with st.container(horizontal=True):
+                        if st.button("🇨🇳 中文", key="lang_zh"):
+                            set_language("zh")
+                            st.rerun()
+                        if st.button("🇺🇸 English", key="lang_en"):
+                            set_language("en")
+                            st.rerun()
 
         st.divider()
         # 用户专属项目列表（移到侧边栏底部）
