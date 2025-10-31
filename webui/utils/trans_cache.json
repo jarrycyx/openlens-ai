@@ -21,6 +21,17 @@
     "language": "语言",
     "测试": "测试",
     "男性乳腺癌患者的预后相对于女性患者如何": "男性乳腺癌患者的预后相对于女性患者如何",
-    "datasets/mimic-iv-icu": "datasets/mimic-iv-icu"
+    "datasets/mimic-iv-icu": "datasets/mimic-iv-icu",
+    "github_link": "GitHub链接",
+    "GitHub Link: {link}": "GitHub链接: {link}",
+    "Star us on GitHub: https://github.com/jarrycyx/openlens-ai": "关注我们在 GitHub：https://github.com/jarrycyx/openlens-ai",
+    "Star us on [GitHub](https://github.com/jarrycyx/openlens-ai)": "关注我们 [GitHub](https://github.com/jarrycyx/openlens-ai)",
+    "start_research_help": "开始研究帮助",
+    "task_dir_not_found": "任务目录未找到",
+    "job_not_running": "任务未运行",
+    "continue_task": "继续任务",
+    "Task {thread_id} is not running.": "任务 {thread_id} 正在运行。",
+    "Task directory not found: {dir}": "任务目录未找到: {dir}",
+    "task_stopped": "任务已停止"
   }
 }

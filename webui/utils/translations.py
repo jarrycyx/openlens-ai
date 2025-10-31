@@ -35,7 +35,7 @@ TRANSLATIONS = {
         
         # 进程相关
         "max_processes_reached": "Maximum number of processes ({max}) reached. Please wait for some processes to finish.",
-        "failed_to_start_process": "Failed to start process. Maximum number of processes ({max}) reached.",
+        "failed_to_start_process": "Failed to start process, Maximum number of processes ({max}) reached. Can submit an issue on GitHub for help.",
         "creating_job": "Creating job...",
         "current_running_jobs": "Current Running Jobs: {current}/{max}",
         
@@ -45,11 +45,19 @@ TRANSLATIONS = {
         "thread_id": "Thread ID: {thread_id}",
         "job_progress_notification": "Job progress and results will be sent to {email}, please make sure the address is correct.",
         "graph_built_successfully": "Graph built successfully!",
+        "job_not_running": "Task {thread_id} is not running.",
+        "continue_task": "Continue Task",
+        "task_resumed": "Task resumed successfully with PID: {pid}",
+        "failed_to_resume_task": "Failed to resume task. Please try again.",
+        "task_dir_not_found": "Task directory not found: {dir}",
+        "task_running": "Task Running",
+        "task_stopped": "Task Stopped",
         
         # 界面元素
         "refresh": "Refresh",
         "conversation_history": "Conversation History",
         "all_files": "All files",
+        "github_link": "🌟 Star us on GitHub",
         
         # 应用标题和描述
         "app_title": "OpenLens AI: Fully Autonomous Research Agent for Health Informatics",
@@ -64,6 +72,7 @@ TRANSLATIONS = {
         "explore_use_cases": "Explore use cases",
         "loading_use_cases": "Loading use cases...",
         "click_to_use_experiment": "Click to use this experiment",
+        "max_processes_reached": "The server is busy. New task will added to the waiting queue.",
         
         # 文件相关
         "content_truncated": "... (content truncated)",
@@ -102,7 +111,7 @@ TRANSLATIONS = {
         
         # 进程相关
         "max_processes_reached": "已达到最大进程数 ({max})。请等待一些进程完成。",
-        "failed_to_start_process": "启动进程失败。已达到最大进程数 ({max})。",
+        "failed_to_start_process": "启动进程失败，已达到最大进程数 ({max})，可在GitHub上提交issue反馈。",
         "creating_job": "正在创建任务...",
         "current_running_jobs": "当前运行任务: {current}/{max}",
         
@@ -112,11 +121,20 @@ TRANSLATIONS = {
         "thread_id": "线程ID: {thread_id}",
         "job_progress_notification": "任务进度和结果将发送至 {email}，请确保地址正确。",
         "graph_built_successfully": "工作流构建成功!",
+        "max_processes_reached": "服务器繁忙，新任务会进入等待队列。",
+        "job_not_running": "任务 {thread_id} 未在运行。",
+        "continue_task": "继续任务",
+        "task_resumed": "任务已成功恢复，PID: {pid}",
+        "failed_to_resume_task": "恢复任务失败，请重试。",
+        "task_dir_not_found": "未找到任务目录: {dir}",
+        "task_running": "任务运行中",
+        "task_stopped": "任务已停止",
         
         # 界面元素
         "refresh": "刷新",
         "conversation_history": "对话历史",
         "all_files": "所有文件",
+        "github_link": "🌟 在GitHub上Star我们",
         
         # 应用标题和描述
         "app_title": "OpenLens AI: 全自主医学科研智能体",

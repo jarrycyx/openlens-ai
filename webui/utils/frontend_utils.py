@@ -121,7 +121,7 @@ def display_messages_from_file(config: Config):
     question = t(config.question)
     dataset_path = config.dataset_path
     language = t(config.llm.language)
-    st.chat_message("human").write(f"**{t('question_label')}** " + question + f"\n\n**{t('dataset_path_label')}** " + dataset_path + f"\n\n**{t('language')}** " + language)
+    st.chat_message("human").write(f"**{t('question_label')}** " + question + f"\n\n**{t('dataset_path_label')}** " + dataset_path + f"\n\n**{t('language')}:** " + language)
     messages_file = _get_messages_file_path(config)
     if not messages_file or not os.path.exists(messages_file):
         return

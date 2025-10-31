@@ -172,13 +172,14 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
                 state_name = list(event.keys())[0]
                 frontend_update_node(state_name, config)
                 step_i += 1
-                with open(os.path.join(config.save_path, "states", f"step_{step_i:04d}_{state_name}.json"), "w") as f:
-                    json_str = dumps(event, ensure_ascii=False, indent=4)
-                    f.write(json_str)
                 
                 if state_name == interrupt_after:
                     logger.info(f"Interrupted after {state_name}")
                     break
+                
+                with open(os.path.join(config.save_path, "states", f"step_{step_i:04d}_{state_name}.json"), "w") as f:
+                    json_str = dumps(event, ensure_ascii=False, indent=4)
+                    f.write(json_str)
                 # 发送进度邮件
                 try:
                     zipfile, latest_md = collect_files(config)

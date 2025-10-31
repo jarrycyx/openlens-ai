@@ -65,6 +65,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
         router_messages = [m for m in state["messages"] if isinstance(m, AIMessage)]
         if router_messages:
             last_router_message = router_messages[-1]
+            results = ""
             if "DECISION" in last_router_message.content:
                 logger.info("Found previous router decision, adding to prompt. " + last_router_message.content)
                 this_prompt += "\n\nPrevious coding results:\n" + last_router_message.content

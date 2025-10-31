@@ -108,13 +108,14 @@ def load_user_projects(email: str) -> List[Dict[str, Any]]:
             except Exception as e:
                 logger.info(f"Failed to load project from {path}: {e}")
                 continue
-
-            question_translated = t(config_data.get("question", "Untitled Project"))
+            
+            # 用户创建的项目，question不需要翻译
+            question =  config_data.get("question", "Untitled Project")
             projects.append(
                 {
                     "thread_id": config_data.get("thread_id", ""),
                     "language": config_data.get("llm", {}).get("language", "en"),
-                    "title": question_translated[:100] + ("..." if len(question_translated) > 100 else ""),
+                    "title": question[:100] + ("..." if len(question) > 100 else ""),
                     "question": config_data.get("question", ""),
                     "dataset": config_data.get("dataset_path", ""),
                     "path": path,
@@ -173,7 +174,7 @@ def build_sidebar():
         # 用户专属项目列表（移到侧边栏底部）
         st.subheader(f"📁 {t('your_projects')}")
         # 新建项目按钮
-        if st.button(f"&nbsp; 🚀&nbsp; {t('new_project')}", width="stretch"):
+        if st.button(f"&nbsp; 🚀&nbsp; {t('new_project')}", help=t("new_project"), width="stretch"):
             st.session_state.config = None
             st.rerun()
         if st.user.is_logged_in:
@@ -216,6 +217,8 @@ def build_sidebar():
         else:
             st.info(t("no_projects_yet"))
 
+        st.divider()
+        st.link_button(t("github_link"), url="https://github.com/jarrycyx/openlens-ai", type="secondary", width="stretch")
 
 
 def start_job(question, dataset_path, email, language="chs"):
@@ -237,7 +240,7 @@ def start_job(question, dataset_path, email, language="chs"):
 
         # 检查进程数量是否已满
         if process_manager.is_full():
-            st.error(t("max_processes_reached", max=process_manager.MAX_PROCESSES))
+            st.error(t("failed_to_start_process", max=process_manager.MAX_PROCESSES))
             return
 
         if not process_manager.is_full():
@@ -298,7 +301,26 @@ def watch_job(config):
     thread_id = config.thread_id
     email = config.notify_email
     st.caption(t("thread_id", thread_id=thread_id))
-    st.warning(t("job_progress_notification", email=email))
+    
+    # 检查任务PID是否存在
+    processes = process_manager.get_process_list()
+    task_process = None
+    for process in processes:
+        if process.get('thread_id') == thread_id:
+            task_process = process
+            break
+    
+    # 如果任务PID不存在，显示警告信息
+    if not task_process:
+        st.warning(t("job_not_running", thread_id=thread_id))
+        
+        # 获取任务目录路径
+        task_dir = os.path.join("outputs", thread_id)
+        
+        if not os.path.exists(task_dir):
+            st.error(t("task_dir_not_found", dir=task_dir))
+    else:
+        st.warning(t("job_progress_notification", email=email))
 
     # 保存 config 到 session state
     st.session_state.config = config
@@ -355,6 +377,8 @@ def main():
     """,
         unsafe_allow_html=True,
     )
+    
+    
     # 如果有当前项目，显示项目界面
     if st.session_state.config:
         
@@ -377,8 +401,47 @@ def main():
             file_path = st.session_state.preview_file if st.session_state.preview_file else latest_file_path
             # 分割为左右两栏
             with st.container(horizontal=True):
-                # show_question = 
-                st.button(f"🙋 **{t('question_label')}** " + config.question, type="tertiary", key="question_button")
+                
+                # 检查任务PID是否存在并显示任务状态
+                processes = process_manager.get_process_list()
+                task_process = None
+                for process in processes:
+                    if process.get('thread_id') == config.thread_id:
+                        task_process = process
+                        break
+                
+                if task_process:
+                    st.markdown(f'🙋 **{t('question_label')}** {t(config.question)} | 🟢 {t("task_running")}')
+                else:
+                    st.markdown(f'🙋 **{t('question_label')}** {t(config.question)} | 🔴 {t("task_stopped")}')
+                    
+                    # 如果任务未运行，显示继续任务按钮
+                    task_dir = os.path.join("outputs", config.thread_id)
+                    if os.path.exists(task_dir):
+                        if st.button(f"▶️ {t('continue_task')}", key=f"continue_{config.thread_id}"):
+                            # 调用resume-from接口
+                            try:
+                                # 启动新进程继续任务
+                                process = subprocess.Popen(
+                                    [
+                                        "python",
+                                        "-m",
+                                        "openlens_ai.main",
+                                        "--resume-from", task_dir,
+                                    ]
+                                )
+                                
+                                # 将进程信息添加到进程管理器
+                                if process_manager.add_process(process.pid, config.thread_id):
+                                    st.success(t("task_resumed", pid=process.pid))
+                                    st.rerun()
+                                else:
+                                    process.terminate()  # 如果添加失败，终止进程
+                                    st.error(t("failed_to_resume_task"))
+                            except Exception as e:
+                                logger.error(f"Failed to resume task: {e}")
+                                st.error(t("failed_to_resume_task"))
+                
                 st.button(f"🔄 {t('refresh')}", type="secondary", key="refresh_button")
             # st.divider()
             
@@ -425,6 +488,8 @@ def main():
         # 显示当前进程数量
         process_count = process_manager.get_process_count()
         st.caption(t("current_running_jobs", current=process_count, max=process_manager.MAX_PROCESSES))
+        # if process_count >= process_manager.MAX_PROCESSES:
+        #     st.warning(t("max_processes_reached"))
 
         # 主要输入框
         question = st.text_area(
@@ -503,7 +568,7 @@ def main():
         submit_col1, submit_col2 = st.columns([1, 3])
 
         with submit_col1:
-            submit_button = st.button(f"🚀 {t('start_research')}", width="stretch", type="secondary")
+            submit_button = st.button(f"🚀 {t('start_research')}", help=t("start_research"), width="stretch", type="secondary")
             # submit_button = st.button(f"🚀 {t('start_research_maintenance')}", width="stretch", type="secondary", disabled=True)
 
         with submit_col2:
@@ -541,6 +606,7 @@ def main():
 
                     with col:
                         # 创建卡片式按钮
+                        # 样例的问题名称需要翻译，提供更好的用户体验
                         question = t(exp.get("question", "No question specified"))
                         dataset = t(exp.get("dataset", "Unknown dataset").split("/")[-1])
                         language = t(exp.get("language", "eng"))
