@@ -16,7 +16,7 @@ import time
 # 语言查找表
 TRANSLATIONS = {
     # 英文到中文的映射
-    "en": {
+    "eng": {
         # 登录相关
         "log_in": "Log in",
         "email": "Email",
@@ -95,7 +95,7 @@ TRANSLATIONS = {
         "question_placeholder": "What is the prediction precision of AKI in ICU patients when dynamically predicting each day based on the past two days of historical data?",
     },
     
-    "zh": {
+    "chs": {
         # 登录相关
         "log_in": "登录",
         "email": "邮箱",
@@ -233,7 +233,7 @@ def translate_with_llm_async(text: str, target_lang: str, cache_key: str) -> Non
             return
         
         # 构建翻译提示
-        lang_map = {"zh": "中文", "en": "English"}
+        lang_map = {"chs": "中文", "eng": "English"}
         target_language = lang_map.get(target_lang, target_lang)
         
         prompt = f"""Please translate the following text to {target_language}.
@@ -279,7 +279,7 @@ Translation:"""
             # 保存到内存中的翻译表
             if target_lang in TRANSLATIONS:
                 # 查找对应的键
-                for key, value in TRANSLATIONS["en"].items():
+                for key, value in TRANSLATIONS["eng"].items():
                     if value == text:
                         TRANSLATIONS[target_lang][key] = translated_text
                         break
@@ -319,20 +319,20 @@ def translate_with_llm(text: str, target_lang: str) -> Optional[str]:
     
     return None  # 立即返回None，表示翻译正在进行中
 
-def get_text(key: str, lang: str = "en", **kwargs) -> str:
+def get_text(key: str, lang: str = "eng", **kwargs) -> str:
     """
     获取指定语言的文本
     
     Args:
         key: 文本键名
-        lang: 语言代码 ("en" 或 "zh")
+        lang: 语言代码 ("eng" 或 "chs")
         **kwargs: 格式化参数
     
     Returns:
         格式化后的文本
     """
     if lang not in TRANSLATIONS:
-        lang = "en"
+        lang = "eng"
     
     # 如果在预定义翻译中找到
     if key in TRANSLATIONS[lang]:
@@ -348,11 +348,11 @@ def get_text(key: str, lang: str = "en", **kwargs) -> str:
         return text
     
     # 如果在英文版本中找到，但目标语言中没有，尝试自动翻译
-    if key in TRANSLATIONS["en"]:
-        english_text = TRANSLATIONS["en"][key]
+    if key in TRANSLATIONS["eng"]:
+        english_text = TRANSLATIONS["eng"][key]
         
         # 如果目标语言是英文，直接返回
-        if lang == "en":
+        if lang == "eng":
             return english_text
         
         # 加载缓存
@@ -395,7 +395,7 @@ def get_text(key: str, lang: str = "en", **kwargs) -> str:
         return english_text
     
     # 如果键名本身不在任何翻译表中，尝试直接翻译键名
-    if lang != "en":
+    if lang != "eng":
         # 加载缓存
         cache = load_translation_cache()
         
@@ -434,13 +434,13 @@ def set_language(lang: str) -> None:
     设置当前语言（可以保存到session state中）
     
     Args:
-        lang: 语言代码 ("en" 或 "zh")
+        lang: 语言代码 ("eng" 或 "chs")
     """
     import streamlit as st
     if "language" not in st.session_state:
-        st.session_state.language = "en"
+        st.session_state.language = "chs"
     
-    if lang in ["en", "zh"]:
+    if lang in ["eng", "chs"]:
         st.session_state.language = lang
 
 def get_current_language() -> str:
@@ -451,7 +451,7 @@ def get_current_language() -> str:
         当前语言代码
     """
     import streamlit as st
-    return st.session_state.get("language", "en")
+    return st.session_state.get("language", "eng")
 
 def t(key: str, **kwargs) -> str:
     """

@@ -111,11 +111,15 @@ def load_user_projects(email: str) -> List[Dict[str, Any]]:
             
             # 用户创建的项目，question不需要翻译
             question =  config_data.get("question", "Untitled Project")
+            
+            chinese_char_cnt = len(re.findall(r"[\u4e00-\u9fa5]", question))
+            chinese_ratio = chinese_char_cnt / len(question) if len(question) > 0 else 0
+            title_truncate_len = 30 if chinese_ratio > 0.5 else 100
             projects.append(
                 {
                     "thread_id": config_data.get("thread_id", ""),
-                    "language": config_data.get("llm", {}).get("language", "en"),
-                    "title": question[:100] + ("..." if len(question) > 100 else ""),
+                    "language": config_data.get("llm", {}).get("language", "eng"),
+                    "title": question[:title_truncate_len] + ("..." if len(question) > title_truncate_len else ""),
                     "question": config_data.get("question", ""),
                     "dataset": config_data.get("dataset_path", ""),
                     "path": path,
@@ -137,14 +141,14 @@ def build_sidebar():
                 st.button(t("log_in"), width="stretch", on_click=st.login)
             with col2:
                 current_lang = get_current_language()
-                lang_button_text = "🌐 中" if current_lang == "en" else "🌐 En"
+                lang_button_text = "🌐 中" if current_lang == "eng" else "🌐 En"
                 with st.popover(lang_button_text, width="content"):
                     st.write("**选择语言 / Select Language**")
                     if st.button("🇨🇳 中文", key="lang_zh_logout"):
-                        set_language("zh")
+                        set_language("chs")
                         st.rerun()
                     if st.button("🇺🇸 English", key="lang_en_logout"):
-                        set_language("en")
+                        set_language("eng")
                         st.rerun()
             # st.stop()  # 未登录时停止执行
         else:
@@ -159,15 +163,15 @@ def build_sidebar():
                     st.button(f"🚶‍♂️‍➡ {t('logout')}", on_click=st.logout, width="content", type="tertiary")
             with col2:
                 current_lang = get_current_language()
-                lang_button_text = "🌐 中" if current_lang == "zh" else "🌐 En"
+                lang_button_text = "🌐 中" if current_lang == "chs" else "🌐 En"
                 with st.popover(lang_button_text, width="content"):
                     st.write("**选择语言 / Select Language**")
                     with st.container(horizontal=True):
                         if st.button("🇨🇳 中文", key="lang_zh"):
-                            set_language("zh")
+                            set_language("chs")
                             st.rerun()
                         if st.button("🇺🇸 English", key="lang_en"):
-                            set_language("en")
+                            set_language("eng")
                             st.rerun()
 
         st.divider()
@@ -350,7 +354,7 @@ def main():
         st.session_state.dataset_selected = "MIMIC-IV-ICU"
     # 初始化语言设置
     if "language" not in st.session_state:
-        st.session_state.language = "zh"
+        st.session_state.language = "chs"
     # 初始化语言选择
     if "language_selected" not in st.session_state:
         st.session_state.language_selected = "中文"
@@ -410,8 +414,13 @@ def main():
                         task_process = process
                         break
                 
+                chinese_char_cnt = len(re.findall(r"[\u4e00-\u9fa5]", config.question))
+                chinese_ratio = chinese_char_cnt / len(config.question) if len(config.question) > 0 else 0
+                question_truncate_len = 30 if chinese_ratio > 0.5 else 100
+                question_show = config.question[:question_truncate_len] + ("..." if len(config.question) > question_truncate_len else "")
+                
                 if task_process:
-                    st.markdown(f'🙋 **{t('question_label')}** {t(config.question)} | 🟢 {t("task_running")}')
+                    st.markdown(f'🙋 **{t('question_label')}** {t(question_show)} | 🟢 {t("task_running")}')
                     
                     # 如果任务正在运行，显示强制中断按钮
                     if st.button(f"⏹️ {t('force_interrupt')}", key=f"interrupt_{config.thread_id}"):
@@ -426,7 +435,7 @@ def main():
                             logger.error(f"Failed to interrupt task: {e}")
                             st.error(t("failed_to_interrupt_task"))
                 else:
-                    st.markdown(f'🙋 **{t('question_label')}** {t(config.question)} | 🔴 {t("task_stopped")}')
+                    st.markdown(f'🙋 **{t('question_label')}** {t(question_show)} | 🔴 {t("task_stopped")}')
                     
                     # 如果任务未运行，显示继续任务按钮
                     task_dir = os.path.join("outputs", config.thread_id)
