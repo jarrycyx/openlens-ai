@@ -106,7 +106,7 @@ def load_user_projects(email: str) -> List[Dict[str, Any]]:
                 else:
                     raise FileNotFoundError("No config.json or config.toml found in project directory")
             except Exception as e:
-                logger.info(f"Failed to load project from {path}: {e}")
+                logger.debug(f"Failed to load project from {path}: {e}")
                 continue
             
             # 用户创建的项目，question不需要翻译
@@ -400,6 +400,7 @@ def main():
         config = st.session_state.config
 
         latest_files = get_latest_files(config)
+        logger.debug(f"Latest files: {[f[0] for f in latest_files]}")
         if latest_files:
             latest_file_path, _, _ = latest_files[0]
             file_path = st.session_state.preview_file if st.session_state.preview_file else latest_file_path

@@ -37,6 +37,10 @@
     "1. 研究主题：基于深度学习的配电网暂态故障识别与早期预警\n- 如何利用一维卷积神经网络或时序Transformer模型，从故障录波器或PMU的暂态数据中，精准识别不同类型的故障（如单相接地、相间短路）？\n- 能否在故障发生前的数秒至数分钟内，通过电压、电流的微妙变化实现早期预警？\n- 模型在数据不平衡（正常数据远多于故障数据）和小样本场景下的泛化能力如何提升？": "1. 研究主题：基于深度学习的配电网暂态故障识别与早期预警\n- 如何利用一维卷积神经网络或时序Transformer模型，从故障录波器或PMU的暂态数据中精准识别不同类型的故障（如单相接地、相间短路）？\n- 能否在故障发生前的数秒至数分钟内，通过电压、电流的微妙变化实现早期预警？\n- 模型在数据不平衡（正常数据远多于故障数据）和小样本场景下的泛化能力如何提升？",
     "在ICU住院的前24小时内记录的生命体征和实验室指标能多准确地预测30天内的死亡率？": "在ICU住院的前24小时内记录的生命体征和实验室指标能多准确地预测30天内的死亡率？",
     "1. 研究主题：基于深度学习的配电网暂态故障识别与早期预警\n...": "1. 研究主题：基于深度学习的配电网暂态故障识别与早期预警\n...",
-    "在ICU住院的前24小时内记录的生命体征和实验室指标能多准确...": "在ICU住院的前24小时内记录的生命体征和实验室指标能有多准确..."
+    "在ICU住院的前24小时内记录的生命体征和实验室指标能多准确...": "在ICU住院的前24小时内记录的生命体征和实验室指标能有多准确...",
+    "Can machine learning models identify early warning signs of acute kidney injury before traditional clinical thresholds are reached?": "机器学习模型能否在传统临床阈值达到之前识别急症肾损伤的早期预警信号？",
+    "Can machine learning models identify early warning signs of acute kidney injury before traditional c...": "机器学习模型是否能在传统临床指标之前识别急慢性肾损伤的早期预警信号？",
+    "What are the temporal patterns of vital sign deterioration preceding cardiac arrest events in critic...": "在重症监护中，心搏骤停事件前生命体征恶化的时序模式是什么？",
+    "Can we develop a fair predictive model for ICU mortality that performs consistently across different...": "我们能否开发一个公平的ICU死亡率预测模型，该模型能够稳定地在不同...表现？"
   }
 }

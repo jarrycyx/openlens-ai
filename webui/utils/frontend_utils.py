@@ -11,6 +11,14 @@ import streamlit as st
 import glob
 import json
 import traceback
+import PyPDF2
+from PIL import Image
+
+    
+try:
+    import PyPDF2
+except ImportError:
+    PyPDF2 = None
 
 from openlens_ai.utils.file_utils import prepare_files_folders, collect_files, collect_token_usage
 from openlens_ai.utils.frontend_messages import _get_messages_file_path, _message_remove_duplicates
@@ -66,33 +74,83 @@ def get_paper_path(config: Config):
         else:
             return None
 
+def check_file(file_path: str):
+    """检查文件是否有效且可读
+    
+    Args:
+        file_path: 文件路径
+        
+    Returns:
+        bool: 文件是否有效且可读
+    """
+    # 首先检查文件是否存在
+        
+    # 尝试读取文件内容
+    try:
+        assert os.path.exists(file_path), f"File {file_path} does not exist"
+        assert os.path.getsize(file_path) > 0, f"File {file_path} is empty"
+        if file_path.endswith(tuple(image_file_ext)):
+            # 尝试解析图像
+            with Image.open(file_path) as img:
+                img.verify()  # 验证图像完整性
+            return True
+        elif file_path.endswith(tuple(pdf_file_ext)):
+            # 尝试解析PDF
+            with open(file_path, 'rb') as f:
+                reader = PyPDF2.PdfReader(f)
+                # 检查PDF是否有页面
+                assert len(reader.pages) > 0, f"PDF {file_path} has no pages"
+                return True
+        elif file_path.endswith(tuple(text_file_ext + code_file_ext)):
+            # 尝试读取文本/代码文件
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read()
+            # 检查文件是否有内容
+            assert content.strip(), f"File {file_path} is empty after stripping"
+            return True
+        else:
+            # 不支持的文件类型
+            raise ValueError(f"Unsupported file type: {file_path}")
+    except Exception as e:
+        logger.debug(f"Failed to check file {file_path}: {e}")
+        return False
+
+
 def get_latest_files(config: Config):
     workspace_path = os.path.join(config.save_path, "workspace")
+    pdf_path = get_paper_path(config)
 
     if not os.path.exists(workspace_path):
         # st.info(t("no_files_generated_yet"))
-        return
+        return []
 
     # 获取所有文件并按修改时间排序
-    all_files = []
+    all_files = {}
     for root, dirs, files in os.walk(workspace_path):
         for file in files:
-            if not file.startswith(".") and not file.endswith(".pyc"):
-                file_path = os.path.join(root, file)
-                rel_path = os.path.relpath(file_path, workspace_path)
-                try:
-                    all_files.append((file_path, rel_path, os.path.getmtime(file_path)))
-                except Exception as e:
-                    logger.warning(f"Failed to get mtime for {file_path}: {e}")
-
+            file_path = os.path.join(root, file)
+            if (file.startswith(".")) or (file.endswith(".pyc")):
+                continue
+            if ((pdf_path) and (os.path.basename(file_path) == os.path.basename(pdf_path))):
+                continue
+            if not check_file(file_path):
+                continue
+                        
+            rel_path = os.path.relpath(file_path, workspace_path)
+            try:
+                all_files[file_path] = (file_path, rel_path, os.path.getmtime(file_path))
+            except Exception as e:
+                logger.warning(f"Failed to get mtime for {file_path}: {e}")
+                    
     if not all_files:
         # st.info(t("no_files_generated_yet"))
-        return
+        return []
 
+    
+    all_files = list(all_files.values())
     # 按修改时间排序，取最新的几个文件
-    all_files.sort(key=lambda x: x[2], reverse=True)
+    all_files = sorted(all_files, key=lambda x: x[2], reverse=True)
     all_files = [x for x in all_files if x[1].endswith(tuple(all_view_ext))]
-    pdf_path = get_paper_path(config)
     if pdf_path:
         all_files.insert(0, (pdf_path, os.path.relpath(pdf_path, workspace_path), os.path.getmtime(pdf_path)))
 
