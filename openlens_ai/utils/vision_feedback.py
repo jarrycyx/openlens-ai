@@ -119,7 +119,10 @@ def get_vision_feedback(image_base64: str, config: Config) -> str:
     
     
 
-    with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_feedback.md")) as f:
+    # Load prompt based on domain configuration
+    domain = getattr(config, 'domain', 'general')
+    prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain, "vision_feedback.md")
+    with open(prompt_path, "r") as f:
         vision_feedback_prompt = f.read() + get_lang_prompt(config.llm.language)
     
     for try_i in range(10):
@@ -143,7 +146,10 @@ def get_vision_feedback(image_base64: str, config: Config) -> str:
 
 def get_latex_vision_feedback(image_base64: str, config: Config) -> str:
     vlm = get_vlm(config)
-    with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_latex_feedback.md")) as f:
+    # Load prompt based on domain configuration
+    domain = getattr(config, 'domain', 'general')
+    prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain, "vision_latex_feedback.md")
+    with open(prompt_path, "r") as f:
         vision_latex_feedback_prompt = f.read() + get_lang_prompt(config.llm.language)
     for try_i in range(10):
         try:
@@ -175,7 +181,10 @@ def get_latex_vision_feedback(image_base64: str, config: Config) -> str:
 def get_vision_classification(image_base64: str, config: Config) -> str:
     vlm = get_vlm(config)
     # Call VLM to classify the image
-    with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "vision_classify.md")) as f:
+    # Load prompt based on domain configuration
+    domain = getattr(config, 'domain', 'general')
+    prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain, "vision_classify.md")
+    with open(prompt_path, "r") as f:
         vision_classify_prompt = f.read() + get_lang_prompt(config.llm.language)
     for try_i in range(10):
         try:

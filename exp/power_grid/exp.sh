@@ -1,0 +1,12 @@
+python -m openlens_ai.main \
+    --question "1. 研究主题：基于深度学习的配电网暂态故障识别与早期预警
+- 如何利用一维卷积神经网络或时序Transformer模型，从故障录波器或PMU的暂态数据中，精准识别不同类型的故障（如单相接地、相间短路）？
+- 能否在故障发生前的数秒至数分钟内，通过电压、电流的微妙变化实现早期预警？
+- 模型在数据不平衡（正常数据远多于故障数据）和小样本场景下的泛化能力如何提升？" \
+    --config "exp/power_grid/config.toml" \
+    --dataset-path "datasets/power_grid" \
+    --thread-id "power_grid_fault_id" \
+    --notify-email "dzdzzd@126.com" \
+    --interrupt-after "none" \
+    --language "eng" \
+    --domain "general"

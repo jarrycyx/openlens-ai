@@ -70,7 +70,8 @@ def parse_args():
     parser.add_argument("--dataset-path", type=str, help="Path to the dataset")
     parser.add_argument("--thread-id", type=str, help="Thread ID for the run")
     parser.add_argument("--notify-email", type=str, help="Email address for notifications", default="openlens_ai/tools/latex_template/blank")
-    parser.add_argument("--language", type=str, help="Language for the run, chs or eng", default="chs")
+    parser.add_argument("--language", type=str, help="Language for the run, chs or eng", default="chs", choices=["chs", "eng"])
+    parser.add_argument("--domain", type=str, default="medical", choices=["general", "medical"], help="Domain to use for prompts (general or medical)")
     
     # Config file
     parser.add_argument("--config", type=str, default="config.toml", help="Path to the config file")
@@ -118,6 +119,7 @@ def cli_main():
         config.thread_id = thread_id
         config.notify_email = notify_email
         config.llm.language = args.language
+        config.domain = args.domain
         
         main(config, interrupt_after=args.interrupt_after)
     

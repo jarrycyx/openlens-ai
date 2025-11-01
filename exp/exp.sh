@@ -4,7 +4,8 @@ python -m openlens_ai.main \
     --thread-id "pred_aki_trend_eicu_demo" \
     --notify-email "dzdzzd@126.com" \
     --interrupt-after "none" \
-    --language "chs"
+    --language "chs" \
+    --domain "medical"
 
 python -m openlens_ai.main \
     --question "What is the prediction precision of AKI in ICU patients when dynamically predicting each day based on the past two days of historical data?" \

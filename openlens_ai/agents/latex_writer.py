@@ -22,29 +22,44 @@ from ..utils.vision_feedback import collect_fig_files, get_fig_base64, get_visio
 
 results_files_extensions = [".png", ".jpg", ".jpeg", ".pdf", ".svg"]
 
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_abstract_intro.md")) as f:
-    introduction_prompt = f.read()
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_related_works.md")) as f:
-    related_works_prompt = f.read()
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_methods.md")) as f:
-    methods_prompt = f.read()
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_experiments.md")) as f:
-    exp_conclusion_prompt = f.read()
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_validator.md")) as f:
-    validator_prompt = f.read()
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_concluder.md")) as f:
-    latex_concluder_prompt = f.read()
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_router.md")) as f:
-    latex_router_prompt = f.read()
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_rigor_prompt.md")) as f:
-    latex_rigor_prompt = f.read()
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_literature_check.md")) as f:
-    latex_literature_check_prompt = f.read()
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "latex_figure_check.md")) as f:
-    latex_figure_check_prompt = f.read()
+# Function to load prompt files based on domain configuration
+def load_prompt_file(config, filename):
+    """Load prompt file from the appropriate domain directory."""
+    domain = getattr(config, 'domain', 'general')
+    prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain, filename)
+    with open(prompt_path, "r") as f:
+        return f.read()
+
+# Initialize prompt variables
+introduction_prompt = None
+related_works_prompt = None
+methods_prompt = None
+exp_conclusion_prompt = None
+validator_prompt = None
+latex_concluder_prompt = None
+latex_router_prompt = None
+latex_rigor_prompt = None
+latex_literature_check_prompt = None
+latex_figure_check_prompt = None
 
 
 def build_latex_writer(config: Config) -> StateGraph:
+    # Load prompts based on domain configuration
+    global introduction_prompt, related_works_prompt, methods_prompt, exp_conclusion_prompt
+    global validator_prompt, latex_concluder_prompt, latex_router_prompt
+    global latex_rigor_prompt, latex_literature_check_prompt, latex_figure_check_prompt
+    
+    introduction_prompt = load_prompt_file(config, "latex_abstract_intro.md")
+    related_works_prompt = load_prompt_file(config, "latex_related_works.md")
+    methods_prompt = load_prompt_file(config, "latex_methods.md")
+    exp_conclusion_prompt = load_prompt_file(config, "latex_experiments.md")
+    validator_prompt = load_prompt_file(config, "latex_validator.md")
+    latex_concluder_prompt = load_prompt_file(config, "latex_concluder.md")
+    latex_router_prompt = load_prompt_file(config, "latex_router.md")
+    latex_rigor_prompt = load_prompt_file(config, "latex_rigor_prompt.md")
+    latex_literature_check_prompt = load_prompt_file(config, "latex_literature_check.md")
+    latex_figure_check_prompt = load_prompt_file(config, "latex_figure_check.md")
+    
     concluder_llm = init_chat_model(
         config.llm.chat.model,
         base_url=config.llm.chat.base_url,

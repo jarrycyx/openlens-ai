@@ -22,17 +22,29 @@ from ..utils.vision_feedback import collect_fig_files, get_fig_base64, get_visio
 
 fig_files_extensions = [".png", ".jpg", ".jpeg", ".pdf", ".svg"]
 
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "coder.md")) as f:
-    prompt = f.read()
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "coder_validator.md")) as f:
-    validator_prompt = f.read()
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "coder_concluder.md")) as f:
-    coder_concluder_prompt = f.read()
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "coder_router.md")) as f:
-    coder_router_prompt = f.read()
+# Function to load prompts based on domain configuration
+def load_prompt_file(config: Config, filename: str) -> str:
+    """Load a prompt file from the appropriate domain directory."""
+    domain_dir = config.domain if hasattr(config, 'domain') and config.domain else "general"
+    prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain_dir, filename)
+    with open(prompt_path) as f:
+        return f.read()
+
+# Initialize prompts as None, will be loaded in build_coder function
+prompt = None
+validator_prompt = None
+coder_concluder_prompt = None
+coder_router_prompt = None
 
 
 def build_coder(config: Config) -> StateGraph:
+    # Load prompts based on domain configuration
+    global prompt, validator_prompt, coder_concluder_prompt, coder_router_prompt
+    prompt = load_prompt_file(config, "coder.md")
+    validator_prompt = load_prompt_file(config, "coder_validator.md")
+    coder_concluder_prompt = load_prompt_file(config, "coder_concluder.md")
+    coder_router_prompt = load_prompt_file(config, "coder_router.md")
+    
     concluder_llm = init_chat_model(
         config.llm.chat.model,
         base_url=config.llm.chat.base_url,

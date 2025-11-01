@@ -18,13 +18,24 @@ from ..utils.config import Config
 
 
 
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "supervisor_plan.md")) as f:
-    prompt = f.read()
+# Function to load prompts based on domain configuration
+def load_prompt_file(config: Config, filename: str) -> str:
+    """Load a prompt file from the appropriate domain directory."""
+    domain_dir = config.domain if hasattr(config, 'domain') and config.domain else "general"
+    prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain_dir, filename)
+    with open(prompt_path) as f:
+        return f.read()
 
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "supervisor_alter_plan.md")) as f:
-    alter_prompt = f.read()
+# Initialize prompts as None, will be loaded in build_supervisor function
+prompt = None
+alter_prompt = None
 
 def build_supervisor(config: Config) -> StateGraph:
+    # Load prompts based on domain configuration
+    global prompt, alter_prompt
+    prompt = load_prompt_file(config, "supervisor_plan.md")
+    alter_prompt = load_prompt_file(config, "supervisor_alter_plan.md")
+    
     search_tool = TavilySearch(max_results=5, search_depth="advanced")
     plan_writer_tool = PlanWriterTool(config)
     plan_reader_tool = PlanReaderTool(config)

@@ -36,18 +36,30 @@ from ..utils.config import Config
 
 
 
-# 加载提示模板
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "literature_review_report.md")) as f:
-    report_prompt_template = f.read()
-# 加载提示模板
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "literature_search.md")) as f:
-    search_prompt_template = f.read()
+# Initialize prompt variables
+report_prompt_template = None
+search_prompt_template = None
+
+# Function to load prompt files based on domain configuration
+def load_prompt_file(config, filename):
+    """Load prompt file from the appropriate domain directory."""
+    domain = getattr(config, 'domain', 'general')
+    prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain, filename)
+    logger.debug(f"Loading prompt file: {prompt_path}")
+    with open(prompt_path, "r") as f:
+        return f.read()
 
 
 def build_literature_review_subgraph(config: Config):
     """
     构建文献调研子图，使用paperscraper搜索文献并通过嵌入模型进行RAG处理生成文献调研报告
     """
+    
+    # Load prompts based on domain configuration
+    global report_prompt_template, search_prompt_template
+    
+    report_prompt_template = load_prompt_file(config, "literature_review_report.md")
+    search_prompt_template = load_prompt_file(config, "literature_search.md")
 
     # 初始化语言模型
     search_llm = init_chat_model(

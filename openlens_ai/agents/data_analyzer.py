@@ -21,12 +21,18 @@ from ..utils.config import Config
 
 
 
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "data_analyzer.md")) as f:
-    data_analyzer_prompt = f.read()
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "data_report.md")) as f:
-    data_report_prompt = f.read()
-with open(os.path.join(os.path.dirname(__file__), "..", "prompts", "data_router.md")) as f:
-    data_router_prompt = f.read()
+# Function to load prompts based on domain configuration
+def load_prompt_file(config: Config, filename: str) -> str:
+    """Load a prompt file from the appropriate domain directory."""
+    domain_dir = config.domain if hasattr(config, 'domain') and config.domain else "general"
+    prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain_dir, filename)
+    with open(prompt_path) as f:
+        return f.read()
+
+# Initialize prompts as None, will be loaded in build_data_analyzer function
+data_analyzer_prompt = None
+data_report_prompt = None
+data_router_prompt = None
 
 
 execute_check_prompt = """
@@ -42,6 +48,12 @@ IMPORTANT: Unexpected/broken characters are typically chinese, korean, or japane
 """
 
 def build_data_analyzer(config: Config) -> StateGraph:
+    # Load prompts based on domain configuration
+    global data_analyzer_prompt, data_report_prompt, data_router_prompt
+    data_analyzer_prompt = load_prompt_file(config, "data_analyzer.md")
+    data_report_prompt = load_prompt_file(config, "data_report.md")
+    data_router_prompt = load_prompt_file(config, "data_router.md")
+    
     llm = init_chat_model(config.llm.chat.model, 
                           base_url=config.llm.chat.base_url, 
                           model_provider="openai",
