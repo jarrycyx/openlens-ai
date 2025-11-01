@@ -33,11 +33,11 @@ model_list:
       api_key: "0"
       model: openai/llm
     model_name: local-llm
-  # - litellm_params:
-  #     api_base: https://cloud.infini-ai.com/maas/v1/
-  #     api_key: sk-hk6ffavo5o3hctbi
-  #     model: openai/glm-4.5-air
-  #   model_name: local-llm
+  - litellm_params:
+      api_base: https://cloud.infini-ai.com/maas/v1/
+      api_key: sk-hk6ffavo5o3hctbi
+      model: openai/glm-4.5-air
+    model_name: local-llm
 router_settings:
   fallbacks:
     - local-llm:

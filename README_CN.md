@@ -27,11 +27,12 @@
     </td>
     <td style="text-align: justify;">
       <strong>OpenLens AI</strong> 是一个专为医学领域设计的全自动研究智能体。
-      只需提供您的数据集和一个单行的研究想法，它便能独立进行文献综述、设计实验、分析数据并生成全面的研究报告——<strong>无需任何人工干预</strong>。
+      只需提供您的数据集和一个单行的研究想法，它便能独立进行文献综述、设计实验、分析数据并生成全面的研究报告——<strong>无需任何人工干预</strong>。<i> 同时也支持医疗以外的领域。</i>
     </td>
   </tr>
 </table>
 
+🔥 **新功能：** 支持中文图表和论文写作。
 
 ## 🔍🔍 核心特性
 
@@ -44,15 +45,15 @@
 - ✅ **自动化文献综述**：根据您的研究问题搜索和总结医学论文
 - ✅ **数据分析**：分析医学数据集并生成综合报告
 - ✅ **实验设计**：建议并验证实验方法
-- ✅ **代码生成与执行**：使用 https://github.com/All-Hands-AI/OpenHands 生成和执行用于数据分析与实验的代码
+- ✅ **代码生成与执行**：使用 [OpenHands](https://github.com/All-Hands-AI/OpenHands) 生成和执行用于数据分析与实验的代码
 - ✅ **多智能体协作**：协调多个专业智能体处理复杂研究任务
 - ✅ **LaTeX 论文生成**：自动创建和管理 LaTeX 格式的研究论文和报告
 - ✅ **交互式用户界面**：基于 Streamlit 的界面，用于监控和交互研究过程
 - ✅ **上下文管理**：通过向量搜索自动管理智能体的上下文信息
 - ✅ **视觉-语言反馈**：集成 VLM（视觉语言模型）进行可视化和反馈
+- ✅ **中文写作支持**：全面支持中文论文写作
 - ⬜ **基于 Powerpoint 的图表**：自动生成基于 Powerpoint 的演示图表以获得更好的视觉质量（以替代当前的 graphviz 图表）
 - ⬜ **通过长上下文模型管理上下文**：集成长上下文模型进行上下文管理（作为当前基于向量搜索方法的补充）
-- ⬜ **中文写作支持**：全面支持中文论文写作
 
 ## 🚀🚀🚀 快速开始
 
@@ -83,15 +84,18 @@ ALIYUN_REMOTE_DOCKER_NAME=crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs
 docker pull $ALIYUN_REMOTE_DOCKER_NAME
 docker tag $ALIYUN_REMOTE_DOCKER_NAME openlens-ai:runtime-latest
 ```
-或者重新build：
+或者从源码构建（如果需要支持中文论文写作，请下载 [windows-fonts.tar.gz](https://github.com/jarrycyx/openlens-ai/releases/download/v0.1.0/windows-fonts.tar.gz) 或收集 ```C://windows/Fonts/``` 中的字体）：
 ```bash
-# Build base docker for tex-live, etc
+# 可选：收集中文字体
+cd openlens_ai/tools/openhands_configs/ && tar -xzvf windows-fonts.tar.gz
+
+# 构建 tex-live 等基础 docker
 bash openlens_ai/tools/openhands_configs/build_docker_base.sh 
-# Build runtime docker to meet the requirements of OpenHands
+# 构建满足 OpenHands 要求的运行时 docker
 bash openlens_ai/tools/openhands_configs/build_docker_runtime.sh 
-# Check the ID of the built image
+# 检查构建镜像的 ID
 docker images
-# Tag the image name with openlens-ai:runtime-latest
+# 将镜像名称标记为 openlens-ai:runtime-latest
 docker tag <IMAGE_ID> openlens-ai:runtime-latest
 ```
 
@@ -150,13 +154,16 @@ docker_name = "openlens-ai:runtime-latest"  # 用于智能体环境的 Docker �
 
 #### 选项 1：命令行界面 (CLI)
 
-```bash
-python -m openlens_ai.build_graph --question "您的研究问题" --dataset-path "数据集路径" --thread-id "此任务的唯一ID"
-```
-
 示例：
 ```bash
-python -m openlens_ai.build_graph --question "基于历史 2 天数据预测 AKI 的精确度如何？" --dataset-path "datasets/mimic" --thread-id "test_000"
+python -m openlens_ai.main \
+  --question "重症监护环境中，心脏骤停事件前生命体征恶化的时间模式是什么？" \
+  --dataset-path "datasets/eicu-demo" \
+  --thread-id "pred_aki_trend_eicu_demo" \
+  --notify-email "dzdzzd@126.com" \
+  --interrupt-after "none" \
+  --language "chs" \
+  --domain "medical" # 领域设置："medical" 表示医疗，"general" 表示其他领域
 ```
 
 #### 选项 2：交互式 Web 界面
@@ -172,7 +179,7 @@ streamlit run start_app.py
 OpenLens AI 使用由 LangGraph 驱动的多智能体架构：
 
 1.  **文献综述员 (Literature Reviewer)**：搜索和分析相关医学文献
-2.  **数据分析员 (Data Analyzer)**：处理和医学数据集
+2.  **数据分析员 (Data Analyzer)**：处理和分析医学数据集
 3.  **监督员 (Supervisor)**：协调研究过程并做出高层决策
 4.  **程序员 (Coder)**：生成数据处理代码和技术解决方案
 5.  **LaTeX 撰写员 (LaTeX Writer)**：生成研究论文和报告的 LaTeX 文档
@@ -234,7 +241,7 @@ openlens_ai/
 
 ## 🙏🙏 致谢
 
-- 使用 https://github.com/All-Hands-AI/OpenHands 作为代码执行沙箱
-- 由 https://github.com/langchain-ai/langgraph 提供工作流编排支持
-- 使用 https://streamlit.io/ 作为 Web 界面
+- 使用 [OpenHands](https://github.com/All-Hands-AI/OpenHands) 作为代码执行沙箱
+- 由 [LangGraph](https://github.com/langchain-ai/langgraph) 提供工作流编排支持
+- 使用 [Streamlit](https://streamlit.io/) 作为 Web 界面
 - 灵感来源于人工智能在医学研究中的最新进展

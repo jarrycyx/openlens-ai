@@ -37,11 +37,12 @@
     </td>
     <td style="text-align: justify;">
       <strong>OpenLens AI</strong> is a fully autonomous research agent designed for the medical field.  
-      Provide it with your dataset and a single-line research idea, and it will independently conduct literature review, design experiments, analyze data, and generate comprehensive research reports—<strong>no manual intervention required</strong>.
+      Provide it with your dataset and a single-line research idea, and it will independently conduct literature review, design experiments, analyze data, and generate comprehensive research reports—<strong>no manual intervention required</strong>. <i> Also supports domains other than healthcare. </i>
     </td>
   </tr>
 </table>
 
+🔥 **New:** Chinese language support for figures and papers.
 
 ## 🔍 Key Features
 
@@ -60,9 +61,9 @@ No installation required! Visit our <a href="https://openlens.icu">project page<
 - ✅ **Interactive UI**: Streamlit-based interface for monitoring and interacting with the research process
 - ✅ **Context Management**: Automated management of contextual information for agents via vector search
 - ✅ **Vision-Language Feedback**: Integrate with VLM for visualization and feedback
+- ✅ **Chinese Language Support**: Full support for Chinese paper writing
 - ⬜ **Powerpoint-Based Figures**: Automated generation of Powerpoint-based figures for demonstrations for better visual quality (to replace the current graphviz-based figures)
 - ⬜ **Context Manager via Long Context Model**: Integrate with long context model for context management (in addition to the current vector search-based approach)
-- ⬜ **Chinese Language Support**: Full support for Chinese paper writing
 
 ## 🚀 Quick Start
 
@@ -164,13 +165,17 @@ See [config.full-example.toml](config.full-example.toml) for more detailed confi
 
 #### Option 1: Command Line Interface
 
-```bash
-python -m openlens_ai.build_graph --question "Your research question" --dataset-path "path/to/dataset" --thread-id "Unique id for this job"
-```
 
 Example:
 ```bash
-python -m openlens_ai.build_graph --question "What is the prediction precision of AKI based on historical 2 day data?" --dataset-path "datasets/mimic" --thread-id "test_000"
+python -m openlens_ai.main \
+  --question "What are the temporal patterns of vital sign deterioration preceding cardiac arrest events in critical care settings?" \
+  --dataset-path "datasets/eicu-demo" \
+  --thread-id "pred_aki_trend_eicu_demo" \
+  --notify-email "dzdzzd@126.com" \
+  --interrupt-after "none" \
+  --language "chs" \
+  --domain "medical" # Domain setting: "medical" for healthcare, "general" for other domains
 ```
 
 #### Option 2: Interactive Web Interface
@@ -183,7 +188,7 @@ Then open your browser to `http://localhost:8501` to access the interactive inte
 
 ## 🧠 Architecture
 
-OpenLens AI uses a multi-agent architecture powered by LangGraph:
+OpenLens AI uses a multi-module architecture powered by LangGraph:
 
 1. **Literature Reviewer**: Searches and analyzes relevant medical literature
 2. **Data Analyzer**: Processes and analyzes medical datasets
