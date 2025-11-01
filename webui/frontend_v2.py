@@ -412,6 +412,19 @@ def main():
                 
                 if task_process:
                     st.markdown(f'🙋 **{t('question_label')}** {t(config.question)} | 🟢 {t("task_running")}')
+                    
+                    # 如果任务正在运行，显示强制中断按钮
+                    if st.button(f"⏹️ {t('force_interrupt')}", key=f"interrupt_{config.thread_id}"):
+                        try:
+                            # 调用进程管理器的中断方法
+                            if process_manager.interrupt_process(config.thread_id):
+                                st.success(t("task_interrupted"))
+                                st.rerun()
+                            else:
+                                st.error(t("failed_to_interrupt_task"))
+                        except Exception as e:
+                            logger.error(f"Failed to interrupt task: {e}")
+                            st.error(t("failed_to_interrupt_task"))
                 else:
                     st.markdown(f'🙋 **{t('question_label')}** {t(config.question)} | 🔴 {t("task_stopped")}')
                     

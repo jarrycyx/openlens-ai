@@ -101,6 +101,37 @@ class ProcessManager:
     def get_process_list(self) -> List[Dict[str, Any]]:
         """获取当前进程列表"""
         return self.load_processes()
+    
+    def interrupt_process(self, thread_id: str) -> bool:
+        """根据thread_id中断进程"""
+        processes = self.load_processes()
+        for process in processes:
+            if process.get('thread_id') == thread_id:
+                pid = process.get('pid')
+                try:
+                    # 使用psutil终止进程及其子进程
+                    parent = psutil.Process(pid)
+                    children = parent.children(recursive=True)
+                    
+                    # 先终止子进程
+                    for child in children:
+                        child.terminate()
+                    
+                    # 等待子进程结束
+                    psutil.wait_procs(children, timeout=3)
+                    
+                    # 终止父进程
+                    parent.terminate()
+                    
+                    # 从进程列表中移除
+                    self.remove_process_by_pid(pid)
+                    return True
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) as e:
+                    logger.error(f"Failed to interrupt process {pid}: {e}")
+                    # 即使终止失败，也从列表中移除
+                    self.remove_process_by_pid(pid)
+                    return False
+        return False
 
 
 # 全局进程管理器实例

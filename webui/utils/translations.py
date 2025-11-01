@@ -52,6 +52,9 @@ TRANSLATIONS = {
         "task_dir_not_found": "Task directory not found: {dir}",
         "task_running": "Task Running",
         "task_stopped": "Task Stopped",
+        "force_interrupt": "Force Interrupt",
+        "task_interrupted": "Task interrupted successfully",
+        "failed_to_interrupt_task": "Failed to interrupt task. Please try again.",
         
         # 界面元素
         "refresh": "Refresh",
@@ -129,6 +132,9 @@ TRANSLATIONS = {
         "task_dir_not_found": "未找到任务目录: {dir}",
         "task_running": "任务运行中",
         "task_stopped": "任务已停止",
+        "force_interrupt": "强制中断",
+        "task_interrupted": "任务已成功中断",
+        "failed_to_interrupt_task": "中断任务失败，请重试。",
         
         # 界面元素
         "refresh": "刷新",
