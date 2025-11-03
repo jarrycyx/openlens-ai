@@ -15,7 +15,7 @@ from langchain_core.messages import AIMessage
 from loguru import logger
 
 from .utils.file_utils import collect_files
-from .utils.send_email import send_email
+from .utils.send_email import send_email, send_localized_email
 from .tools.tool_utils import route_by_keywords
 from .agents.supervisor import build_supervisor
 from .agents.coder import build_coder
@@ -43,12 +43,12 @@ def send_periodic_emails(config: Config):
             cnt += 1
             # 每30*10分钟发送一次邮件
             if cnt % 30 == 0:
-                send_email(
+                send_localized_email(
                     config=config,
-                    subject=f"OpenLens Job Progress | {config.thread_id}",
-                    content=f"Job is still running. Current progress:\n\n{latest_md}",
+                    template_key="job_still_running",
                     recipients=config.notify_email,
                     attachments=zipfile,
+                    latest_md=latest_md
                 )
                 cnt = 0
         except Exception as e:
@@ -116,12 +116,13 @@ def build_graph(config: Config, start_subgraph: str = None):
         frontend_add_message(AIMessage(content=f"Error: {e}\n{error_info}"), config)
         logger.info(f'Failed to build graph: {e}')
         logger.info(error_info)
-        send_email(
+        send_localized_email(
             config=config,
-            subject=f"OpenLens Job Failed | {config.thread_id}",
-            content=f"Failed to run build: {e}\n{error_info}",
+            template_key="failed_to_build",
             recipients=config.notify_email,
             attachments=None,
+            error=str(e),
+            error_info=error_info
         )
 
 
@@ -165,7 +166,7 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
             file_indices = [int(file_name.split("_")[1]) for file_name in file_names if file_name.endswith(".json")]
             max_index = max(file_indices)
             logger.info(f"State from step {max_index}")
-            step_i = 0
+            step_i = max_index
         for event in graph.stream(init_state, {"recursion_limit": 100}):
             # event: [("...", "..."), {}]
             if len(list(event.keys())) > 0:
@@ -175,6 +176,15 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
                 
                 if state_name == interrupt_after:
                     logger.info(f"Interrupted after {state_name}")
+                    
+                    send_localized_email(
+                        config=config,
+                        template_key="subgraph_paused",
+                        recipients=config.notify_email,
+                        attachments=zipfile,
+                        state_name=state_name,
+                        latest_md=latest_md
+                    )
                     break
                 
                 with open(os.path.join(config.save_path, "states", f"step_{step_i:04d}_{state_name}.json"), "w") as f:
@@ -188,12 +198,13 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
                     logger.error(f"Failed to collect files: {e}")
                     logger.info(error_info)
                     zipfile, latest_md = None, ""
-                send_email(
+                send_localized_email(
                     config=config,
-                    subject=f"OpenLens Job Update | {config.thread_id}",
-                    content=f"Subgraph {state_name} complete.\n\n{latest_md}",
+                    template_key="subgraph_complete",
                     recipients=config.notify_email,
                     attachments=zipfile,
+                    state_name=state_name,
+                    latest_md=latest_md
                 )
     except Exception as e:
         error_info = traceback.format_exc()
@@ -207,25 +218,27 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
             logger.error(f"Failed to collect files: {e}")
             logger.info(error_info)
             zipfile, latest_md = None, ""
-        send_email(
+        send_localized_email(
             config=config,
-            subject=f"OpenLens Job Failed | {config.thread_id}",
-            content=f"Failed to run graph: {e}\n{error_info}\n\n{latest_md}",
+            template_key="failed_to_run",
             recipients=config.notify_email,
             attachments=zipfile,
+            error=str(e),
+            error_info=error_info,
+            latest_md=latest_md
         )
         stop_sending_emails.set()
         email_thread.join(timeout=5)
         sys.exit(0)
     finally:
         # 停止定期发送邮件
-        send_email(
-            config=config,
-            subject=f"OpenLens Job Successful | {config.thread_id}",
-            content=f"All subgraphs completed successfully.",
-            recipients=config.notify_email,
-            attachments=zipfile,
-        )
+        send_localized_email(
+        config=config,
+        template_key="job_complete",
+        recipients=config.notify_email,
+        attachments=zipfile,
+        latest_md=latest_md
+    )
         stop_sending_emails.set()
         email_thread.join(timeout=5)
         sys.exit(0)

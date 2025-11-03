@@ -71,7 +71,7 @@ TRANSLATIONS = {
         "files_uploaded_successfully": "Files uploaded successfully to: {path}",
         "start_research": "Start Research",
         "start_research_maintenance": "Start Research (under maintenance)", 
-        "start_research_note": "Note: This will start a fully autonomous research process that may take significant time to complete.",
+        "start_research_note": "Note: This will start a fully autonomous research process that may take significant time. After the initial research, the process will **pause** to allow you to review and resume.",
         "explore_use_cases": "Explore use cases",
         "loading_use_cases": "Loading use cases...",
         "click_to_use_experiment": "Click to use this experiment",
@@ -107,7 +107,7 @@ TRANSLATIONS = {
         
         # 项目相关
         "your_projects": "您的项目",
-        "new_project": "+ 新建项目",
+        "new_project": "➕ 新建项目",
         "no_projects_yet": "暂无项目。请在下方创建您的第一个项目。",
         "eicu-demo": "eICU Demo",
         "mimic-iv-icu": "MIMIC-IV ICU",
@@ -151,7 +151,7 @@ TRANSLATIONS = {
         "files_uploaded_successfully": "文件已成功上传至: {path}",
         "start_research": "开始研究",
         "start_research_maintenance": "开始研究 (维护中)",
-        "start_research_note": "注意：这将启动一个完全自主的研究过程，可能需要较长时间完成。",
+        "start_research_note": "注意：启动一个完全自主的研究过程，可能需要较长时间完成。完成基础调研后将**自动暂停**，等待您确认。",
         "explore_use_cases": "探索用例",
         "loading_use_cases": "正在加载用例...",
         "click_to_use_experiment": "点击使用此实验",

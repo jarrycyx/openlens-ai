@@ -18,9 +18,6 @@ from loguru import logger
 import streamlit as st
 from streamlit.runtime.scriptrunner import add_script_run_ctx, get_script_run_ctx
 
-from openlens_ai.build_graph import build_graph, run_graph
-from openlens_ai.main import main, main_resume
-from openlens_ai.utils.frontend_messages import _get_messages_file_path, _message_remove_duplicates
 from openlens_ai.utils.config import Config
 
 
@@ -584,19 +581,17 @@ def main():
                 st.success(t("files_uploaded_successfully", path=upload_subdir))
                 st.text_input(t("dataset_path_label"), dataset_path, disabled=True)
             else:
-                # st.warning("Please upload at least one file for your dataset")
+                st.warning("Please upload at least one file for your dataset")
                 dataset_path = None
 
-        # 提交按钮
-        submit_col1, submit_col2 = st.columns([1, 3])
 
-        with submit_col1:
-            submit_button = st.button(f"🚀 {t('start_research')}", help=t("start_research"), width="stretch", type="secondary")
+        with st.container(horizontal=True):
+            submit_button = st.button(f"🚀 **{t('start_research')}**", help=t("start_research"), type="secondary")
             # submit_button = st.button(f"🚀 {t('start_research_maintenance')}", width="stretch", type="secondary", disabled=True)
 
-        with submit_col2:
             st.caption(t("start_research_note"))
 
+        
         # 处理提交
         if submit_button:
             if st.user.is_logged_in:

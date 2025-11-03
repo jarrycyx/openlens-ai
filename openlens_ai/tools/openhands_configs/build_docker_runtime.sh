@@ -19,9 +19,9 @@ cd ../../
 # ### Import docker
 # gunzip -c exp/docker/openlens-ai:runtime-latest.tar.gz | docker load
 
-# ### Upload to hub
-docker tag openlens-ai:runtime-latest crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs.com/cyx-docker/openlens-ai:runtime-latest
-docker push crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs.com/cyx-docker/openlens-ai:runtime-latest
+# # ### Upload to hub
+# docker tag openlens-ai:runtime-latest crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs.com/cyx-docker/openlens-ai:runtime-latest
+# docker push crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs.com/cyx-docker/openlens-ai:runtime-latest
 
 unset http_proxy
 unset HTTP_PROXY

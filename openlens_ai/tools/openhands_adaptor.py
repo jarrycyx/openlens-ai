@@ -51,8 +51,14 @@ def fix_permissions_in_docker_container(oh_config_str: str):
         cmd += [image_name, "bash", "-c", f"sudo chmod -R 777 /workspace"]
         logger.debug(f"Fix permissions command: {' '.join(cmd)}")
         result = subprocess.run(cmd, capture_output=True, text=True)
+        
         logger.debug(f"Fix permissions output: {result.stdout} \n {result.stderr}")
         logger.info(f"Fixed permissions in docker container {image_name} with volumes {volumes}")
+        
+        # 清理缓存
+        result = subprocess.run(["docker", "system", "prune", "-f"], capture_output=True, text=True)
+        logger.debug(f"Clean cache output: {result.stdout} \n {result.stderr}")
+        logger.info(f"Cleaned cache in docker container {image_name} with volumes {volumes}")
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to fix permissions in docker container {image_name} with volumes {volumes}: {e}")
 

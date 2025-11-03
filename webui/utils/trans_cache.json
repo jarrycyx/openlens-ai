@@ -41,6 +41,11 @@
     "Can machine learning models identify early warning signs of acute kidney injury before traditional clinical thresholds are reached?": "机器学习模型能否在传统临床阈值达到之前识别急症肾损伤的早期预警信号？",
     "Can machine learning models identify early warning signs of acute kidney injury before traditional c...": "机器学习模型是否能在传统临床指标之前识别急慢性肾损伤的早期预警信号？",
     "What are the temporal patterns of vital sign deterioration preceding cardiac arrest events in critic...": "在重症监护中，心搏骤停事件前生命体征恶化的时序模式是什么？",
-    "Can we develop a fair predictive model for ICU mortality that performs consistently across different...": "我们能否开发一个公平的ICU死亡率预测模型，该模型能够稳定地在不同...表现？"
+    "Can we develop a fair predictive model for ICU mortality that performs consistently across different...": "我们能否开发一个公平的ICU死亡率预测模型，该模型能够稳定地在不同...表现？",
+    "What is the prediction precision of AKI in ICU patients when dynamically predicting each day based o...": "在基于每日动态预测的情况下，AKI在ICU患者中的预测精度是多少？",
+    "How accurately can 30-day mortality be predicted using vital signs and lab values recorded in the fi...": "使用生命体征和实验室值预测30天死亡率的准确性如何？",
+    "How do different ventilation strategies impact length of stay and mortality in patients with acute r...": "不同的通气策略对急性呼吸窘迫综合征患者住院时间和死亡率有何影响？",
+    "How do different ventilation strategies impact length of stay and mortality in patients with acute respiratory distress syndrome?": "不同的通气策略对急性呼吸窘迫综合征患者的住院时间和死亡率有何影响？",
+    "肺炎患者院内死亡率是多少？请使用中文撰写论文。": "肺炎患者的院内死亡率是多少？请用中文撰写论文。"
   }
 }

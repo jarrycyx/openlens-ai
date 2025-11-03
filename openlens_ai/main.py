@@ -9,7 +9,7 @@ from datetime import datetime
 import random
 
 from .utils.file_utils import prepare_files_folders, collect_files
-from .utils.send_email import send_email
+from .utils.send_email import send_email, send_localized_email
 from .utils.config import Config
 from .state import State, load_state  # 从state模块导入load_state函数
 from .build_graph import build_graph, run_graph, all_subgraphs  # 从build_graph模块导入build_graph函数
@@ -19,12 +19,12 @@ def main(config: Config, interrupt_after="none"):  # 新的执行_流程
     init_state, config = prepare_files_folders(config)
     graph = build_graph(config, None)
     # 发送进度邮件
-    send_email(
+    send_localized_email(
         config=config,
-        subject=f"OpenLens Job Started | {config.thread_id}",
-        content=f"## Question\n{config.question}\n\n## Dataset\n{config.dataset_path}\n\nThe job can take a while (any time from 30 minutes to several hours) to complete. Will keep you updated with the progress.",
+        template_key="job_start",
         recipients=config.notify_email,
         attachments=None,
+        latest_md="",
     )
     run_graph(config, graph, init_state, interrupt_after=interrupt_after)
     

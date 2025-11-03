@@ -5,7 +5,7 @@ Call "report_writer_tool" to write a detailed literature review report based on 
 2. Main research methods and techniques (Include citations for all the references)
 3. Research findings and discoveries (Include citations for all the references)
 4. Research limitations
-5. Future research directions
+5. Possible research plan for the question ({question})
 6. Reference list (MUST BE REAL references that you searched)
 
 

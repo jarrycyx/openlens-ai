@@ -46,6 +46,8 @@ ENV PATH=/usr/local/texlive/2025/bin/x86_64-linux:$PATH \
 
 RUN tex --version
 
+RUN echo 'export PATH="/usr/local/texlive/2025/bin/x86_64-linux/:$PATH"' >> /root/.bashrc
+
 RUN apt-get install -y xfonts-utils
 COPY openlens_ai/tools/openhands_configs/windows-fonts/* /usr/share/fonts/msfonts/
 RUN cd /usr/share/fonts/msfonts && chmod 744 * && mkfontscale && mkfontdir && fc-cache -f
