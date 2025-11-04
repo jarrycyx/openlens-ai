@@ -24,12 +24,12 @@ model_list:
       model: openai/glm-4.5v
     model_name: glm-4.5v
   - litellm_params:
-      api_base: http://166.111.74.47:8000/v1/
+      api_base: http://127.0.0.1:8000/v1/
       api_key: "0"
       model: openai/llm
     model_name: local-llm
   # - litellm_params:
-  #     api_base: http://166.111.74.47:8001/v1/
+  #     api_base: http://127.0.0.1:8001/v1/
   #     api_key: "0"
   #     model: openai/llm
   #   model_name: local-llm

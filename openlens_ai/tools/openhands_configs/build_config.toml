@@ -17,7 +17,8 @@ user_id = 3407
 timeout = 3600
 base_container_image = "openlens-ai:base-latest"
 # runtime_container_image = "{runtime_container_image}"
-runtime_extra_build_args = ["--network=host"]
+runtime_extra_build_args = ["--network=host", "--build-arg", "HTTP_PROXY=http://127.0.0.1:7890", "--build-arg", "HTTPS_PROXY=http://127.0.0.1:7890", "--build-arg", "http_proxy=http://127.0.0.1:7890", "--build-arg", "https_proxy=http://127.0.0.1:7890", "--build-arg", "all_proxy=http://127.0.0.1:7890", "--build-arg", "ALL_PROXY=http://127.0.0.1:7890"]
+# runtime_extra_build_args = ["--network=host"]
 runtime_extra_deps = "/openhands/micromamba/envs/openhands/bin/pip install numpy pandas tqdm omegaconf gpustat einops matplotlib scikit-learn scikit-image matplotlib tensorboard \"psycopg[binary]\" prettytable xgboost seaborn tabulate psycopg2-binary torch torchvision torchaudio openai langgraph langchain tensorflow mcp-server-fetch && unset all_proxy && unset ALL_PROXY && unset http_proxy && unset HTTP_PROXY && unset https_proxy && unset HTTPS_PROXY"
 # runtime_extra_deps = "apt-get install -y texlive-full"
 

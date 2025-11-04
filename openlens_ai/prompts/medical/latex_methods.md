@@ -29,7 +29,7 @@ Generation Workflow:
 4. Formatted like example in /workspace/latex_template/
 5. Write new latex and bibtex files to /workspace/manuscript/, make sure main latex file is named "/workspace/manuscript/main.tex" and bibtex file is named "/workspace/manuscript/ref.bib".  Only write latex files, reports and compile pdf in the designated directory (/workspace/manuscript), do not create files outside the directory (i.e., DO NOT CREATE ANY FILES directly in /workspace or its other subdirectories).
 6. Write cross-references to figures/tables (figures are in /workspace/manuscript/figures/). Description of the figures can be found in /workspace/manuscript/figures/xxx_description.txt
-7. Compile to PDF using bibtex and pdflatex, make sure pdf is named "main.pdf"
+7. Compile to PDF using bibtex and pdflatex (bibtex and xelatex if Chinese), make sure pdf is named "main.pdf"
 
 Reminders:
 - When adding figure references, make sure to FIRST CHECK the current workspace for existing figures. INCLUDE ALL EXISTING FIGURES (.png, .pdf, etc) using the following format:

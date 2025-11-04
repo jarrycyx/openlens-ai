@@ -46,6 +46,10 @@
     "How accurately can 30-day mortality be predicted using vital signs and lab values recorded in the fi...": "使用生命体征和实验室值预测30天死亡率的准确性如何？",
     "How do different ventilation strategies impact length of stay and mortality in patients with acute r...": "不同的通气策略对急性呼吸窘迫综合征患者住院时间和死亡率有何影响？",
     "How do different ventilation strategies impact length of stay and mortality in patients with acute respiratory distress syndrome?": "不同的通气策略对急性呼吸窘迫综合征患者的住院时间和死亡率有何影响？",
-    "肺炎患者院内死亡率是多少？请使用中文撰写论文。": "肺炎患者的院内死亡率是多少？请用中文撰写论文。"
+    "肺炎患者院内死亡率是多少？请使用中文撰写论文。": "肺炎患者的院内死亡率是多少？请用中文撰写论文。",
+    "How do hospital-level differences (staff ratio, region) confound predictive modeling of mortality in...": "医院层面的差异（人员比例、地区等）如何干扰对……死亡率的预测建模？",
+    "What is the predictive accuracy of using the first 24 hours of ICU stay to forecast AKI within the s...": "使用ICU住院前24小时的数据预测s...中的AKI的预测准确性如何？",
+    "在ICU住院的前24小时内记录的生命体征和实验室指标能多准确地预测30天内的死亡率？ ": "在ICU住院的前24小时内记录的生命体征和实验室指标能多准确地预测30天内的死亡率？",
+    "技术成熟度评估方法研究文献综述": "技术成熟度评估方法研究文献综述"
   }
 }

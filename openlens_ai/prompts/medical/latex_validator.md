@@ -70,6 +70,7 @@ Reminders:
 - When adding figure references, make sure to FIRST CHECK the current workspace for existing figures. REFERENCE ALL EXISTING FIGURES (.png, .pdf, etc).  Description of the figures can be found in /workspace/manuscript/figures/xxx_description.txt
 - DO NOT draw new figures when writing paper unless ABSOLUTELY NECESSARY.
 - When fixing issues or writing improved version, edit the original files directly, do not write new files, i.e. DO NOT create files such as main_improved.tex, main_fixed.py because this may make the workspace messy and difficult to manage.
+- Make sure the all texts are written in the specified language.
 
 Availabel Figures:
 {figures}

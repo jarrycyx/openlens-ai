@@ -1,5 +1,5 @@
 
-# ### Use proxy if encountered network error
+# ### Use proxy if encountered network error, better be USA IP
 export http_proxy="http://127.0.0.1:7890"
 export HTTP_PROXY="http://127.0.0.1:7890"
 export https_proxy="http://127.0.0.1:7890"

@@ -14,8 +14,6 @@ triggers:
 
 
 
-### 🧠 Micro-Agent 提示脚本：中文字体与 LaTeX 支持
-
 When generating Python code using Matplotlib or LaTeX, ensure full Chinese character compatibility.
 
 ## Matplotlib 中文字体设置
@@ -45,8 +43,8 @@ and select a font that supports Chinese, such as `"Noto Sans CJK"` or `"AR PL UM
 
 ## LaTeX 中文支持
 
-* Use XeLaTeX or LuaLaTeX with CJK or xeCJK packages.
-* Avoid pdflatex for Chinese text.
+* USE XeLaTeX or LuaLaTeX with CJK or xeCJK packages.
+* DO NOT USE pdflatex for Chinese text.
 * Include this LaTeX preamble:
 
 ```latex

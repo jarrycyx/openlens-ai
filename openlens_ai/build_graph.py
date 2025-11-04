@@ -177,6 +177,13 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
                 if state_name == interrupt_after:
                     logger.info(f"Interrupted after {state_name}")
                     
+                    try:
+                        zipfile, latest_md = collect_files(config)
+                    except Exception as e:
+                        error_info = traceback.format_exc()
+                        logger.error(f"Failed to collect files: {e}")
+                        logger.info(error_info)
+                        zipfile, latest_md = None, ""
                     send_localized_email(
                         config=config,
                         template_key="subgraph_paused",
