@@ -22,7 +22,7 @@ from .agents.coder import build_coder
 from .agents.data_analyzer import build_data_analyzer
 from .agents.literature_reviewer import build_literature_review_subgraph
 from .agents.latex_writer import build_latex_writer
-from .state import State, load_state  # 从state模块导入load_state函数
+from .state import State, load_state, track_node_call  # 从state模块导入load_state函数
 from .utils.frontend_messages import frontend_add_message, frontend_add_tool_call, frontend_update_node
 from .utils.config import Config
 
@@ -55,6 +55,11 @@ def send_periodic_emails(config: Config):
             logger.error(f"Error sending periodic email: {e}")
 
 def build_graph(config: Config, start_subgraph: str = None):
+    @track_node_call(subgraph_name="")
+    def end_node(state: State):
+        state["status"] = "completed"
+        return state
+    
     try:
         graph_builder = StateGraph(State)
 
@@ -71,6 +76,9 @@ def build_graph(config: Config, start_subgraph: str = None):
         graph_builder.add_node("data_analyzer", data_analyzer_subgraph)
         graph_builder.add_node("literature_reviewer", literature_review_subgraph)
         graph_builder.add_node("latex_writer", latex_writer_subgraph)
+        graph_builder.add_node("end", end_node)
+
+
 
         
         if start_subgraph and (start_subgraph in all_subgraphs):
@@ -86,7 +94,8 @@ def build_graph(config: Config, start_subgraph: str = None):
             keywords_router,
             {"DECISION: ALTER_PLAN": "supervisor", "DECISION: REANALYZE_DATA": "data_analyzer", "NONE": "latex_writer"},
         )
-        graph_builder.add_edge("latex_writer", END)
+        graph_builder.add_edge("latex_writer", "end")
+        graph_builder.add_edge("end", END)
 
         graph = graph_builder.compile()
 

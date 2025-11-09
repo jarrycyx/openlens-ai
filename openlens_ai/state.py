@@ -31,6 +31,8 @@ class State(TypedDict):
     polish_latex_counter: int = 0
     node_call_stack: list = []
     resume_node_call_stack: list = []
+    status: str = "running"
+    
     available_figs: list = []
 
 

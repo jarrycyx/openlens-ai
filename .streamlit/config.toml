@@ -1,6 +1,7 @@
 [server]
 sslCertFile = '.streamlit/app.openlens.icu.pem'
 sslKeyFile = '.streamlit/app.openlens.icu.key'
+folderWatchBlacklist = [".setup", ".vscode", ".venv", "build", "data", "download", "outputs", "exp", "modules", "datasets", "llm_router"]
 
 [theme]
 font = "sans-serif"

@@ -337,7 +337,6 @@ def watch_job(config):
 
 def main():
     # 设置页面配置
-
     # 初始化session state
     if "config" not in st.session_state:
         st.session_state.config = None
@@ -586,8 +585,8 @@ def main():
 
 
         with st.container(horizontal=True):
-            submit_button = st.button(f"🚀 **{t('start_research')}**", help=t("start_research"), type="secondary")
-            # submit_button = st.button(f"🚀 {t('start_research_maintenance')}", width="stretch", type="secondary", disabled=True)
+            # submit_button = st.button(f"🚀 **{t('start_research')}**", help=t("start_research"), type="secondary")
+            submit_button = st.button(f"🚀 {t('start_research_maintenance')}", type="secondary", disabled=True)
 
             st.caption(t("start_research_note"))
 
