@@ -93,6 +93,9 @@ TRANSLATIONS = {
         
         # 占位符文本
         "question_placeholder": "What is the prediction precision of AKI in ICU patients when dynamically predicting each day based on the past two days of historical data?",
+        
+        # 备注
+        "note": "Note: OpenLens AI is not responsible for any errors or omissions in the results. Please verify the results independently. The research results are for informational purposes only and should not be used as a substitute for direct submission.",
     },
     
     "chs": {
@@ -172,6 +175,9 @@ TRANSLATIONS = {
         
         # 占位符文本
         "question_placeholder": "在ICU患者中，基于过去两天的历史数据动态预测每一天，AKI的预测精度是多少？",
+        
+        # 备注
+        "note": "注意：OpenLens AI 不承担任何因使用其结果而导致的错误或遗漏。请独立验证结果。研究结果仅供参考，不应直接用于学术投稿。",
     }
 }
 

@@ -637,3 +637,5 @@ def main():
                             st.session_state.config = config
                             logger.info(f"Loaded config for experiment: {exp.get('question', 'No question specified')}")
                             st.rerun()
+    
+    st.caption(t("note"))
