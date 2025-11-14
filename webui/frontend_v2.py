@@ -133,13 +133,13 @@ def build_sidebar():
         # 登录/登出功能
         if not st.user.is_logged_in:
             # 未登录时显示登录按钮和语言切换按钮
-            col1, col2 = st.columns([3, 1])
+            col1, col2 = st.columns([2, 1])
             with col1:
-                st.button(t("log_in"), width="stretch", on_click=st.login)
+                st.button(f"🚶‍♂️‍➡ {t('log_in')}", help=t('log_in'), width="stretch", on_click=st.login)
             with col2:
                 current_lang = get_current_language()
                 lang_button_text = "🌐 中" if current_lang == "eng" else "🌐 En"
-                with st.popover(lang_button_text, width="content"):
+                with st.popover(lang_button_text, width="stretch"):
                     st.write("**选择语言 / Select Language**")
                     if st.button("🇨🇳 中文", key="lang_zh_logout"):
                         set_language("chs")
@@ -417,7 +417,7 @@ def main():
                 question_show = config.question[:question_truncate_len] + ("..." if len(config.question) > question_truncate_len else "")
                 
                 if task_process:
-                    st.markdown(f'🙋 **{t('question_label')}** {t(question_show)} | 🟢 {t("task_running")}')
+                    st.markdown(f"🙋 **{t('question_label')}** {t(question_show)} | 🟢 {t('task_running')}")
                     
                     # 如果任务正在运行，显示强制中断按钮
                     if st.button(f"⏹️ {t('force_interrupt')}", key=f"interrupt_{config.thread_id}"):
@@ -432,7 +432,7 @@ def main():
                             logger.error(f"Failed to interrupt task: {e}")
                             st.error(t("failed_to_interrupt_task"))
                 else:
-                    st.markdown(f'🙋 **{t('question_label')}** {t(question_show)} | 🔴 {t("task_stopped")}')
+                    st.markdown(f"🙋 **{t('question_label')}** {t(question_show)} | 🔴 {t('task_stopped')}")
                     
                     # 如果任务未运行，显示继续任务按钮
                     task_dir = os.path.join("outputs", config.thread_id)

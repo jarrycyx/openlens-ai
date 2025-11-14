@@ -495,7 +495,7 @@ def chatbot_with_context_manager(
                     continue
 
         with open(save_path, "w") as f:
-            f.write(dumps(message_to_llm + [state["messages"][-1]], indent=4))
+            f.write(dumps(message_to_llm + [state["messages"][-1]], indent=4, ensure_ascii=False))
 
         return state
 

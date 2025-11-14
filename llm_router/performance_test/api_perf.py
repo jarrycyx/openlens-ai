@@ -60,7 +60,7 @@ def test_openai_performance(api_key, model, prompt, num_requests, max_workers, b
             total_input_tokens += input_tokens
             total_output_tokens += output_tokens
             
-            print(f"请求 {request_num} 完成 | 延迟: {latency:.2f}s | 响应: {response.choices[0].message.content[:30]}...")
+            print(f"请求 {request_num} 完成 | 延迟: {latency:.2f}s | 输入token: {input_tokens} | 输出token: {output_tokens} | 响应: {response.choices[0].message.content[:30]}...")
             return latency
         except Exception as e:
             failed_requests += 1

@@ -42,7 +42,8 @@ dependencies = [
   "streamlit[pdf]",
   "typing-extensions",
   "vllm",
-  "pillow"
+  "pillow",
+  "Authlib"
 ]
 
 [project.scripts]
