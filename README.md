@@ -1,69 +1,40 @@
-**[中文版本](README_CN.md)**
+---
+# 详细文档见https://modelscope.cn/docs/%E5%88%9B%E7%A9%BA%E9%97%B4%E5%8D%A1%E7%89%87
+domain: #领域：cv/nlp/audio/multi-modal/AutoML
+- nlp
+tags: #自定义标签
+- medical
+- research
+- agent
 
-# OpenLens AI: Fully Autonomous Research Agent for Health Infomatics
+## 启动文件(若SDK为Gradio/Streamlit，默认为app.py, 若为Static HTML, 默认为index.html)
+deployspec:
+  entry_file: static/index.html
+license: MIT License
+---
+
+
+# OpenLens AI 📚🔍💡: Fully Autonomous Medical Research Agent
 
 <p align="center">
-  <!-- <a href="https://arxiv.org/abs/2509.14778">
-    <img src="https://img.shields.io/badge/arXiv-paper-red" alt="arXiv-paper" >
-  </a>
-  <a href="https://openlens.icu">
-    <img src="https://img.shields.io/badge/Project-Page-blue" alt="Project Page" >
-  </a>
-  <a href="https://app.openlens.icu">
-    <img src="https://img.shields.io/badge/Try-Now-green" alt="Try Now" >
-  </a> -->
   <img src="https://img.shields.io/badge/Python-3.9%2B-blue" alt="Python Version">
   <img src="https://img.shields.io/badge/LangGraph-Powered-orange" alt="LangGraph">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
 </p>
 
-
-<div align="center">
-<p>
-<strong>📄 Paper:</strong> <a href="https://arxiv.org/abs/2509.14778">Read our research paper on arXiv</a> 
-
-<strong>🌐 Project Page:</strong> <a href="https://openlens.icu">Explore detailed documentation and examples</a> 
-
-<strong>🚀 Try Now:</strong> <a href="https://openlens.icu">Use our cloud application directly in your browser</a>
-<p> </p>
-
-</p>
-</div>
-
-<table>
-  <tr>
-    <td style="width:3cm; text-align:center;">
-      <img src="static/logo.svg" alt="Logo" width="100">
-    </td>
-    <td style="text-align: justify;">
-      <strong>OpenLens AI</strong> is a fully autonomous research agent designed for the medical field.  
-      Provide it with your dataset and a single-line research idea, and it will independently conduct literature review, design experiments, analyze data, and generate comprehensive research reports—<strong>no manual intervention required</strong>. <i> Also supports domains other than healthcare. </i>
-    </td>
-  </tr>
-</table>
-
-🔥 **New:** Chinese language support for figures and papers.
+**OpenLens AI** is a fully autonomous research agent designed for the medical field. Provide it with your dataset and a single-line research idea, and it will independently conduct literature review, design experiments, analyze data, and generate comprehensive research reports—**no manual intervention required**.
 
 ## 🔍 Key Features
 
-<p>
-No installation required! Visit our <a href="https://openlens.icu">project page</a> to learn more about OpenLens AI or try our <a href="https://openlens.icu">cloud application</a> to experience the fully autonomous research agent without any setup.
-</p>
-
-<img src="static/papers/example.png" alt="Logo" width="100%">
-
-- ✅ **Automated Literature Review**: Search and summarize medical papers based on your research question
-- ✅ **Data Analysis**: Analyze medical datasets and generate comprehensive reports
-- ✅ **Experiment Design**: Suggest and validate experimental approaches
-- ✅ **Code Generation and Execution**: Generate and execute code for data analysis and experiments with [OpenHands](https://github.com/All-Hands-AI/OpenHands)
-- ✅ **Multi-Agent Collaboration**: Coordinate multiple specialized agents to handle complex research tasks
-- ✅ **LaTeX Paper Generation**: Automated creation and management of research papers and reports in LaTeX format
-- ✅ **Interactive UI**: Streamlit-based interface for monitoring and interacting with the research process
-- ✅ **Context Management**: Automated management of contextual information for agents via vector search
-- ✅ **Vision-Language Feedback**: Integrate with VLM for visualization and feedback
-- ✅ **Chinese Language Support**: Full support for Chinese paper writing
-- ⬜ **Powerpoint-Based Figures**: Automated generation of Powerpoint-based figures for demonstrations for better visual quality (to replace the current graphviz-based figures)
-- ⬜ **Context Manager via Long Context Model**: Integrate with long context model for context management (in addition to the current vector search-based approach)
+- [x] **Automated Literature Review**: Search and summarize medical papers based on your research question
+- [x] **Data Analysis**: Analyze medical datasets and generate comprehensive reports
+- [x] **Experiment Design**: Suggest and validate experimental approaches
+- [x] **Code Generation and Execution**: Generate and execute code for data analysis and experiments
+- [x] **Multi-Agent Collaboration**: Coordinate multiple specialized agents to handle complex research tasks
+- [x] **LaTeX Paper Generation**: Automated creation and management of research papers and reports in LaTeX format
+- [x] **Interactive UI**: Streamlit-based interface for monitoring and interacting with the research process
+- [x] **Context Management**: Automated management of contextual information for agents via vector search
+- [ ] **Vision-Language Feedback**: Integrate with VLM for visualization and feedback
 
 ## 🚀 Quick Start
 
@@ -77,48 +48,14 @@ No installation required! Visit our <a href="https://openlens.icu">project page<
 
 ### Installation
 
-
-0. Clone the repository:
+1. Clone the repository:
 ```bash
-git clone git@github.com:jarrycyx/openlens-ai.git --recurse-submodules
-cd openlens-ai
-```
-
-1. Ensure Docker Installation:
-
-Pull the runtime directly (**recommended**):
-```bash
-docker --version
-
-# Pull docker
-ALIYUN_REMOTE_DOCKER_NAME=crpi-hbt8nkulkjqjqkie.cn-hangzhou.personal.cr.aliyuncs.com/cyx-docker/openlens-ai:runtime-latest
-docker pull $ALIYUN_REMOTE_DOCKER_NAME
-docker tag $ALIYUN_REMOTE_DOCKER_NAME openlens-ai:runtime-latest
-```
-or build from scratch (if needing to support Chinese paper writing, download [windows-fonts.tar.gz](https://github.com/jarrycyx/openlens-ai/releases/download/v0.1.0/windows-fonts.tar.gz) or collect fonts in ```C://windows/Fonts/```):
-```bash
-# Optional: Collect Chinese fonts
-cd openlens_ai/tools/openhands_configs/ && tar -xzvf windows-fonts.tar.gz
-
-# Build base docker for tex-live, etc
-bash openlens_ai/tools/openhands_configs/build_docker_base.sh 
-# Build runtime docker to meet the requirements of OpenHands
-bash openlens_ai/tools/openhands_configs/build_docker_runtime.sh 
-# Check the ID of the built image
-docker images
-# Tag the image name with openlens-ai:runtime-latest
-docker tag <IMAGE_ID> openlens-ai:runtime-latest
+git clone <repository-url>
+cd agent-med
 ```
 
 2. Install dependencies:
 ```bash
-# If wish to visualize the workflow, install graphviz:
-#   sudo apt-get install graphviz graphviz-dev
-#   pip install pygraphviz
-
-conda create -n py312 python=3.12 # Or with uv / venv
-conda activate py312
-pip install --upgrade pip
 pip install -e .
 ```
 
@@ -130,52 +67,44 @@ cp .env.example .env
 
 ### Configuration
 
-In your `config.toml` file, configure the following:
+In your `.env` file, configure the following:
 
-```yaml
-[llm]
-language = "chs"  # Language setting: "chs" for Chinese, "eng" for English
+```bash
 
-[llm.chat] # Main language model used for general tasks and coding
-model = "glm-4.5-air"  # The main language model used for general tasks
-base_url = "https://cloud.infini-ai.com/maas/v1/"  # Base URL for the model API service
-api_key = "<YOUR API KEY>"  # API key for accessing the language models
+MODEL="qwen3-235b-a22b-instruct-2507"
+API_KEY="<YOUR API KEY>"
+BASE_URL="https://cloud.infini-ai.com/maas/v1/"
+RERANK_MODEL="bge-reranker-v2-m3"
 
-[llm.vision]
-model = "glm-4.1v-9b-thinking"  # The vision model used for image analysis tasks
-base_url = "https://open.bigmodel.cn/api/paas/v4/"  # Base URL for the vision model API service
-api_key = "<YOUR API KEY>"  # API key for accessing the vision model
+TAVILY_API_KEY="<YOUR API KEY>"
 
-[rerank]
-rerank_model = "bge-reranker-v2-m3"  # The reranking model used to improve search result relevance
-rerank_api_key = "<YOUR API KEY>" # API key for accessing the reranking model (infiniai service)
-rerank_base_url = "https://cloud.infini-ai.com/maas/v1/"  # Base URL for the reranking model API service
+LANGSMITH_TRACING="true"
+LANGSMITH_ENDPOINT="https://api.smith.langchain.com"
+LANGSMITH_API_KEY="<YOUR API KEY>"
 
-[tools]
-tavily_api_key = "<YOUR API KEY>"  # API key for Tavily search service used for web search
+MAX_CONTEXT_TOKEN_CNT=32000
+MAX_CONTEXT_TOKEN_CNT_LARGE=96000
+LITERATURE_SEARCH_MIN_TOOL_CALL=10
 
-[docker]
-docker_name = "openlens-ai:runtime-latest"  # Name of the Docker container used for the agent environment
+MAX_TOOL_TOKEN_CNT=2000
 
+SMTP_SERVER=smtp.yeah.net
+SMTP_PORT=25
+EMAIL_USER=<YOUR EMAIL>
+EMAIL_PASSWORD=<YOUR EMAIL SMTP PASSWORD>
 ```
-
-See [config.full-example.toml](config.full-example.toml) for more detailed configuration options.
 
 ### Running the Application
 
 #### Option 1: Command Line Interface
 
+```bash
+python -m open_lens.build_graph --question "Your research question" --dataset-path "path/to/dataset"
+```
 
 Example:
 ```bash
-python -m openlens_ai.main \
-  --question "What are the temporal patterns of vital sign deterioration preceding cardiac arrest events in critical care settings?" \
-  --dataset-path "datasets/eicu-demo" \
-  --thread-id "pred_aki_trend_eicu_demo" \
-  --notify-email "dzdzzd@126.com" \
-  --interrupt-after "none" \
-  --language "chs" \
-  --domain "medical" # Domain setting: "medical" for healthcare, "general" for other domains
+python -m open_lens.build_graph --question "What is the prediction precision of AKI based on historical 2 day data?" --dataset-path "datasets/mimic"
 ```
 
 #### Option 2: Interactive Web Interface
@@ -188,7 +117,7 @@ Then open your browser to `http://localhost:8501` to access the interactive inte
 
 ## 🧠 Architecture
 
-OpenLens AI uses a multi-module architecture powered by LangGraph:
+OpenLens AI uses a multi-agent architecture powered by LangGraph:
 
 1. **Literature Reviewer**: Searches and analyzes relevant medical literature
 2. **Data Analyzer**: Processes and analyzes medical datasets
@@ -202,18 +131,18 @@ Agents communicate through a shared state and can call various tools including:
 - File operations
 - Vector search for context management
 - **Literature Search Tools**:
-  - ✅ arXiv Search and Paper Reading
-  - ✅ medRxiv Search and Paper Reading
-  - ✅ Google Scholar Search
-  - ✅ Tavily Search
-  - ⬜ IACR ePrint Search
-  - ⬜ Semantic Scholar Search and Paper Reading
-  - ⬜ PubMed Search
+  - arXiv Search and Paper Reading
+  - PubMed Search
+  - bioRxiv Search and Paper Reading
+  - medRxiv Search and Paper Reading
+  - Google Scholar Search
+  - IACR ePrint Search
+  - Semantic Scholar Search and Paper Reading
 
 ## 📁 Project Structure
 
 ```
-openlens_ai/
+open_lens/
 ├── agents/              # Agent implementations
 │   ├── coder.py
 │   ├── data_analyzer.py
@@ -233,15 +162,29 @@ openlens_ai/
 
 ### Adding New Agents
 
-1. Create a new agent in [openlens_ai/agents/](openlens_ai/agents/)
-2. Follow the pattern in existing agents like [coder.py](openlens_ai/agents/coder.py)
-3. Register the agent in [build_graph.py](openlens_ai/build_graph.py)
+1. Create a new agent in [open_lens/agents/](open_lens/agents/)
+2. Follow the pattern in existing agents like [coder.py](open_lens/agents/coder.py)
+3. Register the agent in [build_graph.py](open_lens/build_graph.py)
 
 ### Adding New Tools
 
-1. Add tool implementation in [openlens_ai/tools/](openlens_ai/tools/)
+1. Add tool implementation in [open_lens/tools/](open_lens/tools/)
 2. Register the tool in the appropriate agent
 3. Update prompts if needed
+
+## 📊 Example Use Cases
+
+1. **Disease Prediction Modeling**:
+   ```
+   Question: "What is the prediction precision of AKI based on historical 2 day data?"
+   Dataset: MIMIC-III critical care dataset
+   ```
+
+2. **Drug Interaction Research**:
+   ```
+   Question: "What are the latest findings on drug interactions for hypertension medications?"
+   Dataset: Clinical trial data
+   ```
 
 ## 🤝 Contributing
 
@@ -253,7 +196,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- Uses [OpenHands](https://github.com/All-Hands-AI/OpenHands) for code execution sandbox
 - Powered by [LangGraph](https://github.com/langchain-ai/langgraph) for workflow orchestration
-- Uses [Streamlit](https://streamlit.io/) for the web interface
+- Uses [OpenHands](https://github.com/All-Hands-AI/OpenHands) for code execution sandbox
 - Inspired by recent advances in AI for medical research
