@@ -43,7 +43,8 @@ dependencies = [
   "typing-extensions",
   "vllm",
   "pillow",
-  "Authlib"
+  "Authlib", 
+  "fastmcp"
 ]
 
 [project.scripts]

@@ -233,7 +233,7 @@ openlens_ai/
 
 ## 🤝🤝 贡献
 
-我们欢迎贡献！请参阅 CONTRIBUTING.md 了解如何为此项目做出贡献的详细信息。
+我们欢迎贡献！请参阅 [CONTRIBUTING.md](CONTRIBUTING.md) 了解如何为此项目做出贡献的详细信息。
 
 ## 📄📄 许可证
 
