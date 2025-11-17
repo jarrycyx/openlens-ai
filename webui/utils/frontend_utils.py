@@ -48,8 +48,8 @@ def display_single_file(config: Config, file_path: str):
             content = f.read()
 
         # 限制显示内容长度
-        if len(content) > 4000:
-            content = content[:4000] + "\n\n" + t("content_truncated")
+        if len(content) > 20000:
+            content = content[:20000] + "\n\n" + t("content_truncated")
 
         if rel_path.endswith(".md"):
             st.markdown(content)
@@ -203,11 +203,11 @@ def display_messages_from_file(config: Config):
             with st.chat_message(role, avatar="🔍" if role == "user" else None):
                 if title:
                     st.write(f"**{title}**")
-                if len(content) > 300:
-                    # with st.container(height=150):
-                    #     st.write(content)
-                    content = content[:300] + "\n\n" + t("content_truncated")
-                    st.write(content)
+                if len(content) > 2000:
+                    with st.container(height=300):
+                        st.write(content)
+                    # content = content[:300] + "\n\n" + t("content_truncated")
+                    # st.write(content)
                 else:
                     st.write(content)
         elif msg["type"] == "tool_call":

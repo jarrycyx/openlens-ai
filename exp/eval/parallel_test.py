@@ -25,8 +25,9 @@ def run_test(question, dataset_path, thread_id, email):
         'python', '-m', 'openlens_ai.main',
         '--question', question,
         '--dataset-path', dataset_path,
-        '--thread-id', thread_id,,
-        '--notify-email', email
+        '--thread-id', thread_id,
+        '--notify-email', email,
+        '--language', 'eng'
     ]
     
     print(f"Running: {' '.join(cmd)}")

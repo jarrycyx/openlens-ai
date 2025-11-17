@@ -394,6 +394,68 @@ def main():
         # 侧边栏设计
         build_sidebar()
         config = st.session_state.config
+        
+        with st.container(horizontal=True):
+            
+            # 检查任务PID是否存在并显示任务状态
+            processes = process_manager.get_process_list()
+            task_process = None
+            for process in processes:
+                if process.get('thread_id') == config.thread_id:
+                    task_process = process
+                    break
+            
+            chinese_char_cnt = len(re.findall(r"[\u4e00-\u9fa5]", config.question))
+            chinese_ratio = chinese_char_cnt / len(config.question) if len(config.question) > 0 else 0
+            question_truncate_len = 30 if chinese_ratio > 0.5 else 100
+            question_show = config.question[:question_truncate_len] + ("..." if len(config.question) > question_truncate_len else "")
+            
+            if task_process:
+                st.markdown(f"🙋 **{t('question_label')}** {t(question_show)} | 🟢 {t('task_running')}")
+                
+                # 如果任务正在运行，显示强制中断按钮
+                if st.button(f"⏹️ {t('force_interrupt')}", key=f"interrupt_{config.thread_id}"):
+                    try:
+                        # 调用进程管理器的中断方法
+                        if process_manager.interrupt_process(config.thread_id):
+                            st.success(t("task_interrupted"))
+                            st.rerun()
+                        else:
+                            st.error(t("failed_to_interrupt_task"))
+                    except Exception as e:
+                        logger.error(f"Failed to interrupt task: {e}")
+                        st.error(t("failed_to_interrupt_task"))
+            else:
+                st.markdown(f"🙋 **{t('question_label')}** {t(question_show)} | 🔴 {t('task_stopped')}")
+                
+                # 如果任务未运行，显示继续任务按钮
+                task_dir = os.path.join("outputs", config.thread_id)
+                if os.path.exists(task_dir):
+                    if st.button(f"▶️ {t('continue_task')}", key=f"continue_{config.thread_id}"):
+                        # 调用resume-from接口
+                        try:
+                            # 启动新进程继续任务
+                            process = subprocess.Popen(
+                                [
+                                    "python",
+                                    "-m",
+                                    "openlens_ai.main",
+                                    "--resume-from", task_dir,
+                                ]
+                            )
+                            
+                            # 将进程信息添加到进程管理器
+                            if process_manager.add_process(process.pid, config.thread_id):
+                                st.success(t("task_resumed", pid=process.pid))
+                                st.rerun()
+                            else:
+                                process.terminate()  # 如果添加失败，终止进程
+                                st.error(t("failed_to_resume_task"))
+                        except Exception as e:
+                            logger.error(f"Failed to resume task: {e}")
+                            st.error(t("failed_to_resume_task"))
+            
+            st.button(f"🔄 {t('refresh')}", type="secondary", key="refresh_button")
 
         latest_files = get_latest_files(config)
         logger.debug(f"Latest files: {[f[0] for f in latest_files]}")
@@ -401,67 +463,7 @@ def main():
             latest_file_path, _, _ = latest_files[0]
             file_path = st.session_state.preview_file if st.session_state.preview_file else latest_file_path
             # 分割为左右两栏
-            with st.container(horizontal=True):
-                
-                # 检查任务PID是否存在并显示任务状态
-                processes = process_manager.get_process_list()
-                task_process = None
-                for process in processes:
-                    if process.get('thread_id') == config.thread_id:
-                        task_process = process
-                        break
-                
-                chinese_char_cnt = len(re.findall(r"[\u4e00-\u9fa5]", config.question))
-                chinese_ratio = chinese_char_cnt / len(config.question) if len(config.question) > 0 else 0
-                question_truncate_len = 30 if chinese_ratio > 0.5 else 100
-                question_show = config.question[:question_truncate_len] + ("..." if len(config.question) > question_truncate_len else "")
-                
-                if task_process:
-                    st.markdown(f"🙋 **{t('question_label')}** {t(question_show)} | 🟢 {t('task_running')}")
-                    
-                    # 如果任务正在运行，显示强制中断按钮
-                    if st.button(f"⏹️ {t('force_interrupt')}", key=f"interrupt_{config.thread_id}"):
-                        try:
-                            # 调用进程管理器的中断方法
-                            if process_manager.interrupt_process(config.thread_id):
-                                st.success(t("task_interrupted"))
-                                st.rerun()
-                            else:
-                                st.error(t("failed_to_interrupt_task"))
-                        except Exception as e:
-                            logger.error(f"Failed to interrupt task: {e}")
-                            st.error(t("failed_to_interrupt_task"))
-                else:
-                    st.markdown(f"🙋 **{t('question_label')}** {t(question_show)} | 🔴 {t('task_stopped')}")
-                    
-                    # 如果任务未运行，显示继续任务按钮
-                    task_dir = os.path.join("outputs", config.thread_id)
-                    if os.path.exists(task_dir):
-                        if st.button(f"▶️ {t('continue_task')}", key=f"continue_{config.thread_id}"):
-                            # 调用resume-from接口
-                            try:
-                                # 启动新进程继续任务
-                                process = subprocess.Popen(
-                                    [
-                                        "python",
-                                        "-m",
-                                        "openlens_ai.main",
-                                        "--resume-from", task_dir,
-                                    ]
-                                )
-                                
-                                # 将进程信息添加到进程管理器
-                                if process_manager.add_process(process.pid, config.thread_id):
-                                    st.success(t("task_resumed", pid=process.pid))
-                                    st.rerun()
-                                else:
-                                    process.terminate()  # 如果添加失败，终止进程
-                                    st.error(t("failed_to_resume_task"))
-                            except Exception as e:
-                                logger.error(f"Failed to resume task: {e}")
-                                st.error(t("failed_to_resume_task"))
-                
-                st.button(f"🔄 {t('refresh')}", type="secondary", key="refresh_button")
+            
             # st.divider()
             
             col1, col2 = st.columns([1, 2])
