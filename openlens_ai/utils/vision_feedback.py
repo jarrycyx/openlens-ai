@@ -23,7 +23,7 @@ def get_vlm(config: Config):
         openai_api_key=config.llm.vision.api_key,
         extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
-def collect_fig_files(config: Config, fig_files_extensions: list = [".png", ".jpg", ".jpeg", ".pdf", ".svg"], base_dir=None):
+def collect_fig_files(config: Config, fig_files_extensions: list = [".png", ".jpg", ".jpeg", ".pdf"], base_dir=None):
     fig_file_list = []
     if base_dir is None:
         base_dir = os.path.join(config.save_path, "workspace")

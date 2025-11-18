@@ -32,7 +32,7 @@ class State(TypedDict):
     node_call_stack: list = []
     resume_node_call_stack: list = []
     status: str = "running"
-    
+    file_summary: dict = {}
     available_figs: list = []
 
 

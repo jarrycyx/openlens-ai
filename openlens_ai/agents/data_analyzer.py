@@ -1,5 +1,6 @@
 import os
 import json
+import random
 
 import glob
 from loguru import logger
@@ -17,6 +18,7 @@ from ..state import State
 from ..chatbot import chatbot_with_context_manager
 from ..state import load_state, track_node_call
 from ..utils.config import Config
+from ..utils.file_summary import FileSummary
 
 
 
@@ -30,69 +32,110 @@ def load_prompt_file(config: Config, filename: str) -> str:
         return f.read()
 
 # Initialize prompts as None, will be loaded in build_data_analyzer function
-data_analyzer_prompt = None
-data_report_prompt = None
 data_router_prompt = None
 
 
-execute_check_prompt = """
-Now first examine if the code fulfills the following requirements and the code DOES NOT MOCK OR SIMULATE any results.
-Then execute the generated code to make sure it works. Use the "python" command to execute the code, do not use virtual environments or anaconda, do not use any other commands.
-At last checks if the results/outputs includes wrong codeces or unexpected/broken characters.
-If the code fails, fix the code and try again.
-
-Requirements:
-{plan}
-
-IMPORTANT: Unexpected/broken characters are typically chinese, korean, or japanese characters that do not make sense at all. Please fix the code and try again.
-"""
 
 def build_data_analyzer(config: Config) -> StateGraph:
     # Load prompts based on domain configuration
-    global data_analyzer_prompt, data_report_prompt, data_router_prompt
-    data_analyzer_prompt = load_prompt_file(config, "data_analyzer.md")
     data_report_prompt = load_prompt_file(config, "data_report.md")
-    data_router_prompt = load_prompt_file(config, "data_router.md")
     
     llm = init_chat_model(config.llm.chat.model, 
                           base_url=config.llm.chat.base_url, 
                           model_provider="openai",
                                             openai_api_key=config.llm.chat.api_key,
                           extra_body={"chat_template_kwargs": {"enable_thinking": False}})
-    router_llm = init_chat_model(config.llm.chat.model,
-                                 base_url=config.llm.chat.base_url,
-                                 model_provider="openai",
-                                                          openai_api_key=config.llm.chat.api_key,
-                                 extra_body={"chat_template_kwargs": {"enable_thinking": True}})
-    search_tool = TavilySearch(max_results=5, search_depth="advanced")
-    code_tool = OpenHandsTool(config)
     report_writer_tool = ReportWriterTool(config, file_name="data_report.md")
     tools = [report_writer_tool]
     llm_with_tools = llm.bind_tools(tools)
 
     @track_node_call("data_analyzer")
-    def openhands_node(state: State):
-        this_prompt = data_analyzer_prompt.format(question=state["question"])
+    def data_sample_node(state: State):
+        # Initialize FileSummary to get file descriptions
+        file_summary = FileSummary(config)
         
-        router_messages = [m for m in state["messages"] if isinstance(m, AIMessage)]
-        if router_messages:
-            last_router_message = router_messages[-1]
-            results = ""
-            if "DECISION" in last_router_message.content:
-                logger.info("Found previous router decision, adding to prompt. " + last_router_message.content)
-                this_prompt += "\n\nPrevious coding results:\n" + last_router_message.content
-                results = code_tool.invoke({"prompts": [this_prompt]})
-            state["messages"] += [
-                # ToolMessage(
-                #     content=results,
-                #     name="openhands_tool",
-                #     tool_call_id="openhands_tool",
-                # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
-                HumanMessage(content=results)
-            ]
-            return state
+        # Get file tree with summaries
+        file_tree_with_summaries = file_summary.get_file_tree_with_summaries()
         
-        results = code_tool.invoke({"prompts": [this_prompt, execute_check_prompt.format(plan=this_prompt)]})
+        # Create output directory if it doesn't exist
+        output_dir = os.path.join(state["save_path"], "workspace", "data_analyze")
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Prepare output content
+        output_content = []
+        output_content.append("# File Analysis Report\n")
+        # output_content.append("## File Tree with Summaries\n")
+        # output_content.append(file_tree_with_summaries)
+        output_content.append("\n\n## File Content Samples\n")
+        
+        # Get all files from workspace and dataset
+        workspace_path = os.path.join(state["save_path"], "workspace")
+        dataset_path = config.dataset_path
+        
+        # Collect all files
+        all_files = []
+        
+        # Add files from workspace (excluding the data_analyze directory to avoid recursion)
+        for root, dirs, files in os.walk(workspace_path):
+            if "data_analyze" in dirs:
+                dirs.remove("data_analyze")
+            for file in files:
+                file_path = os.path.join(root, file)
+                all_files.append(file_path)
+        
+        # Add files from dataset
+        if os.path.exists(dataset_path):
+            for root, dirs, files in os.walk(dataset_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    all_files.append(file_path)
+        
+        # Process each file
+        for file_path in all_files:
+            try:
+                # Get file summary from cache
+                abs_path = os.path.abspath(file_path)
+                summary = file_summary.file_cache.get(abs_path, {}).get("summary", "No summary available")
+                
+                # Read file content samples
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    lines = f.readlines()
+                    
+                # Get first 10 lines
+                first_10_lines = lines[:10]
+                
+                # Get random 10 lines (if file has more than 10 lines)
+                random_10_lines = []
+                if len(lines) > 10:
+                    random_indices = random.sample(range(10, len(lines)), min(10, len(lines) - 10))
+                    random_10_lines = [lines[i] for i in sorted(random_indices)]
+                
+                # Add file information to output
+                output_content.append(f"### {file_path}\n")
+                output_content.append(f"**Summary:** {summary}\n")
+                output_content.append("**First 10 lines:**\n")
+                output_content.append("```\n")
+                output_content.extend(first_10_lines)
+                output_content.append("```\n")
+                
+                if random_10_lines:
+                    output_content.append("**Random 10 lines:**\n")
+                    output_content.append("```\n")
+                    output_content.extend(random_10_lines)
+                    output_content.append("```\n")
+                
+                output_content.append("\n")
+            except Exception as e:
+                logger.warning(f"Failed to process file {file_path}: {e}")
+                output_content.append(f"### {file_path}\n")
+                output_content.append(f"**Error:** {str(e)}\n\n")
+        
+        # Write output to file
+        output_path = os.path.join(output_dir, "data_show.md")
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write("".join(output_content))
+        
+        logger.info(f"File analysis report saved to {output_path}")
         
         return state
 
@@ -106,28 +149,19 @@ def build_data_analyzer(config: Config) -> StateGraph:
         state = this_chatbot(state)
         return state
 
-    def router_node(state: State):
-        router_chatbot = chatbot_with_context_manager(config, router_llm, data_router_prompt, context_manage="token_cnt_large", calling_subgraph="data_analyzer")
-        state = router_chatbot(state)
-        return state
-
     graph_builder = StateGraph(State)
     
     router_by_write_reports = route_by_tool_call("report_writer_tool")
-    route_by_data_show = route_by_file_existence(os.path.join(config.save_path, "workspace", "data_analyze", "data_show.md"))
-    keywords_router = route_by_keywords(["DECISION: CONTINUE", "DECISION: RETURN"])
 
     tool_node = BasicToolNode(tools, config)
     graph_builder.add_node("data_chatbot", chatbot)
-    graph_builder.add_node("data_openhands_node", openhands_node)
+    graph_builder.add_node("data_sample_node", data_sample_node)
     graph_builder.add_node("data_tools", tool_node)
-    graph_builder.add_node("data_router", router_node)
 
-    graph_builder.add_edge(START, "data_openhands_node")
-    graph_builder.add_conditional_edges("data_openhands_node", route_by_data_show, {"FILE_NOT_FOUND": "data_openhands_node", "FILE_EXISTS": "data_chatbot"})
+    graph_builder.add_edge(START, "data_sample_node")
+    graph_builder.add_edge("data_sample_node", "data_chatbot")
     graph_builder.add_edge("data_chatbot", "data_tools")
-    graph_builder.add_conditional_edges("data_tools", router_by_write_reports, {"RETURN_TO_LLM": "data_chatbot", END: "data_router"})
-    graph_builder.add_conditional_edges("data_router", keywords_router, {"DECISION: CONTINUE": END, "DECISION: RETURN": "data_openhands_node", "NONE": "data_router"})
+    graph_builder.add_conditional_edges("data_tools", router_by_write_reports, {"RETURN_TO_LLM": "data_chatbot", END: END})
 
     graph = graph_builder.compile()
 
@@ -136,7 +170,8 @@ def build_data_analyzer(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph, new_save_dir = load_state("outputs/pred_aki_dy_eicu_demo_20250903143709")
+    config, state, last_subgraph = load_state("outputs/pred_aki_dy_mimic_icu_csv")
+    
     graph = build_data_analyzer(config)
 
     graph.invoke(state)

@@ -21,22 +21,11 @@ from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 from ..state import State
 from ..utils.frontend_messages import frontend_add_message, frontend_add_tool_call
 from ..utils.config import Config, get_lang_prompt
-from ..tools.file_search_keyword import FileSearchTool
 from ..chatbot import chatbot_with_context_manager
 from .vlm_mcp.server import run_server
+from ..utils.file_summary import FileSummary
 
 
-
-postfix = """
-Reminders: DO NOT mock or simulate results. Only write python files to generate the code and bash shell scripts to execute them.
-"""
-
-# execute_prompt = """
-# Now first examine if the code fulfills the requirements and the code DOES NOT MOCK OR SIMULATE any results.
-# Then execute the generated code to make sure it works. Use the "python" command to execute the code, do not use virtual environments or anaconda, do not use any other commands.
-# At last checks if the results/outputs includes wrong codeces or unexpected/broken characters.
-# If the code fails, fix the code and try again.
-# """
 
 
 def fix_permissions_in_docker_container(oh_config_str: str):
@@ -191,14 +180,20 @@ def run_openhands_prompt(prompts, config: Config):
     """
     if isinstance(prompts, str):
         prompts = [prompts]
-
-    # prompts.append(execute_prompt)
     
     vlm_mcp_thread = threading.Thread(target=run_server, args=(config,))
     vlm_mcp_thread.start()
 
     all_results = ""
     for prompt in prompts:
+        # Initialize FileSummary to get file descriptions
+        file_summary = FileSummary(config)
+        
+        # Get file tree with summaries
+        file_tree_with_summaries = file_summary.get_file_tree_with_summaries()
+        
+        full_prompt = prompt + get_lang_prompt(config.llm.language) + f"\n\n\nFile tree with summaries:\n\n\n{file_tree_with_summaries}"
+        
         pwd = os.getcwd()
         workspace_dir = os.path.join(pwd, config.save_path, "workspace")
         openhands_traj_path = os.path.join(pwd, config.save_path, "openhands_traj")
@@ -214,7 +209,7 @@ def run_openhands_prompt(prompts, config: Config):
         prompt_file = os.path.join(pwd, config.save_path, "openhands_logs", f"prompt_{time_stamp}.txt")
         os.makedirs(os.path.dirname(prompt_file), exist_ok=True)
         with open(prompt_file, "w") as f:
-            f.write(prompt + get_lang_prompt(config.llm.language))
+            f.write(full_prompt)
 
         max_iter = config.workflow.openhands_max_iter
         docker_name = config.docker.docker_name

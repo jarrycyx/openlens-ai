@@ -163,12 +163,12 @@ def build_latex_writer(config: Config) -> StateGraph:
                     docker_current_path = os.path.join("/workspace", "manuscript", "figures", os.path.basename(fig))
                     available_fig_file_list.append(docker_current_path)
                     
-                    # write description for reference
-                    host_current_path = os.path.join(figure_target_path, os.path.basename(fig))
-                    current_path_ext = os.path.splitext(host_current_path)[1]
-                    with open(host_current_path.replace(current_path_ext, "_description.txt"), "w") as f:
-                        f.write(vlm_response)
-                    continue
+                    # # write description for reference
+                    # host_current_path = os.path.join(figure_target_path, os.path.basename(fig))
+                    # current_path_ext = os.path.splitext(host_current_path)[1]
+                    # with open(host_current_path.replace(current_path_ext, "_description.txt"), "w") as f:
+                    #     f.write(vlm_response)
+                    # continue
                 elif "DECISION: REJECT" in vlm_response:
                     all_feedback += f"Image {fig_rel_path} feedback: {vlm_response}\n"
                     logger.info(f"Image {fig_rel_path} is rejected by VLM, will not include it.")
