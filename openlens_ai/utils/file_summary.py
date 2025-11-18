@@ -50,7 +50,8 @@ class FileSummary:
             try:
                 with open(self.file_cache_path, 'r', encoding='utf-8') as f:
                     file_summary_cache = json.load(f)
-                    logger.info(f"File summary cache loaded with {len(file_summary_cache)} entries: {str(file_summary_cache)}")
+                    logger.debug(f"File summary cache loaded with {len(file_summary_cache)} entries: {str(file_summary_cache)}")
+                    return file_summary_cache
             except Exception as e:
                 logger.warning(f"Failed to load file summary cache: {e}")
         return {}
@@ -97,12 +98,9 @@ class FileSummary:
         abs_path = os.path.abspath(file_path)
         current_mtime = self._get_file_mtime(abs_path)
         
-        # If file is not in cache, it's a new file
-        if abs_path not in self.file_cache:
-            return True
-        
         # Check if file modification time has been updated
-        cached_mtime = self.file_cache[abs_path].get("mtime", 0)
+        cached_mtime = self.file_cache.get(abs_path, {}).get("mtime", 0)
+        logger.debug(f"Check file {abs_path}, current mtime: {current_mtime}, cached mtime: {cached_mtime}")
         return current_mtime > cached_mtime
     
     def _read_file_content(self, file_path: str, max_size: int = 5000) -> str:
@@ -186,7 +184,7 @@ class FileSummary:
                 # Build a more detailed prompt including file path information
                 prompt = f"Please summarize in one sentence (no more than 500 characters) the main function and content of the following file '{file_name}':\n\nFile Path: {file_path}\n\nFile Content:\n{content}\n\nSummary:"
                 
-                logger.info(f"Summarizing file {file_path}...")
+                logger.debug(f"Summarizing file {file_path}...")
             
                 # Wrap the prompt with HumanMessage
                 message = HumanMessage(content=prompt)
