@@ -5,17 +5,89 @@ import random
 from datetime import datetime
 from loguru import logger
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Tuple, List, Optional
 from pydantic import BaseModel
 import glob
 import zipfile
 import shutil
 import toml
 import tqdm
+import pandas as pd
 
 from .config import Config
 
 
+def sample_file_content(file_path: str, max_size: int = 100 * 1024 * 1024) -> Tuple[List[str], List[str]]:
+    """
+    Sample content from a file, handling both text and binary files.
+    
+    For text files, returns first 10 lines and random 10 lines.
+    For Excel files (xls/xlsx), returns first 10 rows and random 10 rows.
+    For other binary files, returns empty lists.
+    
+    Args:
+        file_path: Path to the file to sample
+        max_size: Maximum size in bytes to read from the file
+        
+    Returns:
+        Tuple of (first_samples, random_samples) where each is a list of strings
+    """
+    try:
+        # Check if file is binary
+        is_binary = False
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                f.read(1024)  # Try to read a small chunk as text
+        except UnicodeDecodeError:
+            is_binary = True
+        
+        if is_binary:
+            # Handle binary files
+            file_ext = os.path.splitext(file_path)[1].lower()
+            
+            if file_ext in ['.xls', '.xlsx']:
+                # Handle Excel files
+                try:
+                    df = pd.read_excel(file_path)
+                    
+                    # Convert DataFrame to string representation
+                    df_str = df.to_string()
+                    lines = df_str.split('\n')
+                    
+                    # Get first 10 lines
+                    first_10_lines = lines[:10]
+                    
+                    # Get random 10 lines (if file has more than 10 lines)
+                    random_10_lines = []
+                    if len(lines) > 10:
+                        random_indices = random.sample(range(10, len(lines)), min(10, len(lines) - 10))
+                        random_10_lines = [lines[i] for i in sorted(random_indices)]
+                    
+                    return first_10_lines, random_10_lines
+                except Exception as e:
+                    logger.warning(f"Error reading Excel file {file_path}: {e}")
+                    return [], []
+            else:
+                # Skip other binary files
+                return [], []
+        else:
+            # Handle text files
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                lines = f.readlines(max_size)  # Read up to max_size of content
+            
+            # Get first 10 lines
+            first_10_lines = lines[:10]
+            
+            # Get random 10 lines (if file has more than 10 lines)
+            random_10_lines = []
+            if len(lines) > 10:
+                random_indices = random.sample(range(10, len(lines)), min(10, len(lines) - 10))
+                random_10_lines = [lines[i] for i in sorted(random_indices)]
+            
+            return first_10_lines, random_10_lines
+    except Exception as e:
+        logger.warning(f"Error sampling file {file_path}: {e}")
+        return [], []
 
 
 def collect_files(config: Config, max_size: int = 10 * 1024 * 1024, compressed_dir_name="compressed"):

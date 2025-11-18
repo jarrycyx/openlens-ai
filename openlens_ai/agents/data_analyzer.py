@@ -19,6 +19,7 @@ from ..chatbot import chatbot_with_context_manager
 from ..state import load_state, track_node_call
 from ..utils.config import Config
 from ..utils.file_summary import FileSummary
+from ..utils.file_utils import sample_file_content
 
 
 
@@ -56,6 +57,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
         
         # Get file tree with summaries
         file_tree_with_summaries = file_summary.get_file_tree_with_summaries()
+        state["file_summary"] = file_summary.file_cache
         
         # Create output directory if it doesn't exist
         output_dir = os.path.join(state["save_path"], "workspace", "data_analyze")
@@ -97,18 +99,8 @@ def build_data_analyzer(config: Config) -> StateGraph:
                 abs_path = os.path.abspath(file_path)
                 summary = file_summary.file_cache.get(abs_path, {}).get("summary", "No summary available")
                 
-                # Read file content samples
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    lines = f.readlines()
-                    
-                # Get first 10 lines
-                first_10_lines = lines[:10]
-                
-                # Get random 10 lines (if file has more than 10 lines)
-                random_10_lines = []
-                if len(lines) > 10:
-                    random_indices = random.sample(range(10, len(lines)), min(10, len(lines) - 10))
-                    random_10_lines = [lines[i] for i in sorted(random_indices)]
+                # Use sample_file_content function to get file samples
+                first_10_lines, random_10_lines = sample_file_content(file_path)
                 
                 # Add file information to output
                 output_content.append(f"### {file_path}\n")
@@ -123,6 +115,11 @@ def build_data_analyzer(config: Config) -> StateGraph:
                     output_content.append("```\n")
                     output_content.extend(random_10_lines)
                     output_content.append("```\n")
+                else:
+                    # If it's a binary file but not an Excel file, add a note
+                    file_ext = os.path.splitext(file_path)[1].lower()
+                    if file_ext not in ['.xls', '.xlsx'] and file_ext not in ['.txt', '.md', '.py', '.js', '.html', '.css', '.json', '.csv', '.tsv']:
+                        output_content.append("**Binary file skipped (not a text or Excel file)**\n")
                 
                 output_content.append("\n")
             except Exception as e:

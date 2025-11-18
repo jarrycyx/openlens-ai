@@ -112,6 +112,8 @@ def build_latex_writer(config: Config) -> StateGraph:
             # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
             HumanMessage(content=results)
         ]
+        file_summary = FileSummary(config)
+        state["file_summary"] = file_summary.file_cache
         return state
     
     @track_node_call("latex_writer")
@@ -137,6 +139,8 @@ def build_latex_writer(config: Config) -> StateGraph:
             # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
             HumanMessage(content=results)
         ]
+        file_summary = FileSummary(config)
+        state["file_summary"] = file_summary.file_cache
         return state
     
     @track_node_call("latex_writer")
@@ -204,6 +208,8 @@ def build_latex_writer(config: Config) -> StateGraph:
             # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
             HumanMessage(content=results)
         ]
+        file_summary = FileSummary(config)
+        state["file_summary"] = file_summary.file_cache
         return state
     
     @track_node_call("latex_writer")
@@ -230,6 +236,8 @@ def build_latex_writer(config: Config) -> StateGraph:
             # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
             HumanMessage(content=results)
         ]
+        file_summary = FileSummary(config)
+        state["file_summary"] = file_summary.file_cache
         return state
     
     
@@ -260,6 +268,8 @@ def build_latex_writer(config: Config) -> StateGraph:
             HumanMessage(content=results)
         ]
         
+        file_summary = FileSummary(config)
+        state["file_summary"] = file_summary.file_cache
         
         ## Check for generated images using vision-language model
         workspace_dir = os.path.join(config.save_path, "workspace")

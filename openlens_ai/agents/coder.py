@@ -17,6 +17,7 @@ from ..state import State, load_state, get_subplan, track_node_call
 from ..chatbot import chatbot_with_context_manager
 from ..utils.config import Config
 from ..utils.vision_feedback import collect_fig_files, get_fig_base64, get_vision_feedback
+from ..utils.file_summary import FileSummary
 
 
 
@@ -89,6 +90,8 @@ def build_coder(config: Config) -> StateGraph:
             # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
             HumanMessage(content=results)
         ]
+        file_summary = FileSummary(config)
+        state["file_summary"] = file_summary.file_cache
         return state
 
     @track_node_call("coder")
