@@ -111,6 +111,13 @@ docker tag <IMAGE_ID> openlens-ai:runtime-latest
 ```
 
 2. Install dependencies:
+First install OpenHands:
+```bash
+cd modules/OpenHands
+```
+Then install OpenHands following the [instructions](https://github.com/All-Hands-AI/OpenHands/blob/main/Development.md).
+
+Install python dependencies:
 ```bash
 # If wish to visualize the workflow, install graphviz:
 #   sudo apt-get install graphviz graphviz-dev

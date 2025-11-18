@@ -39,12 +39,16 @@ runtime_container_image = "{runtime_container_image}"
 
 
 [mcp]
-# shttp_servers = [
-#     # Streamable HTTP server with API key authentication
-#     {url="https://mcp.tavily.com/mcp/?tavilyApiKey={tavily_key}", api_key="{tavily_key}"}
+shttp_servers = [
+    # Streamable HTTP server with API key authentication
+    {url="https://mcp.tavily.com/mcp/?tavilyApiKey={tavily_key}", api_key="{tavily_key}"},
+    # Streamable HTTP server with no authentication
+    {url="http://localhost:9077/mcp", timeout=120},
+]
+# shttp_servers = []
+# stdio_servers = [
+#     { name="analyze_file_vlm", command="python", args=["-m", "openlens_ai.tools.analyze_file_vlm", "--config", "{config_path}"] }
 # ]
-shttp_servers = []
-stdio_servers = []
 sse_servers = []
 
 [security]

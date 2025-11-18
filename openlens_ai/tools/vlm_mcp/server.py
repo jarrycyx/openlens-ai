@@ -5,7 +5,9 @@ import sys
 import base64
 import traceback
 import time
-from typing import List, Dict, Optional, Annotated
+import argparse
+from loguru import logger
+from typing import List, Dict, Optional, Annotated, Union
 from pydantic import Field
 from loguru import logger
 import fitz
@@ -56,7 +58,7 @@ def analyze_image(image_base64: str, prompt: Optional[str] = None) -> str:
             vlm = get_vlm(config)
             
             from langchain_core.messages import HumanMessage
-            
+            logger.info(f"MCP analyze_image: prompt is {prompt}")
             # Try both formatters
             for formatter in [
                 lambda p, img: HumanMessage(content=[
@@ -121,7 +123,8 @@ def analyze_latex_image(image_base64: str) -> str:
     description="Analyze a file (image or PDF) using VLM.",
 )
 def analyze_file_vlm(file_path: Annotated[str, Field(description="ABSOLUTE Path to the file (supports png, jpg, jpeg, pdf)")], 
-                     prompt: Annotated[str, Field(description="Analysis instruction for the file, i.e., 'Describe the figure in detail.', 'Does the result contain any error?'")]) -> str:
+                     prompt: Annotated[str, Field(description="Analysis instruction for the file, i.e., 'Describe the figure in detail.', 'Does the result contain any error?'")],
+                     security_risk: Annotated[str, Field(description="Security risk level for the file, i.e., 'Low', 'Medium', 'High'")]) -> str:
     """Analyze a file (image or PDF) using VLM.
     
     Args:
@@ -135,7 +138,7 @@ def analyze_file_vlm(file_path: Annotated[str, Field(description="ABSOLUTE Path 
     if file_path.startswith("/workspace"):
         file_path = file_path.replace("/workspace", os.path.join(config.save_path, "workspace"))
     
-    print(f"Analyzing file: {file_path}")
+    logger.info(f"MCP analyze_file_vlm: Analyzing file: {file_path}")
     if not os.path.exists(file_path):
         return f"Error: File not found at {file_path}"
     
@@ -164,18 +167,24 @@ def analyze_file_vlm(file_path: Annotated[str, Field(description="ABSOLUTE Path 
         return f"Error: Unsupported file format {ext}. Supported formats: png, jpg, jpeg, pdf"
 
 
-def run_server(config_path: str):
+def run_server(config: Union[Config, str]):
     """Run the VLM MCP server with the provided config.
     
     Args:
-        config_path: Path to the configuration file
+        config: Config object or path to the configuration file
     """
-    
-    config = Config.from_toml(config_path)
+    if isinstance(config, Config):
+        config = config
+    else:
+        config = Config.from_toml(config)
     set_config(config)
-    mcp.run(transport="stdio")
+    mcp.run(transport="streamable-http", host="0.0.0.0", port=9077)
 
 
 
 if __name__ == "__main__":
-    run_server("outputs/pred_aki_trend_eicu_demo/config.toml")
+    parser = argparse.ArgumentParser(description="VLM MCP Server")
+    parser.add_argument("--config", type=str, default="config.toml",
+                        help="Path to the configuration file")
+    args = parser.parse_args()
+    run_server(args.config)

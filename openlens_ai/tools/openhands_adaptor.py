@@ -23,6 +23,7 @@ from ..utils.frontend_messages import frontend_add_message, frontend_add_tool_ca
 from ..utils.config import Config, get_lang_prompt
 from ..tools.file_search_keyword import FileSearchTool
 from ..chatbot import chatbot_with_context_manager
+from .vlm_mcp.server import run_server
 
 
 
@@ -192,6 +193,9 @@ def run_openhands_prompt(prompts, config: Config):
         prompts = [prompts]
 
     # prompts.append(execute_prompt)
+    
+    vlm_mcp_thread = threading.Thread(target=run_server, args=(config,))
+    vlm_mcp_thread.start()
 
     all_results = ""
     for prompt in prompts:
@@ -332,23 +336,21 @@ def collect_info_and_run_openhands(prompt: str, config: Config, state: State):
 
 
 if __name__ == "__main__":
-    # prompt = "Write a python script to print hello world! Then execute it."
-    # dataset_path = "data/dataset.jsonl"
+    from ..state import load_state
+    
+    prompt = "Write a python script to draw a circle and save it as a png file. Then check if the content of the image using VLM tool (analyze_file_vlm)."
+    # prompt = "Search on the internet for the latest news about the OpenHands project."
+    dataset_path = "data/dataset.jsonl"
+    config, state, last_subgraph = load_state("outputs/pred_aki_trend_eicu_demo")
+    result = run_openhands_prompt(prompt, config)
+    with open("result.txt", "w") as f:
+        f.write(result)
+
     # config = Config(
-    #     dataset_path="outputs/test/data",
-    #     save_path="outputs/test",
+    #     dataset_path="datasets/eicu-demo",
+    #     save_path="outputs/pred_aki_trend_eicu_demo_20251024143113_resume_20251024152546",
     #     thread_id="test",
     #     question="test",
     # )
-    # result = run_openhands_prompt(prompt, config)
-    # with open("result.txt", "w") as f:
-    #     f.write(result)
-
-    config = Config(
-        dataset_path="datasets/eicu-demo",
-        save_path="outputs/pred_aki_trend_eicu_demo_20251024143113_resume_20251024152546",
-        thread_id="test",
-        question="test",
-    )
-    oh_config_str = open(os.path.join(config.save_path, "openhands_config.toml"), "r").read()
-    fix_permissions_in_docker_container(oh_config_str)
+    # oh_config_str = open(os.path.join(config.save_path, "openhands_config.toml"), "r").read()
+    # fix_permissions_in_docker_container(oh_config_str)
