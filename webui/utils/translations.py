@@ -63,7 +63,7 @@ TRANSLATIONS = {
         "github_link": "🌟 Star us on GitHub",
         
         # 应用标题和描述
-        "app_title": "OpenLens AI: Fully Autonomous Research Agent for Health Informatics",
+        "app_title": "OpenLens AI: Fully Autonomous Multimodal Agent for Health Infomatics Research",
         "research_question": "Research Question",
         "dataset_source": "Dataset Source",
         "upload_dataset_files": "Upload Dataset Files",

@@ -1,6 +1,6 @@
 **[中文版本](README_CN.md)**
 
-# OpenLens AI: Fully Autonomous Research Agent for Health Infomatics
+# OpenLens AI: Fully Autonomous Multimodal Agent for Health Informatics Research
 
 <p align="center">
   <!-- <a href="https://arxiv.org/abs/2509.14778">
@@ -36,7 +36,7 @@
       <img src="static/logo.svg" alt="Logo" width="100">
     </td>
     <td style="text-align: justify;">
-      <strong>OpenLens AI</strong> is a fully autonomous research agent designed for the medical field.  
+      <strong>OpenLens AI</strong> is a fully autonomous multimodal agent designed for the medical research field.  
       Provide it with your dataset and a single-line research idea, and it will independently conduct literature review, design experiments, analyze data, and generate comprehensive research reports—<strong>no manual intervention required</strong>. <i> Also supports domains other than healthcare. </i>
     </td>
   </tr>

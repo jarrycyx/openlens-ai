@@ -1,3 +1,5 @@
+# Synthetic datasets
+
 https://www.kaggle.com/datasets/prasad22/healthcare-dataset/data
 
 https://www.kaggle.com/datasets/uom190346a/synthetic-clinical-tabular-dataset/data
