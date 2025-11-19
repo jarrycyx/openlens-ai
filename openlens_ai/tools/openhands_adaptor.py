@@ -3,8 +3,10 @@ import re
 import subprocess
 import traceback
 import threading
+import multiprocessing
 import time
 import toml
+import socket
 from typing import Optional, Type, Dict, Any, Union
 from datetime import datetime
 from loguru import logger
@@ -26,10 +28,29 @@ from .vlm_mcp.server import run_server
 from ..utils.file_summary import FileSummary
 
 
+def is_port_available(port):
+    """Check if a port is available"""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        try:
+            s.bind(('localhost', port))
+            return True
+        except OSError:
+            return False
+
+
+def get_available_port(start_port=9077):
+    """Get an available port, starting from start_port"""
+    port = start_port
+    while not is_port_available(port):
+        port += 1
+        # Avoid infinite loop, set maximum attempts
+        if port > start_port + 100:
+            raise Exception(f"Unable to find available port, tried from {start_port} to {port}")
+    return port
 
 
 def fix_permissions_in_docker_container(oh_config_str: str):
-    """在docker中运行sudo chmod -R 777指令"""
+    """Run sudo chmod -R 777 command in docker container"""
     try:
         oh_config = toml.loads(oh_config_str)
         image_name = oh_config["sandbox"]["runtime_container_image"]
@@ -45,7 +66,7 @@ def fix_permissions_in_docker_container(oh_config_str: str):
         logger.debug(f"Fix permissions output: {result.stdout} \n {result.stderr}")
         logger.info(f"Fixed permissions in docker container {image_name} with volumes {volumes}")
         
-        # 清理缓存
+        # Clean cache
         result = subprocess.run(["docker", "system", "prune", "-f"], capture_output=True, text=True)
         logger.debug(f"Clean cache output: {result.stdout} \n {result.stderr}")
         logger.info(f"Cleaned cache in docker container {image_name} with volumes {volumes}")
@@ -57,7 +78,7 @@ def run_openhands(
     cmd: str,
     config: Config,
 ):
-    """运行Docker容器并实时输出+保存日志"""
+    """Run Docker container with real-time output and log saving"""
 
     time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
     save_name = f"openhands_{time_stamp}.log"
@@ -66,26 +87,26 @@ def run_openhands(
     with open(log_save_path, "w") as f:
         f.write(cmd + "\n\n\n")
 
-    log_lines = []  # 保存所有日志行
+    log_lines = []  # Save all log lines
 
     for try_i in range(5):
         try:
-            # 启动子进程（实时流处理核心）
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, shell=True)  # 合并stdout和stderr  # 行缓冲模式
+            # Start subprocess (core of real-time stream processing)
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, shell=True)  # Merge stdout and stderr  # Line buffering mode
 
             with open(log_save_path, "a") as f:
                 f.write(f"Process pid: {process.pid}\n\n")
                 logger.info(f"Process pid: {process.pid}")
 
-            # 创建全局变量来记录读取的行数
+            # Create global variable to record the number of lines read
             line_count = {"count": 0}
-            # 创建守护线程来监控进程
+            # Create daemon thread to monitor process
             monitor_thread = threading.Thread(target=monitor_process, args=(process.pid, line_count), daemon=True)
             monitor_thread.start()
 
-            # 实时处理输出流
+            # Process output stream in real-time
             output_chunk = ""
-            pattern = r"(\d{2}:\d{2}:\d{2} - openhands:)"  # 用时间戳拆分日志
+            pattern = r"(\d{2}:\d{2}:\d{2} - openhands:)"  # Split logs with timestamp
             frontend_add_tool_call("openhands", {}, config)
             while True:
                 output_line = process.stdout.readline()
@@ -93,7 +114,7 @@ def run_openhands(
                 if output_line == "" and process.poll() is not None:
                     break
                 if output_line:
-                    # 更新读取的行数
+                    # Update the number of lines read
                     line_count["count"] += 1
 
                     if re.match(pattern, output_line):
@@ -107,18 +128,18 @@ def run_openhands(
                         logger.warning(f"tenacity.RetryError occurred, killing docker process {process.pid} and retrying...")
                         os.system(f"kill -9 {process.pid}")
                     output_chunk += output_line
-                    # 同时保存到日志集合
+                    # Also save to log collection
                     log_lines.append(output_line)
                     with open(log_save_path, "a") as f:
                         f.write(output_line)
 
-            # 检查退出状态
+            # Check exit status
             return_code = process.poll()
             if return_code != 0:
                 raise subprocess.CalledProcessError(return_code, docker_cmd)
 
             logger.info("Docker container executed successfully.")
-            return "".join(log_lines)  # 返回完整日志
+            return "".join(log_lines)  # Return complete log
         except Exception as e:
             error_log = "".join(log_lines) + f"\nERROR: {str(e)}"
             # traceback.print_exc()
@@ -126,37 +147,37 @@ def run_openhands(
 
 
 def monitor_process(pid: int, line_count: dict):
-    """监控进程输出行数的守护线程函数"""
+    """Daemon thread function to monitor process output line count"""
     logger.info(f"Starting process monitor for PID {pid}")
     start_count = line_count["count"]
-    # 等待1分钟
+    # Wait for 5 minutes
     time.sleep(300)
     logger.info(f"Process {pid} has been running for 5 minute, checking line count...")
-    # 检查1分钟内读取的行数是否不超过10行
+    # Check if the number of lines read within 5 minutes does not exceed 10
     if line_count["count"] - start_count <= 10:
         try:
-            # 结束进程
+            # Terminate process
             os.kill(pid, 9)  # SIGKILL
             logger.info(f"Process {pid} killed due to insufficient output")
         except ProcessLookupError:
-            # 进程已经结束
+            # Process has already ended
             pass
         except Exception as e:
             logger.error(f"Error killing process {pid}: {e}")
 
     last_line_count = 0
-    # 每隔30分钟检查是否卡住
+    # Check every 30 minutes if stuck
     while True:
         time.sleep(1800)
         logger.info(f"Process {pid} has been running for 30 minutes, current line count: {line_count['count']}, last line count: {last_line_count}")
         if line_count["count"] == last_line_count:
             try:
-                # 结束进程
+                # Terminate process
                 os.kill(pid, 9)  # SIGKILL
                 logger.info(f"Process {pid} killed due to insufficient output")
                 return
             except ProcessLookupError:
-                # 进程已经结束
+                # Process has already ended
                 return
             except Exception as e:
                 logger.error(f"Error killing process {pid}: {e}")
@@ -166,23 +187,27 @@ def monitor_process(pid: int, line_count: dict):
 
 def run_openhands_prompt(prompts, config: Config):
     """
-    运行OpenHands提示并返回结果
+    Run OpenHands prompts and return results
 
-    该函数接受一个或多个提示，为每个提示构建OpenHands命令并在Docker容器中执行，
-    最终返回处理后的结果。
+    This function accepts one or more prompts, builds OpenHands commands for each prompt 
+    and executes them in Docker containers, finally returning the processed results.
 
     Args:
-        prompts (str or list): 单个提示字符串或提示列表
-        config (dict): 配置字典，包含执行环境相关设置
+        prompts (str or list): Single prompt string or list of prompts
+        config (dict): Configuration dictionary containing execution environment settings
 
     Returns:
-        str: 处理后的执行结果，限制在最后3000个字符
+        str: Processed execution result, limited to the last 3000 characters
     """
     if isinstance(prompts, str):
         prompts = [prompts]
     
-    vlm_mcp_thread = threading.Thread(target=run_server, args=(config,))
-    vlm_mcp_thread.start()
+    # Get available port
+    port = get_available_port(9077)
+    logger.info(f"Starting VLM MCP server using port {port}")
+    
+    vlm_mcp_process = multiprocessing.Process(target=run_server, args=(config, port))
+    vlm_mcp_process.start()
 
     all_results = ""
     for prompt in prompts:
@@ -220,6 +245,7 @@ def run_openhands_prompt(prompts, config: Config):
         oh_config = oh_config_template.replace("{api_key}", config.llm.chat.api_key)
         oh_config = oh_config.replace("{base_url}", config.llm.chat.base_url)
         oh_config = oh_config.replace("{code_model}", config.llm.chat.model)
+        oh_config = oh_config.replace("{analyze_file_vlm_port}", str(port))
         
         if config.llm.condenser.model:
             oh_config = oh_config.replace("{condenser_api_key}", config.llm.condenser.api_key)
@@ -258,8 +284,8 @@ def run_openhands_prompt(prompts, config: Config):
         with open(this_config_path, "w") as f:
             f.write(oh_config)
         logger.debug(f"Using OpenHands config: {oh_config}")
-        for try_i in range(2): # 最多尝试2次
-            # 构建在Docker容器中执行的命令
+        for try_i in range(2): # Try at most 2 times
+            # Build the command to execute in Docker container
             cmd = (
                 ". openlens_ai/tools/openhands_configs/openhands_env.sh; "
                 # f"chmod -R 777 {os.path.abspath(config.save_path)};"
@@ -270,7 +296,7 @@ def run_openhands_prompt(prompts, config: Config):
             )
             results = run_openhands(cmd, config)
             fix_permissions_in_docker_container(oh_config)
-            # 移除ANSI转义序列（颜色代码等）
+            # Remove ANSI escape sequences (color codes, etc.)
             results = re.sub(r"\033\[[\d;]*m", "", results)
             results = split_and_clean_log(results)
             results = results[-10000:]
@@ -281,19 +307,29 @@ def run_openhands_prompt(prompts, config: Config):
                 logger.warning(f"Docker container executed unsuccessfully. Trying again ({try_i}/5)...")
                 continue
 
-        # 将当前提示的结果添加到总结果中
+        # Add the result of the current prompt to the total result
         all_results += "=" * 20 + f"Prompt: {prompt[:20]}..." + "=" * 20
         all_results += "\n" + results
-
-    # 限制结果长度为最后3000个字符
+        
+    # vlm_mcp_process termination
+    if vlm_mcp_process.is_alive():
+        logger.info("Terminating vlm_mcp_process...")
+        vlm_mcp_process.terminate()
+        vlm_mcp_process.join(timeout=5)  # Wait up to 5 seconds for process to terminate
+        if vlm_mcp_process.is_alive():
+            logger.warning("vlm_mcp_process did not terminate gracefully. Force killing...")
+            vlm_mcp_process.kill()  # Force kill if it doesn't terminate gracefully
+            vlm_mcp_process.join()
+    
+    # Limit result length to the last 3000 characters
     return all_results
 
 
 def split_and_clean_log(log_text):
-    # 正则匹配 `时间 - openhands` 作为分隔符
+    # Regex match `time - openhands` as separator
     pattern = r"\n(\d{2}:\d{2}:\d{2} - openhands:)"
 
-    # 拆分日志
+    # Split log
     log_entries = re.split(pattern, log_text)
     clean_entries = []
     for entry in log_entries:
@@ -301,7 +337,7 @@ def split_and_clean_log(log_text):
             clean_entries.append(entry)
     for entry_i in range(len(clean_entries)):
         if "]" in clean_entries[entry_i]:
-            clean_entries[entry_i] = clean_entries[entry_i].split("]", 1)[1]  # 取后半部分
+            clean_entries[entry_i] = clean_entries[entry_i].split("]", 1)[1]  # Take the latter part
     return "\n\n".join(clean_entries)
 
 
@@ -320,7 +356,7 @@ class OpenHandsTool(BaseTool):
         self.config = config
 
     def _run(self, prompts: Union[list, str]) -> str:
-        """执行OpenHands操作的主要方法"""
+        """Main method for executing OpenHands operations"""
         logger.info(f"Starting OpenHands with prompt: {prompts}")
         # return str([random.randint(1000, 9999) for _ in range(10000)])
         return run_openhands_prompt(prompts, self.config)

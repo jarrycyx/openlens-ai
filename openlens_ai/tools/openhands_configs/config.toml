@@ -6,11 +6,10 @@ save_trajectory_path = "{openhands_traj_path}"
 run_as_openhands = false
 debug = true
 
-
 [llm]
-model="openai/{code_model}" # openai means openai-compatible endpoint, not OpenAI models
-api_key="{api_key}"
-base_url="{base_url}"
+model = "openai/{code_model}"  # openai means openai-compatible endpoint, not OpenAI models
+api_key = "{api_key}"
+base_url = "{base_url}"
 input_cost_per_token = 1.0
 output_cost_per_token = 1.0
 max_message_chars = 30000
@@ -20,10 +19,9 @@ log_completions_folder = "{log_completions_folder}"
 log_completions = true
 
 [llm.condenser]
-model="openai/{code_condenser_model}" # openai means openai-compatible endpoint, not OpenAI models
-api_key="{condenser_api_key}"
-base_url="{condenser_base_url}"
-
+model = "openai/{code_condenser_model}"  # openai means openai-compatible endpoint, not OpenAI models
+api_key = "{condenser_api_key}"
+base_url = "{condenser_base_url}"
 
 [condenser]
 type = "llm"
@@ -32,18 +30,20 @@ keep_first = 1
 max_size = 50
 
 [sandbox]
-volumes="{sandbox_volumes}"
+volumes = "{sandbox_volumes}"
 user_id = 3407
 timeout = 3600
 runtime_container_image = "{runtime_container_image}"
-
+enable_gpu = true
+docker_runtime_kwargs = { mem_limit = "16g", cpu_period = 100000, cpu_quota = 10000 }
+# https://docker-py.readthedocs.io/en/stable/containers.html?highlight=run#docker.models.containers.ContainerCollection.run
 
 [mcp]
 shttp_servers = [
-    # Streamable HTTP server with API key authentication
-    {url="https://mcp.tavily.com/mcp/?tavilyApiKey={tavily_key}", api_key="{tavily_key}"},
-    # Streamable HTTP server with no authentication
-    {url="http://localhost:9077/mcp", timeout=120},
+  # Streamable HTTP server with API key authentication
+  { url = "https://mcp.tavily.com/mcp/?tavilyApiKey={tavily_key}", api_key = "{tavily_key}" },
+  # Streamable HTTP server with no authentication
+  { url = "http://localhost:{analyze_file_vlm_port}/mcp", timeout = 120 },
 ]
 # shttp_servers = []
 # stdio_servers = [

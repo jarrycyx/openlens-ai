@@ -5,22 +5,22 @@ litellm_settings:
 model_list:
   - litellm_params:
       api_base: https://cloud.infini-ai.com/maas/v1/
-      api_key: sk-hk6ffavo5o3hctbi
+      api_key: ak-dbyuxxqb5aa7es3e
       model: openai/glm-4.5-air
     model_name: glm-4.5-air
   - litellm_params:
       api_base: https://cloud.infini-ai.com/maas/v1/
-      api_key: sk-hk6ffavo5o3hctbi
+      api_key: ak-dbyuxxqb5aa7es3e
       model: openai/glm-4.6
     model_name: glm-4.6
   - litellm_params:
       api_base: https://cloud.infini-ai.com/maas/v1/
-      api_key: sk-hk6ffavo5o3hctbi
+      api_key: ak-dbyuxxqb5aa7es3e
       model: openai/glm-4.1v-9b-thinking
     model_name: glm-4.1v-9b-thinking
   - litellm_params:
       api_base: https://cloud.infini-ai.com/maas/v1/
-      api_key: sk-hk6ffavo5o3hctbi
+      api_key: ak-dbyuxxqb5aa7es3e
       model: openai/glm-4.5v
     model_name: glm-4.5v
   - litellm_params:
@@ -35,7 +35,7 @@ model_list:
     model_name: local-llm
   # - litellm_params:
   #     api_base: https://cloud.infini-ai.com/maas/v1/
-  #     api_key: sk-hk6ffavo5o3hctbi
+  #     api_key: ak-dbyuxxqb5aa7es3e
   #     model: openai/glm-4.5-air
   #   model_name: local-llm
 router_settings:

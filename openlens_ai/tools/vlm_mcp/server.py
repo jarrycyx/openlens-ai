@@ -167,18 +167,20 @@ def analyze_file_vlm(file_path: Annotated[str, Field(description="ABSOLUTE Path 
         return f"Error: Unsupported file format {ext}. Supported formats: png, jpg, jpeg, pdf"
 
 
-def run_server(config: Union[Config, str]):
+def run_server(config: Union[Config, str], port: int = 9077):
     """Run the VLM MCP server with the provided config.
     
     Args:
         config: Config object or path to the configuration file
+        port: Port number to run the server on (default: 9077)
     """
     if isinstance(config, Config):
         config = config
     else:
         config = Config.from_toml(config)
     set_config(config)
-    mcp.run(transport="streamable-http", host="0.0.0.0", port=9077)
+    mcp.run(transport="streamable-http", host="0.0.0.0", port=port)
+    logger.info(f"VLM MCP server running on port {port}")
 
 
 
@@ -186,5 +188,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="VLM MCP Server")
     parser.add_argument("--config", type=str, default="config.toml",
                         help="Path to the configuration file")
+    parser.add_argument("--port", type=int, default=9077,
+                        help="Port number to run the server on (default: 9077)")
     args = parser.parse_args()
     run_server(args.config)

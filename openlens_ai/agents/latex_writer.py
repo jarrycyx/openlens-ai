@@ -17,6 +17,7 @@ from ..state import State, load_state, track_node_call
 from ..utils.config import Config
 from ..chatbot import chatbot_with_context_manager
 from ..utils.vision_feedback import collect_fig_files, get_fig_base64, get_vision_feedback, get_vision_classification, get_latex_vision_feedback
+from ..utils.file_summary import FileSummary
 
 
 

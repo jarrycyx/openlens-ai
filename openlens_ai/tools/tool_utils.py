@@ -242,7 +242,8 @@ class BasicToolNode:
                 # 去除重复的错误信息
                 state["messages"] = [m for m in state["messages"] if m.content != new_message.content]
                 state["messages"].append(new_message)
-                
-            self.save_tool_call(state["messages"][-1])
+            
+            if len(state["messages"]) > 0:
+                self.save_tool_call(state["messages"][-1])
             state["last_tool_call"] = tool_call["name"]
             return state
