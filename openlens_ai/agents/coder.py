@@ -10,7 +10,7 @@ from langchain.chat_models import init_chat_model
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
 from ..tools.tool_utils import BasicToolNode, route_tools, route_by_keywords, route_by_tool_call, route_by_subtask_redo_counter_wrapper
-from ..tools.openhands_adaptor import OpenHandsTool
+from ..tools.openhands_adaptor import OpenHandsTool, run_openhands_prompt
 from ..tools.exp_plan import PlanReaderTool, PlanWriterTool, subtask_route_tools
 from ..tools.reports import ReportReaderTool, ReportWriterTool
 from ..state import State, load_state, get_subplan, track_node_call
