@@ -11,7 +11,7 @@ from langchain.load.dump import dumps
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
 from ..tools.tool_utils import BasicToolNode, route_by_tool_call, route_by_keywords, route_by_latex_polish_counter_wrapper
-from ..tools.openhands_adaptor import OpenHandsTool
+from ..tools.openhands_adaptor import OpenHandsTool, run_openhands_prompt
 from ..tools.reports import ReportReaderTool, ReportWriterTool
 from ..state import State, load_state, track_node_call
 from ..utils.config import Config
@@ -76,7 +76,6 @@ def build_latex_writer(config: Config) -> StateGraph:
         extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
     
-    code_tool = OpenHandsTool(config)
     report_writer_tool = ReportWriterTool(config, file_name="manuscript/latex_quality_report.md")
     
     tools = [report_writer_tool]
@@ -104,15 +103,9 @@ def build_latex_writer(config: Config) -> StateGraph:
             logger.info("No REASON in the AI tool message, use the default prompt.")
             reason = ""
         
-        results = code_tool.invoke({"prompts": [this_prompt]})
-        state["messages"] += [
-            # ToolMessage(
-            #     content=results,
-            #     name="openhands_tool",
-            #     tool_call_id="openhands_tool",
-            # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
-            HumanMessage(content=results)
-        ]
+        results = run_openhands_prompt([this_prompt], config, add_file_summary=False)
+        
+        state["messages"] += [HumanMessage(content=results)]
         file_summary = FileSummary(config)
         state["file_summary"] = file_summary.file_cache
         return state
@@ -131,15 +124,9 @@ def build_latex_writer(config: Config) -> StateGraph:
             logger.info("No REASON in the AI tool message, use the default prompt.")
             reason = ""
         
-        results = code_tool.invoke({"prompts": [this_prompt]})
-        state["messages"] += [
-            # ToolMessage(
-            #     content=results,
-            #     name="openhands_tool",
-            #     tool_call_id="openhands_tool",
-            # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
-            HumanMessage(content=results)
-        ]
+        results = run_openhands_prompt([this_prompt], config, add_file_summary=False)
+        
+        state["messages"] += [HumanMessage(content=results)]
         file_summary = FileSummary(config)
         state["file_summary"] = file_summary.file_cache
         return state
@@ -166,14 +153,8 @@ def build_latex_writer(config: Config) -> StateGraph:
                     
                     # save to state for writing
                     docker_current_path = os.path.join("/workspace", "manuscript", "figures", os.path.basename(fig))
-                    available_fig_file_list.append(docker_current_path)
+                    available_fig_file_list.append(docker_current_path + f"\n Description: {vlm_response}")
                     
-                    # # write description for reference
-                    # host_current_path = os.path.join(figure_target_path, os.path.basename(fig))
-                    # current_path_ext = os.path.splitext(host_current_path)[1]
-                    # with open(host_current_path.replace(current_path_ext, "_description.txt"), "w") as f:
-                    #     f.write(vlm_response)
-                    # continue
                 elif "DECISION: REJECT" in vlm_response:
                     all_feedback += f"Image {fig_rel_path} feedback: {vlm_response}\n"
                     logger.info(f"Image {fig_rel_path} is rejected by VLM, will not include it.")
@@ -200,15 +181,9 @@ def build_latex_writer(config: Config) -> StateGraph:
             reason = ""
         
         this_prompt = this_prompt.replace("{figures}", "\n".join(state["available_figs"]))
-        results = code_tool.invoke({"prompts": [this_prompt]})
-        state["messages"] += [
-            # ToolMessage(
-            #     content=results,
-            #     name="openhands_tool",
-            #     tool_call_id="openhands_tool",
-            # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
-            HumanMessage(content=results)
-        ]
+        results = run_openhands_prompt([this_prompt], config, add_file_summary=False)
+        
+        state["messages"] += [HumanMessage(content=results)]
         file_summary = FileSummary(config)
         state["file_summary"] = file_summary.file_cache
         return state
@@ -228,15 +203,9 @@ def build_latex_writer(config: Config) -> StateGraph:
             logger.info("No REASON in the AI tool message, use the default prompt.")
             reason = ""
         
-        results = code_tool.invoke({"prompts": [this_prompt]})
-        state["messages"] += [
-            # ToolMessage(
-            #     content=results,
-            #     name="openhands_tool",
-            #     tool_call_id="openhands_tool",
-            # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
-            HumanMessage(content=results)
-        ]
+        results = run_openhands_prompt([this_prompt], config, add_file_summary=False)
+        
+        state["messages"] += [HumanMessage(content=results)]
         file_summary = FileSummary(config)
         state["file_summary"] = file_summary.file_cache
         return state
@@ -258,16 +227,12 @@ def build_latex_writer(config: Config) -> StateGraph:
             reason = ""
         
         check_figure_prompt = latex_figure_check_prompt.replace("{figures}", "\n".join(state["available_figs"]))
-        results = code_tool.invoke({"prompts": [check_figure_prompt, this_prompt, latex_rigor_prompt, latex_literature_check_prompt]})
+        results = run_openhands_prompt([check_figure_prompt, this_prompt], config, add_file_summary=False)
+        results = run_openhands_prompt([latex_rigor_prompt], config, add_file_summary=True)
+        results = run_openhands_prompt([latex_literature_check_prompt], config, add_file_summary=False)
         
-        state["messages"] += [
-            # ToolMessage(
-            #     content=results,
-            #     name="openhands_tool",
-            #     tool_call_id="openhands_tool",
-            # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
-            HumanMessage(content=results)
-        ]
+        
+        state["messages"] += [HumanMessage(content=results)]
         
         file_summary = FileSummary(config)
         state["file_summary"] = file_summary.file_cache
@@ -299,7 +264,8 @@ def build_latex_writer(config: Config) -> StateGraph:
             if not all_feedback:
                 logger.info("No image feedback, will skip image improvement.")
                 return state   
-            code_tool.invoke({"prompts": [this_prompt]})
+            
+            results = run_openhands_prompt([this_prompt], config, add_file_summary=False)
             
         return state
        

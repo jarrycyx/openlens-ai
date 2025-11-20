@@ -15,6 +15,7 @@ Please analyze this page of LaTeX-compiled PDF document for me. Conduct a compre
 3.  **Visual Clarity & Readability:**
     *   Is the text throughout the document clear and readable at standard zoom (100%)?
     *   Are the figures and charts within the document of sufficient resolution to be clearly understood?
+    *   Does the results represents simulated/synthetic/placeholder data which is untrustworthy?
     *   Is the document visually well-structured, using whitespace effectively to avoid a cluttered appearance?
 
 **Please provide a summary:** Clearly state if you spot any issues. For each potential problem identified, offer a specific suggestion for improvement or correction.

@@ -127,7 +127,7 @@ def route_by_subtask_redo_counter_wrapper(config: Config):
 
 def route_by_latex_polish_counter_wrapper(config: Config):
     def route_by_latex_polish_counter(state: State):
-        max_latex_redo = config.workflow.max_latex_polish_round if hasattr(config, 'max_latex_polish_round') else 10
+        max_latex_redo = config.workflow.max_latex_polish_round if hasattr(config.workflow, 'max_latex_polish_round') else 10
         if "polish_latex_counter" not in state:
             state["polish_latex_counter"] = 0
         logger.info(f"MAX_LATEX_POLISH_ROUND: {max_latex_redo}, current redo: {state['polish_latex_counter']}")

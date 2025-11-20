@@ -185,7 +185,7 @@ def monitor_process(pid: int, line_count: dict):
         last_line_count = line_count["count"]
 
 
-def run_openhands_prompt(prompts, config: Config):
+def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True):
     """
     Run OpenHands prompts and return results
 
@@ -211,13 +211,14 @@ def run_openhands_prompt(prompts, config: Config):
 
     all_results = ""
     for prompt in prompts:
-        # Initialize FileSummary to get file descriptions
-        file_summary = FileSummary(config)
-        
-        # Get file tree with summaries
-        file_tree_with_summaries = file_summary.get_file_tree_with_summaries()
-        
-        full_prompt = prompt + get_lang_prompt(config.llm.language) + f"\n\n\nFile tree with summaries:\n\n\n{file_tree_with_summaries}"
+        if add_file_summary:
+            # Initialize FileSummary to get file descriptions
+            file_summary = FileSummary(config)
+            # Get file tree with summaries
+            file_tree_with_summaries = file_summary.get_file_tree_with_summaries()
+            full_prompt = prompt + get_lang_prompt(config.llm.language) + f"\n\n\nFile tree with summaries:\n\n\n{file_tree_with_summaries}"
+        else:
+            full_prompt = prompt + get_lang_prompt(config.llm.language)
         
         pwd = os.getcwd()
         workspace_dir = os.path.join(pwd, config.save_path, "workspace")

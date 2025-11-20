@@ -35,7 +35,7 @@ user_id = 3407
 timeout = 3600
 runtime_container_image = "{runtime_container_image}"
 enable_gpu = true
-docker_runtime_kwargs = { mem_limit = "16g", cpu_period = 100000, cpu_quota = 10000 }
+docker_runtime_kwargs = { mem_limit = "16g" }
 # https://docker-py.readthedocs.io/en/stable/containers.html?highlight=run#docker.models.containers.ContainerCollection.run
 
 [mcp]

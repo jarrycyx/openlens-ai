@@ -61,7 +61,6 @@ def build_coder(config: Config) -> StateGraph:
         extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
     
-    code_tool = OpenHandsTool(config)
     plan_reader_tool = PlanReaderTool(config)
     report_writer_tool = ReportWriterTool(config)
     concluder_tools = [report_writer_tool]
@@ -81,15 +80,8 @@ def build_coder(config: Config) -> StateGraph:
             logger.info("No REASON in the AI tool message, use the default prompt.")
             reason = ""
             
-        results = code_tool.invoke({"prompts": [this_prompt]})
-        state["messages"] += [
-            # ToolMessage(
-            #     content=results,
-            #     name="openhands_tool",
-            #     tool_call_id="openhands_tool",
-            # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
-            HumanMessage(content=results)
-        ]
+        results = run_openhands_prompt([this_prompt], config, add_file_summary=True)
+        state["messages"] += [HumanMessage(content=results)]
         file_summary = FileSummary(config)
         state["file_summary"] = file_summary.file_cache
         return state
@@ -98,15 +90,8 @@ def build_coder(config: Config) -> StateGraph:
     def openhands_validation_node(state: State):
         subplan = get_subplan(state)
         this_prompt = validator_prompt.format(question=state["question"], subplan=subplan)
-        results = code_tool.invoke({"prompts": [this_prompt]})
-        state["messages"] += [
-            # ToolMessage(
-            #     content=results,
-            #     name="openhands_tool",
-            #     tool_call_id="openhands_tool",
-            # ), # Commenting out the ToolMessage because this tool is manually invoked and may cause issues, use HumanMessage instead.
-            HumanMessage(content=results)
-        ]
+        results = run_openhands_prompt([this_prompt], config, add_file_summary=True)
+        state["messages"] += [HumanMessage(content=results)]
         
         ## Check for generated images using vision-language model
         current_subtask_i = state["current_subtask_index"]
@@ -135,7 +120,7 @@ def build_coder(config: Config) -> StateGraph:
             return state   
         this_prompt = f"Based on the following vision feedback, please modify the python code to improve the experiments. " + \
             f"Vision feedback: " + all_feedback
-        code_tool.invoke({"prompts": [this_prompt]})
+        results = run_openhands_prompt([this_prompt], config, add_file_summary=True)
             
         
         return state

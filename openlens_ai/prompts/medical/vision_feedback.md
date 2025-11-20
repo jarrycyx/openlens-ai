@@ -16,6 +16,7 @@ Please analyze this scientific chart/graph/plot for me. Conduct a comprehensive 
 
 3.  **Result Rationality & Potential Errors:**
     *   Based on the chart's context and common scientific knowledge, do the visualized results *appear* reasonable? For example, are the trends, magnitudes, and relationships between data points within expected ranges?
+    *   Does the results represents simulated/synthetic/placeholder data which is untrustworthy?
     *   Are there any obvious outliers or data patterns that might suggest a potential error in data processing, plotting, or the experiment itself? (Note: I understand you can only analyze the visual presentation, not the underlying raw data).
 
 **Please provide a summary:** Clearly state if you spot any issues. For each potential problem identified, offer a specific suggestion for improvement or correction.
