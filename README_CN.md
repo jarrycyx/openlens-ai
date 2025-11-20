@@ -1,6 +1,6 @@
 **[English Version](README.md)**
 
-# OpenLens AI：面向健康信息学的全自动研究智能体
+# OpenLens AI：面向医疗信息学的全自动多模态科研智能体
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.9%2B-blue" alt="Python Version">
@@ -32,6 +32,7 @@
   </tr>
 </table>
 
+🔥 **新功能：** 支持通用领域（例如软件、机器学习等）。
 🔥 **新功能：** 支持中文图表和论文写作。
 
 ## 🔍🔍 核心特性
@@ -100,6 +101,13 @@ docker tag <IMAGE_ID> openlens-ai:runtime-latest
 ```
 
 2. 安装依赖：
+首先安装 OpenHands：
+```bash
+cd modules/OpenHands
+```
+然后按照[说明](https://github.com/All-Hands-AI/OpenHands/blob/main/Development.md)安装 OpenHands。
+
+安装 Python 依赖：
 ```bash
 # 如果希望可视化工作流，请安装 graphviz：
 #   sudo apt-get install graphviz graphviz-dev
