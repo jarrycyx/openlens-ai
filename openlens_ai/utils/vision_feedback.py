@@ -14,7 +14,9 @@ from langchain.chat_models import init_chat_model
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
 from ..utils.config import Config, get_lang_prompt
-    
+from ..state import load_state
+
+
 def get_vlm(config: Config):
     return init_chat_model(
         config.llm.vision.model,
@@ -23,6 +25,8 @@ def get_vlm(config: Config):
         openai_api_key=config.llm.vision.api_key,
         extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
+
+
 def collect_fig_files(config: Config, fig_files_extensions: list = [".png", ".jpg", ".jpeg", ".pdf"], base_dir=None):
     fig_file_list = []
     if base_dir is None:
@@ -32,11 +36,12 @@ def collect_fig_files(config: Config, fig_files_extensions: list = [".png", ".jp
     logger.info(f"Found {len(fig_file_list)} results files: {fig_file_list}")
     return fig_file_list
 
+
 def get_fig_base64(fig_file_list):
     fig_base64_list = []
     for fig in fig_file_list:
         # If it's a PDF file, convert it to PNG first
-        if fig.lower().endswith('.pdf'):
+        if fig.lower().endswith(".pdf"):
             try:
                 pdf_document = fitz.open(fig)
                 # Convert each page to PNG
@@ -45,7 +50,7 @@ def get_fig_base64(fig_file_list):
                     mat = fitz.Matrix(2, 2)  # 2x zoom for better quality
                     pix = page.get_pixmap(matrix=mat)
                     img_data = pix.tobytes("png")
-                    img_base64 = base64.b64encode(img_data).decode('utf-8')
+                    img_base64 = base64.b64encode(img_data).decode("utf-8")
                     # Append page number to filename for identification
                     fig_base64_list.append((f"{fig}_page_{page_num+1}.png", img_base64))
                 pdf_document.close()
@@ -54,19 +59,19 @@ def get_fig_base64(fig_file_list):
                 # If conversion fails, try to read PDF as is
                 with open(fig, "rb") as f:
                     img_data = f.read()
-                    img_base64 = base64.b64encode(img_data).decode('utf-8')
+                    img_base64 = base64.b64encode(img_data).decode("utf-8")
                     fig_base64_list.append((fig, img_base64))
             except Exception as e:
                 logger.error(f"Error converting PDF {fig} to PNG: {e}")
                 # If conversion fails, try to read PDF as is
                 with open(fig, "rb") as f:
                     img_data = f.read()
-                    img_base64 = base64.b64encode(img_data).decode('utf-8')
+                    img_base64 = base64.b64encode(img_data).decode("utf-8")
                     fig_base64_list.append((fig, img_base64))
         else:
             with open(fig, "rb") as f:
                 img_data = f.read()
-                img_base64 = base64.b64encode(img_data).decode('utf-8')
+                img_base64 = base64.b64encode(img_data).decode("utf-8")
                 fig_base64_list.append((fig, img_base64))
     return fig_base64_list
 
@@ -79,64 +84,56 @@ def save_llm_call(messages: list, config: Config):
     with open(save_path, "w") as f:
         f.write(dumps(messages, indent=4, ensure_ascii=False))
 
-def get_vision_feedback(image_base64: str, config: Config) -> str:
-    
+
+def call_vlm_with_prompt(image_base64: str, config: Config, prompt: str) -> str:
+    """
+    通用的VLM调用函数，用于处理图像相关的请求
+
+    Args:
+        image_base64: Base64编码的图像数据
+        config: 配置对象
+        prompt: 提示词文本
+
+    Returns:
+        VLM的响应内容
+    """
+
     def formatter_a(prompt, image_base64):
         logger.info(f"Using formatter A")
         # https://docs.bigmodel.cn/api-reference/%E6%A8%A1%E5%9E%8B-api/%E5%AF%B9%E8%AF%9D%E8%A1%A5%E5%85%A8#%E5%9B%BE%E7%89%87
         # https://docs.siliconflow.cn/cn/api-reference/chat-completions/chat-completions#vlm
-        image_feedback_message = HumanMessage(content=[
-                {
-                    "type": "text",
-                    "text": prompt
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": image_base64,
-                    }
-                },
-            ])
+        image_feedback_message = HumanMessage(
+            content=[
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": {"url": image_base64,},},
+            ]
+        )
         return image_feedback_message
-    
+
     def formatter_b(prompt, image_base64):
         logger.info(f"Using formatter B")
-        image_feedback_message = HumanMessage(content=[
-                {
-                    "type": "text",
-                    "text": prompt
-                },
-                {
-                    "type": "image",
-                    "source_type": "base64",
-                    "data": image_base64,
-                    "mime_type": "image/jpeg",
-                },
-            ])
+        image_feedback_message = HumanMessage(
+            content=[
+                {"type": "text", "text": prompt},
+                {"type": "image", "source_type": "base64", "data": image_base64, "mime_type": "image/jpeg"},
+            ]
+        )
         return image_feedback_message
- 
-    vlm = get_vlm(config)
-    
-    
 
-    # Load prompt based on domain configuration
-    domain = getattr(config, 'domain', 'general')
-    prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain, "vision_feedback.md")
-    with open(prompt_path, "r") as f:
-        vision_feedback_prompt = f.read() + get_lang_prompt(config.llm.language)
-        if config.important:
-            vision_feedback_prompt += "\n## Important Instructions\n" + config.important
-    
+    vlm = get_vlm(config)
+
+    # 选择使用的格式化器
+    formatters = [formatter_a, formatter_b]
+
     for try_i in range(10):
-        for this_formatter in [formatter_a, formatter_b]:
-        # for this_formatter in [formatter_b]:
+        for this_formatter in formatters:
             try:
                 # Call VLM to evaluate the image
-                image_feedback_message = this_formatter(vision_feedback_prompt, image_base64)
-                
-                vlm_response = vlm.invoke([image_feedback_message])
-                save_llm_call([image_feedback_message, vlm_response], config)
-                logger.info(f"Vision feedback: {vlm_response.content}")
+                image_message = this_formatter(prompt, image_base64)
+
+                vlm_response = vlm.invoke([image_message])
+                save_llm_call([image_message, vlm_response], config)
+                logger.info(f"Vision response: {vlm_response.content}")
                 return vlm_response.content
             except Exception as e:
                 logger.warning(f"Error when calling llm: {e}")
@@ -145,79 +142,61 @@ def get_vision_feedback(image_base64: str, config: Config) -> str:
                 time.sleep(5)
 
 
+def _load_prompt(config: Config, prompt_filename: str) -> str:
+    """
+    加载提示词文本
+
+    Args:
+        config: 配置对象
+        prompt_filename: 提示词文件名
+
+    Returns:
+        提示词文本
+    """
+    # Load prompt based on domain configuration
+    domain = getattr(config, "domain", "general")
+    prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain, prompt_filename)
+    with open(prompt_path, "r") as f:
+        prompt = f.read() + get_lang_prompt(config.llm.language)
+        if config.important:
+            prompt += "\n## Important Instructions\n" + config.important
+    return prompt
+
+
+def get_vision_feedback(image_base64: str, config: Config) -> str:
+    """
+    获取图像反馈
+    """
+    prompt = _load_prompt(config, "vision_feedback.md")
+    return call_vlm_with_prompt(image_base64, config, prompt)
+
 
 def get_latex_vision_feedback(image_base64: str, config: Config) -> str:
-    vlm = get_vlm(config)
-    # Load prompt based on domain configuration
-    domain = getattr(config, 'domain', 'general')
-    prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain, "vision_latex_feedback.md")
-    with open(prompt_path, "r") as f:
-        vision_latex_feedback_prompt = f.read() + get_lang_prompt(config.llm.language)
-        if config.important:
-            vision_latex_feedback_prompt += "\n## Important Instructions\n" + config.important
-    for try_i in range(10):
-        try:
-            # Call VLM to evaluate the image
-            image_feedback_message = HumanMessage(content=[
-                {
-                    "type": "text",
-                    "text": vision_latex_feedback_prompt
-                },
-                {
-                    "type": "image",
-                    "source_type": "base64",
-                    "data": image_base64,
-                    "mime_type": "image/jpeg",
-                },
-            ])
-            
-            vlm_response = vlm.invoke([image_feedback_message])
-            save_llm_call([image_feedback_message, vlm_response], config)
-            logger.info(f"Vision feedback: {vlm_response.content}")
-            return vlm_response.content
-        except Exception as e:
-            logger.warning(f"Error when calling llm: {e}")
-            logger.warning(traceback.format_exc())
-            logger.warning("Retrying...")
-            time.sleep(5)
+    """
+    获取LaTeX图像反馈
+    """
+    prompt = _load_prompt(config, "vision_latex_feedback.md")
+    return call_vlm_with_prompt(image_base64, config, prompt)
 
 
 def get_vision_classification(image_base64: str, config: Config) -> str:
-    vlm = get_vlm(config)
-    # Call VLM to classify the image
-    # Load prompt based on domain configuration
-    domain = getattr(config, 'domain', 'general')
-    prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain, "vision_classify.md")
-    with open(prompt_path, "r") as f:
-        vision_classify_prompt = f.read() + get_lang_prompt(config.llm.language)
-        if config.important:
-            vision_classify_prompt += "\n## Important Instructions\n" + config.important
-    for try_i in range(10):
-        try:
-            image_classification_message = HumanMessage(content=[
-                {
-                    "type": "text",
-                    "text": vision_classify_prompt
-                },
-                {
-                    "type": "image",
-                    "source_type": "base64",
-                    "data": image_base64,
-                    "mime_type": "image/jpeg",
-                }
-            ])
-            vlm_response = vlm.invoke([image_classification_message])
-            save_llm_call([image_classification_message, vlm_response], config)
-            logger.info(f"Vision classification: {vlm_response.content}")
-            return vlm_response.content
-        except Exception as e:
-            logger.warning(f"Error when calling llm: {e}")
-            logger.warning(traceback.format_exc())
-            logger.warning("Retrying...")
-            time.sleep(5)
-            
+    """
+    获取图像分类
+    """
+    prompt = _load_prompt(config, "vision_classify.md")
+    return call_vlm_with_prompt(image_base64, config, prompt)
+
 
 if __name__ == "__main__":
-    test_image = "outputs/comprehensive_dashboard.png"
-    image_base64 = base64.b64encode(open(test_image, "rb").read()).decode('utf-8')
-    vlm_response = get_vision_feedback(image_base64, Config(save_path="", thread_id="", question="", dataset_path=""))
+
+    config, state, last_subgraph = load_state("outputs/power_grid_fault_id")
+
+    test_image = "outputs/power_grid_fault_id/workspace/subtask_01/processed_data/figures/domain_distribution_improved.png"
+    image_base64 = get_fig_base64([test_image])[0][1]
+    vlm_response = get_vision_feedback(image_base64, config)
+    logger.info(vlm_response)
+
+    test_pdf = "outputs/power_grid_fault_id/workspace/manuscript/main.pdf"
+    pdf_base64 = get_fig_base64([test_pdf])[0][1]
+    vlm_response = get_latex_vision_feedback(pdf_base64, config)
+    logger.info(vlm_response)

@@ -13,7 +13,7 @@ from loguru import logger
 import fitz
 from fastmcp import FastMCP
 
-from ...utils.vision_feedback import get_vlm, get_vision_feedback, get_vision_classification, get_latex_vision_feedback, get_fig_base64
+from ...utils.vision_feedback import get_vlm, get_vision_feedback, get_vision_classification, get_latex_vision_feedback, get_fig_base64, call_vlm_with_prompt
 from ...utils.config import Config
 from ...state import load_state
 
@@ -51,37 +51,7 @@ def analyze_image(image_base64: str, prompt: Optional[str] = None) -> str:
     """
     try:
         config = get_config()
-        
-        # If custom prompt is provided, use it with the default vision feedback function
-        if prompt:
-            # Create a custom prompt by modifying the default one
-            vlm = get_vlm(config)
-            
-            from langchain_core.messages import HumanMessage
-            logger.info(f"MCP analyze_image: prompt is {prompt}")
-            # Try both formatters
-            for formatter in [
-                lambda p, img: HumanMessage(content=[
-                    {"type": "text", "text": p},
-                    {"type": "image_url", "image_url": {"url": img}}
-                ]),
-                lambda p, img: HumanMessage(content=[
-                    {"type": "text", "text": p},
-                    {"type": "image", "source_type": "base64", "data": img, "mime_type": "image/jpeg"}
-                ])
-            ]:
-                try:
-                    message = formatter(prompt, image_base64)
-                    response = vlm.invoke([message])
-                    return response.content
-                except Exception as e:
-                    logger.warning(f"Error with formatter: {e}")
-                    continue
-            
-            return "Error: Failed to process image with VLM"
-        else:
-            # Use the default vision feedback function
-            return get_vision_feedback(image_base64, config)
+        return call_vlm_with_prompt(image_base64, config, prompt)
     except Exception as e:
         return f"Error analyzing image: {str(e)}\n{traceback.format_exc()}"
 

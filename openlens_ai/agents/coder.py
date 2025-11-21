@@ -213,7 +213,7 @@ def build_coder(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph, new_save_dir = load_state("outputs/pred_aki_dy_mimic_icu_csv")
+    config, state, last_subgraph = load_state("outputs/pred_aki_dy_mimic_icu_csv")
     graph = build_coder(config)
 
     graph.invoke(state, {"recursion_limit": 100})

@@ -11,7 +11,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
 
 from ...utils.config import Config
-from ...chatbot import vector_search, perform_rerank, count_tokens_approximately
+from ...utils.embedding import vector_search, perform_rerank, count_tokens_approximately
 
 # Global config variable
 _config = None
@@ -99,7 +99,7 @@ def search_files_by_vector(
     all_docs_str = [doc.page_content for doc in all_splits]
     
     # Perform rerank using the existing function
-    relevant_messages = perform_rerank(
+    relevant_strs = perform_rerank(
         all_docs_str, 
         query, 
         token_cnt, 
@@ -107,6 +107,9 @@ def search_files_by_vector(
         rerank_api_key, 
         rerank_base_url
     )
+    
+    # Convert strings back to messages
+    relevant_messages = [HumanMessage(content=msg) for msg in relevant_strs]
     
     # Convert messages back to result format
     for message in relevant_messages:

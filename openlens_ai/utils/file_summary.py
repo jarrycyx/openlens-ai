@@ -7,9 +7,11 @@ from typing import Dict, List, Optional, Tuple
 from loguru import logger
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage
+from langchain_core.messages.utils import count_tokens_approximately, get_buffer_string
 
 from .config import Config
-from .vision_feedback import get_fig_base64, get_vision_classification
+from .vision_feedback import get_fig_base64, call_vlm_with_prompt
+from .embedding import perform_rerank
 
 
 class FileSummary:
@@ -17,13 +19,12 @@ class FileSummary:
     File inspection and summarization tool for checking file modification times and generating file trees with one-sentence summaries for each file.
     """
     
-    def __init__(self, config: Config, root_dir: str = None):
+    def __init__(self, config: Config):
         """
         Initialize the file inspection and summarization tool
         
         Args:
             config: Configuration object
-            root_dir: Root directory to check, defaults to config.save_path
         """
         self.config = config
             
@@ -126,7 +127,9 @@ class FileSummary:
                             # 获取第一个base64编码
                             base64_content = base64_list[0][1]
                             # 使用视觉模型进行分类和总结
-                            summary = get_vision_classification(base64_content, self.config)
+                            prompt = "Please summarize in one sentence (no more than 500 characters) the main function and content of the following image:"
+                            logger.info(f"Summarize {file_path} with prompt: {prompt}")
+                            summary = call_vlm_with_prompt(base64_content, self.config, prompt)
                             if summary:
                                 return summary
                     except Exception as e:
@@ -255,13 +258,14 @@ class FileSummary:
             
             # If it's a file, check if summary needs to be updated
             if os.path.isfile(item_path):
-                if self._is_file_updated(item_path):
+                abs_path = os.path.abspath(item_path)
+                this_file_summary = self.file_cache.get(abs_path, {}).get("summary", "")
+                if self._is_file_updated(item_path) or len(this_file_summary) > 2000:
                     summary = self._summarize_file(item_path)
                     self._update_file_cache(item_path, summary)
                 else:
                     # Get summary from cache
-                    abs_path = os.path.abspath(item_path)
-                    summary = self.file_cache.get(abs_path, {}).get("summary", "")
+                    summary = this_file_summary
                 
                 if summary:
                     # Use file tree line as key to ensure uniqueness
@@ -281,7 +285,7 @@ class FileSummary:
         
         return file_tree, summaries
     
-    def get_file_tree_with_summaries(self) -> str:
+    def get_file_tree_with_summaries(self, max_token_cnt: int = 1000, question: str = "") -> str:
         """
         Get file tree and one-sentence summary for each file
         
@@ -316,6 +320,21 @@ class FileSummary:
                 # Add indentation to match file tree structure
                 indent = line[:len(line) - len(file_name)]
                 result.append(f"{indent}{file_name}: {summaries[line]}")
+                
+        if count_tokens_approximately([HumanMessage(content="\n".join(result))]) > max_token_cnt:
+            if question:
+                logger.info(f"Reranking result with question: {question}")
+                result = perform_rerank(result, question, max_token_cnt, 
+                                        config.rerank.rerank_model, 
+                                        config.rerank.rerank_api_key, 
+                                        config.rerank.rerank_base_url)
+            else:
+                logger.warning("No question provided for reranking. Directly truncate the result.")
+                truncated = []
+                for line in result:
+                    if count_tokens_approximately([HumanMessage(content=line)]) <= max_token_cnt:
+                        truncated.append(line)
+                result = truncated
         
         return "\n".join(result)
 
@@ -325,11 +344,11 @@ if __name__ == "__main__":
     from .config import Config
     from ..state import load_state
     
-    config, state, last_subgraph = load_state("outputs/pred_aki_dy_mimic_icu_csv")
+    config, state, last_subgraph = load_state("outputs/power_grid_fault_id")
     
     # Create file inspection and summarization tool
     file_summary = FileSummary(config)
     
     # Get file tree and summaries
-    result = file_summary.get_file_tree_with_summaries()
+    result = file_summary.get_file_tree_with_summaries(question="Clustering machine learning")
     print(result)
