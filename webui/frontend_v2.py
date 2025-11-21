@@ -1,6 +1,6 @@
 """
-此模块为 OpenLens AI 前端的核心模块，负责实现用户界面和交互逻辑，
-包括用户登录、项目管理、任务启动和监控等功能。
+This module is the core module of the OpenLens AI frontend, responsible for implementing user interface and interaction logic,
+including user login, project management, task startup and monitoring functions.
 """
 import os
 import sys
@@ -37,12 +37,12 @@ def load_saved_experiments():
     if not os.path.exists(saved_exp_root):
         return []
 
-    # 遍历所有子目录查找实验目录
+    # Traverse all subdirectories to find experiment directories
     for root, dirs, files in os.walk(saved_exp_root):
         for dir_name in dirs:
             if dir_name.startswith("test_"):
-                # 解析目录名获取dataset和question信息
-                # 格式: test_{dataset}_{question}
+                # Parse directory name to get dataset and question information
+                # Format: test_{dataset}_{question}
                 dir_path = os.path.join(root, dir_name)
                 config_path = os.path.join(dir_path, "config.json")
 
@@ -76,12 +76,12 @@ def load_saved_experiments():
 
 
 def load_user_projects(email: str) -> List[Dict[str, Any]]:
-    """加载用户专属项目列表"""
+    """Load user-specific project list"""
     if not email:
         return []
 
     projects = []
-    # 根据用户ID查找项目
+    # Find projects based on user ID
     admin_email = config.frontend.frontend_admin_email
 
     if email == admin_email:
@@ -106,7 +106,7 @@ def load_user_projects(email: str) -> List[Dict[str, Any]]:
                 logger.debug(f"Failed to load project from {path}: {e}")
                 continue
             
-            # 用户创建的项目，question不需要翻译
+            # User-created projects, question does not need translation
             question =  config_data.get("question", "Untitled Project")
             
             chinese_char_cnt = len(re.findall(r"[\u4e00-\u9fa5]", question))
@@ -124,15 +124,15 @@ def load_user_projects(email: str) -> List[Dict[str, Any]]:
                     "last_modified": os.path.getmtime(path),
                 }
             )
-    # 按最后修改时间排序
+    # Sort by last modified time
     return sorted(projects, key=lambda x: x["last_modified"], reverse=True)
 
 
 def build_sidebar():
     with st.sidebar:
-        # 登录/登出功能
+        # Login/logout functionality
         if not st.user.is_logged_in:
-            # 未登录时显示登录按钮和语言切换按钮
+            # Show login button and language switch button when not logged in
             col1, col2 = st.columns([2, 1])
             with col1:
                 st.button(f"🚶‍♂️‍➡ {t('log_in')}", help=t('log_in'), width="stretch", on_click=st.login)
@@ -147,9 +147,9 @@ def build_sidebar():
                     if st.button("🇺🇸 English", key="lang_en_logout"):
                         set_language("eng")
                         st.rerun()
-            # st.stop()  # 未登录时停止执行
+            # st.stop()  # Stop execution when not logged in
         else:
-            # 已登录时显示用户信息和语言切换按钮
+            # Show user information and language switch button when logged in
             user_info = st.user.to_dict()
             col1, col2 = st.columns([3, 1])
             with col1:
@@ -172,9 +172,9 @@ def build_sidebar():
                             st.rerun()
 
         st.divider()
-        # 用户专属项目列表（移到侧边栏底部）
+        # User-specific project list (moved to bottom of sidebar)
         st.subheader(f"📁 {t('your_projects')}")
-        # 新建项目按钮
+        # New project button
         if st.button(f"&nbsp; 🚀&nbsp; {t('new_project')}", help=t("new_project"), width="stretch"):
             st.session_state.config = None
             st.rerun()
@@ -190,9 +190,9 @@ def build_sidebar():
                     project_key = f"project_{project['thread_id']}"
                     dataset_name = t(project["dataset"].split("/")[-1] if project["dataset"] else "Unknown dataset")
 
-                    if st.button(f"**{project_language}** | {project_title} | *{dataset_name}*", key=project_key, width="stretch", type="tertiary"):
-                        # 加载项目配置
-                        try:
+                    # Load project configuration
+                    try:
+                        if st.button(f"**{project_language}** | {project_title} | *{dataset_name}*", key=project_key, width="stretch", type="tertiary"):
                             if os.path.exists(os.path.join(project["path"], "config.json")):
                                 with open(config_path, "r") as f:
                                     config_data = json.load(f)
@@ -201,18 +201,18 @@ def build_sidebar():
                                     config_data = toml.load(f)
                             else:
                                 raise FileNotFoundError("No config.json or config.toml found in project directory")
-                        except Exception as e:
-                            logger.warning(f"Failed to load config from {project['path']}: {e}")
-                            continue
 
                         config = Config(**config_data)
                         st.session_state.config = config
 
-                        # 如果有旧的监控线程，停止它
+                        # If there is an old monitoring thread, stop it
                         if st.session_state.monitor_thread:
                             st.session_state.monitor_thread.stop()
 
                         st.rerun()
+                    except Exception as e:
+                        logger.warning(f"Failed to load config from {project['path']}: {e}")
+                        continue
             else:
                 st.info(t("no_projects_yet"))
         else:
@@ -224,9 +224,9 @@ def build_sidebar():
 
 def start_job(question, dataset_path, email, language="chs"):
     if question and dataset_path and (len(email) > 5):
-        # 获取配置
+        # Get configuration
         
-        # 生成线程ID
+        # Generate thread ID
         question_show = re.sub(r"[^\w]", "_", question.strip())
         thread_id = (
             "OL_"
@@ -239,16 +239,16 @@ def start_job(question, dataset_path, email, language="chs"):
             + str(random.randint(1000, 9999))
         )
 
-        # 检查进程数量是否已满
+        # Check if the number of processes has reached the maximum
         if process_manager.is_full():
             st.error(t("failed_to_start_process", max=process_manager.MAX_PROCESSES))
             return
 
         if not process_manager.is_full():
-            # 将语言选择映射到main.py期望的值
+            # Map language selection to the value expected by main.py
             language_code = "chs" if language == "中文" else "eng"
             
-            # 启动新进程运行任务
+            # Start a new process to run the task
             process = subprocess.Popen(
                 [
                     "python",
@@ -263,9 +263,9 @@ def start_job(question, dataset_path, email, language="chs"):
                 ]
             )
 
-            # 将进程信息添加到进程管理器
+            # Add process information to the process manager
             if not process_manager.add_process(process.pid, thread_id):
-                process.terminate()  # 如果添加失败，终止进程
+                process.terminate()  # If adding fails, terminate the process
                 st.error(t("failed_to_start_process", max=process_manager.MAX_PROCESSES))
                 return
 
@@ -303,7 +303,7 @@ def watch_job(config):
     email = config.notify_email
     st.caption(t("thread_id", thread_id=thread_id))
     
-    # 检查任务PID是否存在
+    # Check if task PID exists
     processes = process_manager.get_process_list()
     task_process = None
     for process in processes:
@@ -311,11 +311,11 @@ def watch_job(config):
             task_process = process
             break
     
-    # 如果任务PID不存在，显示警告信息
+    # If task PID does not exist, show warning message
     if not task_process:
         st.warning(t("job_not_running", thread_id=thread_id))
         
-        # 获取任务目录路径
+        # Get task directory path
         task_dir = os.path.join("outputs", thread_id)
         
         if not os.path.exists(task_dir):
@@ -323,10 +323,10 @@ def watch_job(config):
     else:
         st.warning(t("job_progress_notification", email=email))
 
-    # 保存 config 到 session state
+    # Save config to session state
     st.session_state.config = config
 
-    # 如果有旧的监控线程，停止它
+    # If there is an old monitoring thread, stop it
     if st.session_state.monitor_thread:
         logger.info("Stopping old monitor thread")
         st.session_state.monitor_thread.stop()
@@ -336,8 +336,8 @@ def watch_job(config):
 
 
 def main():
-    # 设置页面配置
-    # 初始化session state
+    # Set page configuration
+    # Initialize session state
     if "config" not in st.session_state:
         st.session_state.config = None
     if "monitor_thread" not in st.session_state:
@@ -348,10 +348,10 @@ def main():
         st.session_state.question_input = ""
     if "dataset_selected" not in st.session_state:
         st.session_state.dataset_selected = "MIMIC-IV-ICU"
-    # 初始化语言设置
+    # Initialize language settings
     if "language" not in st.session_state:
         st.session_state.language = "chs"
-    # 初始化语言选择
+    # Initialize language selection
     if "language_selected" not in st.session_state:
         st.session_state.language_selected = "中文"
     st.markdown(
@@ -379,7 +379,7 @@ def main():
     )
     
     
-    # 如果有当前项目，显示项目界面
+    # If there is a current project, show the project interface
     if st.session_state.config:
         
         st.set_page_config(
@@ -391,13 +391,13 @@ def main():
                 "About": "https://github.com/OpenLens-AI/OpenLens-AI",
             },
         )
-        # 侧边栏设计
+        # Sidebar design
         build_sidebar()
         config = st.session_state.config
         
         with st.container(horizontal=True):
             
-            # 检查任务PID是否存在并显示任务状态
+            # Check if task PID exists and display task status
             processes = process_manager.get_process_list()
             task_process = None
             for process in processes:
@@ -413,10 +413,10 @@ def main():
             if task_process:
                 st.markdown(f"🙋 **{t('question_label')}** {t(question_show)} | 🟢 {t('task_running')}")
                 
-                # 如果任务正在运行，显示强制中断按钮
+                # If task is running, show force interrupt button
                 if st.button(f"⏹️ {t('force_interrupt')}", key=f"interrupt_{config.thread_id}"):
                     try:
-                        # 调用进程管理器的中断方法
+                        # Call the interrupt method of the process manager
                         if process_manager.interrupt_process(config.thread_id):
                             st.success(t("task_interrupted"))
                             st.rerun()
@@ -428,13 +428,13 @@ def main():
             else:
                 st.markdown(f"🙋 **{t('question_label')}** {t(question_show)} | 🔴 {t('task_stopped')}")
                 
-                # 如果任务未运行，显示继续任务按钮
+                # If task is not running, show continue task button
                 task_dir = os.path.join("outputs", config.thread_id)
                 if os.path.exists(task_dir):
                     if st.button(f"▶️ {t('continue_task')}", key=f"continue_{config.thread_id}"):
-                        # 调用resume-from接口
+                        # Call resume-from interface
                         try:
-                            # 启动新进程继续任务
+                            # Start a new process to continue the task
                             process = subprocess.Popen(
                                 [
                                     "python",
@@ -444,12 +444,12 @@ def main():
                                 ]
                             )
                             
-                            # 将进程信息添加到进程管理器
+                            # Add process information to the process manager
                             if process_manager.add_process(process.pid, config.thread_id):
                                 st.success(t("task_resumed", pid=process.pid))
                                 st.rerun()
                             else:
-                                process.terminate()  # 如果添加失败，终止进程
+                                process.terminate()  # If adding fails, terminate the process
                                 st.error(t("failed_to_resume_task"))
                         except Exception as e:
                             logger.error(f"Failed to resume task: {e}")
@@ -462,7 +462,7 @@ def main():
         if latest_files:
             latest_file_path, _, _ = latest_files[0]
             file_path = st.session_state.preview_file if st.session_state.preview_file else latest_file_path
-            # 分割为左右两栏
+            # Split into left and right columns
             
             # st.divider()
             
@@ -499,20 +499,20 @@ def main():
                 "About": "https://github.com/OpenLens-AI/OpenLens-AI",
             },
         )
-        # 侧边栏设计
+        # Sidebar design
         build_sidebar()
 
-        # 主界面设计
+        # Main interface design
         # st.title("🫧 OpenLens AI")
         st.subheader(f"🫧 {t('app_title')}")
 
-        # 显示当前进程数量
+        # Display current process count
         process_count = process_manager.get_process_count()
         st.caption(t("current_running_jobs", current=process_count, max=process_manager.MAX_PROCESSES))
         # if process_count >= process_manager.MAX_PROCESSES:
         #     st.warning(t("max_processes_reached"))
 
-        # 主要输入框
+        # Main input box
         question = st.text_area(
             t("research_question"),
             value=st.session_state.question_input,
@@ -521,10 +521,10 @@ def main():
             key="question_input_main",
         )
 
-        # 如果用户输入了问题，隐藏Use Cases
+        # If user entered a question, hide Use Cases
         show_use_cases = not question.strip()
 
-        # 数据集选择/上传功能区
+        # Dataset selection/upload area
         col1, col2 = st.columns([2, 1])
         
         with col1:
@@ -537,7 +537,7 @@ def main():
             st.session_state.dataset_selected = dataset_option
         
         with col2:
-            # 语言选择框
+            # Language selection box
             language_option = st.selectbox(
                 t("language"),
                 ["中文", "English"],
@@ -561,18 +561,18 @@ def main():
                 t("upload_dataset_files"), accept_multiple_files=True, type=["csv", "txt", "json", "parquet", "xls", "xlsx"], help=t("upload_dataset_help")
             )
 
-            # 创建用户上传目录
+            # Create user upload directory
             user_upload_dir = "datasets/user_upload"
             os.makedirs(user_upload_dir, exist_ok=True)
 
-            # 处理文件上传
+            # Handle file upload
             if uploaded_files:
-                # 创建带时间戳的子目录
+                # Create subdirectory with timestamp
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 upload_subdir = os.path.join(user_upload_dir, f"upload_{timestamp}_{random.randint(1000, 9999):04d}")
                 os.makedirs(upload_subdir, exist_ok=True)
 
-                # 保存上传的文件
+                # Save uploaded files
                 for uploaded_file in uploaded_files:
                     file_path = os.path.join(upload_subdir, uploaded_file.name)
                     with open(file_path, "wb") as f:
@@ -593,39 +593,39 @@ def main():
             st.caption(t("start_research_note"))
 
         
-        # 处理提交
+        # Handle submission
         if submit_button:
             if st.user.is_logged_in:
                 start_job(question, dataset_path, st.session_state.email, st.session_state.language_selected)
             else:
                 st.login()
 
-        # Use Cases选项卡（仅在没有输入问题时显示）
+        # Use Cases tab (only shown when no question is entered)
         if show_use_cases:
             st.subheader(t("explore_use_cases"))
 
-            # 加载保存的实验
+            # Load saved experiments
             with st.spinner(t("loading_use_cases")):
                 saved_experiments = load_saved_experiments()
                 # saved_experiments = random.sample(saved_experiments, min(6, len(saved_experiments)))
                 saved_experiments = saved_experiments[:12]
 
-            # 创建三列用于卡片式展示（添加一列用于Resume Session）
+            # Create three columns for card-style display (add one column for Resume Session)
             col1, col2 = st.columns(2)
 
             if saved_experiments:
                 for i, exp in enumerate(saved_experiments):
-                    # 从dir_name解析出dataset和更友好的标题
+                    # Parse dataset and more friendly title from dir_name
 
-                    # 选择列（跳过第一列，因为已经被Resume Session占用）
+                    # Select column (skip the first column as it's occupied by Resume Session)
                     if i % 2 == 0:
                         col = col1
                     else:
                         col = col2
 
                     with col:
-                        # 创建卡片式按钮
-                        # 样例的问题名称需要翻译，提供更好的用户体验
+                        # Create card-style button
+                        # Sample question names need translation for better user experience
                         question = t(exp.get("question", "No question specified"))
                         dataset = t(exp.get("dataset", "Unknown dataset").split("/")[-1])
                         language = t(exp.get("language", "eng"))
@@ -635,7 +635,7 @@ def main():
                                 config_data = json.load(f)
 
                             config = Config(**config_data)
-                            config.save_path = exp["path"] # 确保保存路径与实验路径一致
+                            config.save_path = exp["path"] # Ensure save path is consistent with experiment path
                             st.session_state.config = config
                             logger.info(f"Loaded config for experiment: {exp.get('question', 'No question specified')}")
                             st.rerun()

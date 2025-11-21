@@ -37,7 +37,7 @@ all_view_ext = pdf_file_ext + image_file_ext + text_file_ext + code_file_ext
 
 def display_single_file(config: Config, file_path: str):
     rel_path = os.path.relpath(file_path, config.save_path)
-    # 尝试读取文件内容
+    # Try to read file content
     if rel_path.endswith(tuple(image_file_ext)):
         st.image(file_path)
     elif rel_path.endswith(tuple(pdf_file_ext)):
@@ -47,7 +47,7 @@ def display_single_file(config: Config, file_path: str):
         with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
 
-        # 限制显示内容长度
+        # Limit the display content length
         if len(content) > 20000:
             content = content[:20000] + "\n\n" + t("content_truncated")
 
@@ -58,7 +58,7 @@ def display_single_file(config: Config, file_path: str):
     else:
         pass
 
-    # 提供下载按钮
+    # Provide download button
     with open(file_path, "rb") as f:
         file_data = f.read()
 
@@ -75,41 +75,41 @@ def get_paper_path(config: Config):
             return None
 
 def check_file(file_path: str):
-    """检查文件是否有效且可读
+    """Check if the file is valid and readable
     
     Args:
-        file_path: 文件路径
+        file_path: File path
         
     Returns:
-        bool: 文件是否有效且可读
+        bool: Whether the file is valid and readable
     """
-    # 首先检查文件是否存在
+    # First check if the file exists
         
-    # 尝试读取文件内容
+    # Try to read file content
     try:
         assert os.path.exists(file_path), f"File {file_path} does not exist"
         assert os.path.getsize(file_path) > 0, f"File {file_path} is empty"
         if file_path.endswith(tuple(image_file_ext)):
-            # 尝试解析图像
+            # Try to parse the image
             with Image.open(file_path) as img:
                 img.verify()  # 验证图像完整性
             return True
         elif file_path.endswith(tuple(pdf_file_ext)):
-            # 尝试解析PDF
+            # Try to parse the PDF
             with open(file_path, 'rb') as f:
                 reader = PyPDF2.PdfReader(f)
-                # 检查PDF是否有页面
+                # Check if the PDF has pages
                 assert len(reader.pages) > 0, f"PDF {file_path} has no pages"
                 return True
         elif file_path.endswith(tuple(text_file_ext + code_file_ext)):
-            # 尝试读取文本/代码文件
+            # Try to read text/code files
             with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
-            # 检查文件是否有内容
+            # Check if the file has content
             assert content.strip(), f"File {file_path} is empty after stripping"
             return True
         else:
-            # 不支持的文件类型
+            # Unsupported file type
             raise ValueError(f"Unsupported file type: {file_path}")
     except Exception as e:
         logger.debug(f"Failed to check file {file_path}: {e}")
@@ -124,7 +124,7 @@ def get_latest_files(config: Config):
         # st.info(t("no_files_generated_yet"))
         return []
 
-    # 获取所有文件并按修改时间排序
+    # Get all files and sort by modification time
     all_files = {}
     for root, dirs, files in os.walk(workspace_path):
         for file in files:
@@ -148,21 +148,21 @@ def get_latest_files(config: Config):
 
     
     all_files = list(all_files.values())
-    # 按修改时间排序，取最新的几个文件
+    # Sort by modification time, take the latest files
     all_files = sorted(all_files, key=lambda x: x[2], reverse=True)
     all_files = [x for x in all_files if x[1].endswith(tuple(all_view_ext))]
     if pdf_path:
         all_files.insert(0, (pdf_path, os.path.relpath(pdf_path, workspace_path), os.path.getmtime(pdf_path)))
 
-    latest_files = all_files[:10]  # 显示最新的5个文件
+    latest_files = all_files[:10]  # Display the latest 10 files
 
     return latest_files
 
 def display_multiple_file_preview(config: Config):
-    """显示最新生成的文件内容预览"""
+    """Display preview of the latest generated file content"""
     latest_files = get_latest_files(config)
 
-    ############ 显示多个文件
+    ############ Display multiple files
     for i, (file_path, rel_path, _) in enumerate(latest_files):
         try:
             expand = i == 0
@@ -174,7 +174,7 @@ def display_multiple_file_preview(config: Config):
 
 
 def display_messages_from_file(config: Config):
-    # 从文件中读取并显示最新的消息
+    # Read and display the latest messages from the file
 
     question = t(config.question)
     dataset_path = config.dataset_path
@@ -193,7 +193,7 @@ def display_messages_from_file(config: Config):
 
     messages = _message_remove_duplicates(messages)
     # logger.debug(f"Loaded {len(messages)} messages from {messages_file}")
-    # 显示消息
+    # Display messages
     for msg in messages:
         if msg["type"] == "message":
             role = msg["role"]
@@ -220,7 +220,7 @@ def display_messages_from_file(config: Config):
 
 
 def show_scrollable(content, file_name, height=200):
-    content = content[:10000]  # 限制内容长度，防止过大
+    content = content[:10000]  # Limit content length to prevent it from being too large
 
     if file_name.endswith(".md"):
         component = st.write
@@ -293,10 +293,10 @@ def show_workspace(config):
 
     save_path = config.save_path
     workspace_path = os.path.join(save_path, "workspace")
-    # 使用 glob.glob 递归获取所有文件
+    # Use glob.glob to recursively get all files
     pattern = os.path.join(workspace_path, "**", "*")
     all_files = glob.glob(pattern, recursive=True)
-    # 过滤出文件（而不是目录），并计算相对于workspace_path的路径
+    # Filter out files (not directories) and calculate the path relative to workspace_path
     current_files = set()
     current_fils_hash = {}
     for f in all_files:
@@ -306,7 +306,7 @@ def show_workspace(config):
                 current_files.add(f)
                 current_fils_hash[f] = hashlib.md5(open(f, "rb").read()).hexdigest()
 
-    # extra files是workspace外面的可能需要展示的文件，所以是相对于save_path的路径
+    # extra files are files outside the workspace that may need to be displayed, so they are paths relative to save_path
     extra_files = ["overall_graph_image.png"]
     for extra_f in extra_files:
         if os.path.exists(os.path.join(save_path, extra_f)):
@@ -322,9 +322,9 @@ def show_workspace(config):
         st.success(t("click_download_workspace"))
         st.write(f"**{t('file_list')}**")
         with st.container(horizontal=True):
-            # 显示文件列表
+            # Display file list
             if current_files:
-                # 创建一个按钮，点击后设置要查看的文件
+                # Create a button that sets the file to view after clicking
                 for file_path in sorted(current_files):
                     try:
                         file_name = os.path.basename(file_path)

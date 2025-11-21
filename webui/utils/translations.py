@@ -1,6 +1,6 @@
 """
-多语言支持模块，提供中英文界面文本的查找表和切换功能
-支持LLM自动翻译和缓存机制
+Multilingual support module, providing lookup tables and switching functionality for Chinese and English interface text
+Supports LLM automatic translation and caching mechanism
 """
 
 import os
@@ -13,33 +13,33 @@ import requests
 import threading
 import time
 
-# 语言查找表
+# Language lookup table
 TRANSLATIONS = {
-    # 英文到中文的映射
+    # English to Chinese mapping
     "eng": {
-        # 登录相关
+        # Login related
         "log_in": "Log in",
         "email": "Email",
         "logout": "Log out",
         
-        # 语言选项
+        # Language options
         "chs": "Chinese",
         "eng": "English",
         
-        # 项目相关
+        # Project related
         "your_projects": "Your Projects",
         "new_project": "+ New project",
         "no_projects_yet": "No projects yet. Create your first project below.",
         "eicu-demo": "eICU Demo",
         "mimic-iv-icu": "MIMIC-IV ICU",
         
-        # 进程相关
+        # Process related
         "max_processes_reached": "Maximum number of processes ({max}) reached. Please wait for some processes to finish.",
         "failed_to_start_process": "Failed to start process, Maximum number of processes ({max}) reached. Can submit an issue on GitHub for help.",
         "creating_job": "Creating job...",
         "current_running_jobs": "Current Running Jobs: {current}/{max}",
         
-        # 任务相关
+        # Task related
         "question_label": "Question:",
         "dataset_path_label": "Dataset Path:",
         "thread_id": "Thread ID: {thread_id}",
@@ -56,13 +56,13 @@ TRANSLATIONS = {
         "task_interrupted": "Task interrupted successfully",
         "failed_to_interrupt_task": "Failed to interrupt task. Please try again.",
         
-        # 界面元素
+        # UI elements
         "refresh": "Refresh",
         "conversation_history": "Conversation History",
         "all_files": "All files",
         "github_link": "🌟 Star us on GitHub",
         
-        # 应用标题和描述
+        # Application title and description
         "app_title": "OpenLens AI: Fully Autonomous Multimodal Agent for Health Infomatics Research",
         "research_question": "Research Question",
         "dataset_source": "Dataset Source",
@@ -77,7 +77,7 @@ TRANSLATIONS = {
         "click_to_use_experiment": "Click to use this experiment",
         "max_processes_reached": "The server is busy. New task will added to the waiting queue.",
         
-        # 文件相关
+        # File related
         "content_truncated": "... (content truncated)",
         "download": "Download",
         "no_files_generated_yet": "No files generated yet.",
@@ -91,37 +91,37 @@ TRANSLATIONS = {
         "file_list_item": "- {rel_path}",
         "no_files_in_workspace": "No files in workspace yet.",
         
-        # 占位符文本
+        # Placeholder text
         "question_placeholder": "What is the prediction precision of AKI in ICU patients when dynamically predicting each day based on the past two days of historical data?",
         
-        # 备注
+        # Note
         "note": "Note: OpenLens AI is not responsible for any errors or omissions in the results. Please verify the results independently. The research results are for informational purposes only and should not be used as a substitute for direct submission.",
     },
     
     "chs": {
-        # 登录相关
+        # Login related
         "log_in": "登录",
         "email": "邮箱",
         "logout": "登出",
         
-        # 语言选项
+        # Language options
         "chs": "中文",
         "eng": "英文",
         
-        # 项目相关
+        # Project related
         "your_projects": "您的项目",
         "new_project": "➕ 新建项目",
         "no_projects_yet": "暂无项目。请在下方创建您的第一个项目。",
         "eicu-demo": "eICU Demo",
         "mimic-iv-icu": "MIMIC-IV ICU",
         
-        # 进程相关
+        # Process related
         "max_processes_reached": "已达到最大进程数 ({max})。请等待一些进程完成。",
         "failed_to_start_process": "启动进程失败，已达到最大进程数 ({max})，可在GitHub上提交issue反馈。",
         "creating_job": "正在创建任务...",
         "current_running_jobs": "当前运行任务: {current}/{max}",
         
-        # 任务相关
+        # Task related
         "question_label": "问题:",
         "dataset_path_label": "数据集路径:",
         "thread_id": "线程ID: {thread_id}",
@@ -139,13 +139,13 @@ TRANSLATIONS = {
         "task_interrupted": "任务已成功中断",
         "failed_to_interrupt_task": "中断任务失败，请重试。",
         
-        # 界面元素
+        # UI elements
         "refresh": "刷新",
         "conversation_history": "对话历史",
         "all_files": "所有文件",
         "github_link": "🌟 在GitHub上Star我们",
         
-        # 应用标题和描述
+        # Application title and description
         "app_title": "OpenLens AI: 全自主医学科研智能体",
         "research_question": "研究问题",
         "dataset_source": "数据集来源",
@@ -159,7 +159,7 @@ TRANSLATIONS = {
         "loading_use_cases": "正在加载用例...",
         "click_to_use_experiment": "点击使用此实验",
         
-        # 文件相关
+        # File related
         "content_truncated": "... (内容已截断)",
         "download": "下载",
         "no_files_generated_yet": "尚未生成文件。",
@@ -173,19 +173,19 @@ TRANSLATIONS = {
         "file_list_item": "- {rel_path}",
         "no_files_in_workspace": "工作区中尚无文件。",
         
-        # 占位符文本
+        # Placeholder text
         "question_placeholder": "在ICU患者中，基于过去两天的历史数据动态预测每一天，AKI的预测精度是多少？",
         
-        # 备注
+        # Note
         "note": "注意：OpenLens AI 不承担任何因使用其结果而导致的错误或遗漏。请独立验证结果。研究结果仅供参考，不应直接用于学术投稿。",
     }
 }
 
-# 翻译缓存文件路径
+# Translation cache file path
 TRANSLATION_CACHE_FILE = os.path.join(os.path.dirname(__file__), "trans_cache.json")
 
 def load_translation_cache() -> Dict[str, Any]:
-    """加载翻译缓存"""
+    """Load translation cache"""
     try:
         if os.path.exists(TRANSLATION_CACHE_FILE):
             with open(TRANSLATION_CACHE_FILE, "r", encoding="utf-8") as f:
@@ -195,7 +195,7 @@ def load_translation_cache() -> Dict[str, Any]:
     return {}
 
 def save_translation_cache(cache: Dict[str, Any]) -> None:
-    """保存翻译缓存"""
+    """Save translation cache"""
     try:
         with open(TRANSLATION_CACHE_FILE, "w", encoding="utf-8") as f:
             json.dump(cache, f, ensure_ascii=False, indent=2)
@@ -203,11 +203,11 @@ def save_translation_cache(cache: Dict[str, Any]) -> None:
         logger.warning(f"Failed to save translation cache: {e}")
 
 def get_cache_key(text: str, target_lang: str) -> str:
-    """生成缓存键 - 直接使用原文作为键，更直观且便于调试"""
+    """Generate cache key - use original text as key directly, more intuitive and easier to debug"""
     return text
 
 def load_llm_config() -> Dict[str, Any]:
-    """从translation_llm.json加载LLM配置"""
+    """Load LLM configuration from translation_llm.json"""
     try:
         config_path = os.path.join(os.path.dirname(__file__), "translation_llm.json")
         if os.path.exists(config_path):
@@ -218,12 +218,12 @@ def load_llm_config() -> Dict[str, Any]:
         logger.warning(f"Failed to load LLM config: {e}")
     return {}
 
-# 全局变量，用于跟踪正在进行的翻译任务
+# Global variables for tracking ongoing translation tasks
 _ongoing_translations = {}
 _translation_lock = threading.Lock()
 
 def translate_with_llm_async(text: str, target_lang: str, cache_key: str) -> None:
-    """异步使用LLM进行翻译"""
+    """Asynchronously translate using LLM"""
     try:
         llm_config = load_llm_config()
         if not llm_config:
@@ -238,7 +238,7 @@ def translate_with_llm_async(text: str, target_lang: str, cache_key: str) -> Non
             logger.warning("Incomplete LLM configuration")
             return
         
-        # 构建翻译提示
+        # Build translation prompt
         lang_map = {"chs": "中文", "eng": "English"}
         target_language = lang_map.get(target_lang, target_lang)
         
@@ -249,7 +249,7 @@ Text to translate: {text}
 
 Translation:"""
         
-        # 调用LLM API
+        # Call LLM API
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
@@ -275,16 +275,16 @@ Translation:"""
             result = response.json()
             translated_text = result["choices"][0]["message"]["content"].strip()
             
-            # 保存到缓存
+            # Save to cache
             cache = load_translation_cache()
             if target_lang not in cache:
                 cache[target_lang] = {}
             cache[target_lang][cache_key] = translated_text
             save_translation_cache(cache)
             
-            # 保存到内存中的翻译表
+            # Save to in-memory translation table
             if target_lang in TRANSLATIONS:
-                # 查找对应的键
+                # Find the corresponding key
                 for key, value in TRANSLATIONS["eng"].items():
                     if value == text:
                         TRANSLATIONS[target_lang][key] = translated_text
@@ -297,24 +297,24 @@ Translation:"""
     except Exception as e:
         logger.warning(f"Translation with LLM failed: {e}")
     finally:
-        # 清理正在进行的翻译任务记录
+        # Clean up ongoing translation task records
         with _translation_lock:
             translation_id = f"{text}_{target_lang}"
             if translation_id in _ongoing_translations:
                 del _ongoing_translations[translation_id]
 
 def translate_with_llm(text: str, target_lang: str) -> Optional[str]:
-    """使用LLM进行翻译（非阻塞版本）"""
-    # 检查是否已经在进行中
+    """Translate using LLM (non-blocking version)"""
+    # Check if already in progress
     translation_id = f"{text}_{target_lang}"
     with _translation_lock:
         if translation_id in _ongoing_translations:
-            return None  # 已在进行中，不重复启动
+            return None  # Already in progress, don't start again
         
-        # 标记为正在进行
+        # Mark as in progress
         _ongoing_translations[translation_id] = True
     
-    # 启动异步翻译
+    # Start asynchronous translation
     cache_key = get_cache_key(text, target_lang)
     thread = threading.Thread(
         target=translate_with_llm_async,
@@ -323,61 +323,61 @@ def translate_with_llm(text: str, target_lang: str) -> Optional[str]:
     )
     thread.start()
     
-    return None  # 立即返回None，表示翻译正在进行中
+    return None  # Immediately return None, indicating translation is in progress
 
 def get_text(key: str, lang: str = "eng", **kwargs) -> str:
     """
-    获取指定语言的文本
+    Get text in the specified language
     
     Args:
-        key: 文本键名
-        lang: 语言代码 ("eng" 或 "chs")
-        **kwargs: 格式化参数
+        key: Text key name
+        lang: Language code ("eng" or "chs")
+        **kwargs: Formatting parameters
     
     Returns:
-        格式化后的文本
+        Formatted text
     """
     if lang not in TRANSLATIONS:
         lang = "eng"
     
-    # 如果在预定义翻译中找到
+    # If found in predefined translations
     if key in TRANSLATIONS[lang]:
         text = TRANSLATIONS[lang][key]
         
-        # 如果提供了格式化参数，进行格式化
+        # If formatting parameters are provided, format the text
         if kwargs:
             try:
                 return text.format(**kwargs)
             except (KeyError, ValueError):
-                # 格式化失败时返回原始文本
+                # Return original text if formatting fails
                 return text
         return text
     
-    # 如果在英文版本中找到，但目标语言中没有，尝试自动翻译
+    # If found in English version but not in target language, try automatic translation
     if key in TRANSLATIONS["eng"]:
         english_text = TRANSLATIONS["eng"][key]
         
-        # 如果目标语言是英文，直接返回
+        # If target language is English, return directly
         if lang == "eng":
             return english_text
         
-        # 加载缓存
+        # Load cache
         cache = load_translation_cache()
         
-        # 确保缓存中有目标语言的条目
+        # Ensure cache has entries for target language
         if lang not in cache:
             cache[lang] = {}
         
         cache_key = get_cache_key(english_text, lang)
         
-        # 检查缓存中是否有翻译
+        # Check if translation exists in cache
         if cache_key in cache[lang]:
             translated_text = cache[lang][cache_key]
-            # 保存到内存中的翻译表
+            # Save to in-memory translation table
             TRANSLATIONS[lang][key] = translated_text
             # logger.info(f"Used cached translation for '{key}' in {lang}")
             
-            # 如果提供了格式化参数，进行格式化
+            # If formatting parameters are provided, format the text
             if kwargs:
                 try:
                     return translated_text.format(**kwargs)
@@ -385,11 +385,11 @@ def get_text(key: str, lang: str = "eng", **kwargs) -> str:
                     return translated_text
             return translated_text
         
-        # 使用LLM进行翻译（非阻塞）
+        # Use LLM for translation (non-blocking)
         logger.info(f"Starting translation for '{key}' using LLM...")
         translated_text = translate_with_llm(english_text, lang)
         
-        # 立即返回英文版本，翻译在后台进行
+        # Immediately return English version, translation happens in background
         logger.info(f"Translation started for '{key}', returning English version for now")
         
         # 如果提供了格式化参数，进行格式化
@@ -400,18 +400,18 @@ def get_text(key: str, lang: str = "eng", **kwargs) -> str:
                 return english_text
         return english_text
     
-    # 如果键名本身不在任何翻译表中，尝试直接翻译键名
+    # If key name itself is not in any translation table, try translating the key name directly
     if lang != "eng":
-        # 加载缓存
+        # Load cache
         cache = load_translation_cache()
         
-        # 确保缓存中有目标语言的条目
+        # Ensure cache has entries for target language
         if lang not in cache:
             cache[lang] = {}
         
         cache_key = get_cache_key(key, lang)
         
-        # 检查缓存中是否有翻译
+        # Check if translation exists in cache
         if cache_key in cache[lang]:
             translated_text = cache[lang][cache_key]
             # logger.info(f"Used cached translation for key '{key}' in {lang}")
@@ -424,23 +424,23 @@ def get_text(key: str, lang: str = "eng", **kwargs) -> str:
                     return translated_text
             return translated_text
         
-        # 使用LLM进行翻译（非阻塞）
+        # Use LLM for translation (non-blocking)
         logger.info(f"Starting translation for key '{key}' using LLM...")
         translated_text = translate_with_llm(key, lang)
         
-        # 立即返回原始键名，翻译在后台进行
+        # Immediately return original key name, translation happens in background
         logger.info(f"Translation started for key '{key}', returning original for now")
         return key
     
-    # 默认返回键名本身
+    # Default to return the key name itself
     return key
 
 def set_language(lang: str) -> None:
     """
-    设置当前语言（可以保存到session state中）
+    Set current language (can be saved to session state)
     
     Args:
-        lang: 语言代码 ("eng" 或 "chs")
+        lang: Language code ("eng" or "chs")
     """
     import streamlit as st
     if "language" not in st.session_state:
@@ -451,23 +451,23 @@ def set_language(lang: str) -> None:
 
 def get_current_language() -> str:
     """
-    获取当前语言
+    Get current language
     
     Returns:
-        当前语言代码
+        Current language code
     """
     import streamlit as st
     return st.session_state.get("language", "eng")
 
 def t(key: str, **kwargs) -> str:
     """
-    便捷函数：获取当前语言的文本
+    Convenience function: get text in current language
     
     Args:
-        key: 文本键名
-        **kwargs: 格式化参数
+        key: Text key name
+        **kwargs: Formatting parameters
     
     Returns:
-        格式化后的文本
+        Formatted text
     """
     return get_text(key, get_current_language(), **kwargs)

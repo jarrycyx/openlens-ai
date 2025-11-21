@@ -11,18 +11,18 @@ PROCESS_FILE = os.path.join("outputs", "processes.json")
 
 class ProcessManager:
     """
-    管理OpenLens AI进程的类
+    Class for managing OpenLens AI processes
     """
     MAX_PROCESSES = 1
 
     def __init__(self):
-        """初始化进程管理器"""
+        """Initialize process manager"""
         self.process_file = PROCESS_FILE
         self._ensure_process_file_exists()
         
 
     def _ensure_process_file_exists(self):
-        """确保进程文件存在"""
+        """Ensure process file exists"""
         if not os.path.exists("outputs"):
             os.makedirs("outputs")
             
@@ -31,7 +31,7 @@ class ProcessManager:
                 json.dump([], f)
 
     def load_processes(self) -> List[Dict[str, Any]]:
-        """加载所有进程信息"""
+        """Load all process information"""
         try:
             with open(self.process_file, 'r') as f:
                 processes = json.load(f)
@@ -41,12 +41,12 @@ class ProcessManager:
             return []
 
     def save_processes(self, processes: List[Dict[str, Any]]):
-        """保存进程信息到文件"""
+        """Save process information to file"""
         with open(self.process_file, 'w') as f:
             json.dump(processes, f, indent=2, ensure_ascii=False)
 
     def add_process(self, pid: int, thread_id: str) -> bool:
-        """添加新进程，如果成功返回True，如果达到最大进程数返回False"""
+        """Add new process, return True if successful, return False if max processes reached"""
         processes = self.load_processes()
         
         # 检查是否已达到最大进程数
@@ -63,35 +63,35 @@ class ProcessManager:
         return True
 
     def remove_process_by_pid(self, pid: int):
-        """根据PID移除进程"""
+        """Remove process by PID"""
         processes = self.load_processes()
         processes = [p for p in processes if p.get('pid') != pid]
         self.save_processes(processes)
 
     def get_process_count(self) -> int:
-        """获取当前进程数量"""
+        """Get current process count"""
         return len(self.load_processes())
 
     def is_full(self) -> bool:
-        """检查进程管理器是否已满"""
+        """Check if process manager is full"""
         return self.get_process_count() >= self.MAX_PROCESSES
 
     def cleanup_finished_processes(self, processes):
-        """清理已完成的进程"""
+        """Clean up finished processes"""
         active_processes = []
         
         for process in processes:
             try:
-                # 检查进程是否仍在运行
+                # Check if process is still running
                 pid = process['pid']
                 os.kill(pid, 0)  # 不发送信号，只检查进程是否存在
                 if psutil.Process(pid).status() != "zombie":
                     active_processes.append(process)
                 else:
-                    logger.info(f"清理异常进程: {process.get('thread_id', 'Unknown')}")
+                    logger.info(f"Clean up abnormal process: {process.get('thread_id', 'Unknown')}")
             except Exception as e:
-                # 进程不存在或PID无效，跳过该进程
-                logger.info(f"清理已完成的进程: {process.get('thread_id', 'Unknown')}")
+                # Process doesn't exist or PID is invalid, skip this process
+                logger.info(f"Clean up finished process: {process.get('thread_id', 'Unknown')}")
                 pass
         
         if len(active_processes) != len(processes):
@@ -99,36 +99,36 @@ class ProcessManager:
         return active_processes
 
     def get_process_list(self) -> List[Dict[str, Any]]:
-        """获取当前进程列表"""
+        """Get current process list"""
         return self.load_processes()
     
     def interrupt_process(self, thread_id: str) -> bool:
-        """根据thread_id中断进程"""
+        """Interrupt process by thread_id"""
         processes = self.load_processes()
         for process in processes:
             if process.get('thread_id') == thread_id:
                 pid = process.get('pid')
                 try:
-                    # 使用psutil终止进程及其子进程
+                    # Use psutil to terminate process and its children
                     parent = psutil.Process(pid)
                     children = parent.children(recursive=True)
                     
-                    # 先终止子进程
+                    # Terminate child processes first
                     for child in children:
                         child.terminate()
                     
-                    # 等待子进程结束
+                    # Wait for child processes to end
                     psutil.wait_procs(children, timeout=3)
                     
-                    # 终止父进程
+                    # Terminate parent process
                     parent.terminate()
                     
-                    # 从进程列表中移除
+                    # Remove from process list
                     self.remove_process_by_pid(pid)
                     return True
                 except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) as e:
                     logger.error(f"Failed to interrupt process {pid}: {e}")
-                    # 即使终止失败，也从列表中移除
+                    # Even if termination fails, remove from list
                     self.remove_process_by_pid(pid)
                     return False
         return False
