@@ -259,7 +259,7 @@ def start_job(question, dataset_path, email, language="chs"):
                     "--thread-id", thread_id,
                     "--notify-email", email,
                     "--language", language_code,
-                    "--interrupt-after", "literature_reviewer"
+                    "--interrupt-after-subgraph", "literature_reviewer"
                 ]
             )
 
@@ -440,7 +440,7 @@ def main():
                                     "python",
                                     "-m",
                                     "openlens_ai.main",
-                                    "--resume-from", task_dir,
+                                    "--resume-dir", task_dir,
                                 ]
                             )
                             

@@ -181,7 +181,7 @@ python -m openlens_ai.main \
   --dataset-path "datasets/eicu-demo" \
   --thread-id "pred_aki_trend_eicu_demo" \
   --notify-email "dzdzzd@126.com" \
-  --interrupt-after "none" \
+  --interrupt-after-subgraph "none" \
   --language "chs" \
   --domain "medical" # Domain setting: "medical" for healthcare, "general" for other domains
 ```

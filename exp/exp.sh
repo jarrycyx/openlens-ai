@@ -3,7 +3,7 @@ python -m openlens_ai.main \
     --dataset-path "datasets/eicu-demo" \
     --thread-id "pred_aki_trend_eicu_demo" \
     --notify-email "dzdzzd@126.com" \
-    --interrupt-after "none" \
+    --interrupt-after-subgraph "none" \
     --language "chs" \
     --domain "medical"
 
@@ -12,7 +12,7 @@ python -m openlens_ai.main \
     --dataset-path "datasets/mimic-iv-icu" \
     --thread-id "pred_aki_dy_mimic_icu_csv" \
     --notify-email "dzdzzd@126.com" \
-    --interrupt-after "none" \
+    --interrupt-after-subgraph "none" \
     --language "eng" \
     --domain "medical"
 

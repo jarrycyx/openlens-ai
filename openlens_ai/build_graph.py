@@ -55,7 +55,7 @@ def send_periodic_emails(config: Config):
             logger.error(f"Error sending periodic email: {e}")
 
 def build_graph(config: Config, start_subgraph: str = None):
-    @track_node_call(subgraph_name="")
+    @track_node_call(subgraph_name="end")
     def end_node(state: State):
         state["status"] = "completed"
         return state
@@ -157,7 +157,7 @@ def get_last_node(graph: CompiledStateGraph, this_node_name: str):
             return b
 
 
-def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, interrupt_after="none"):
+def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, interrupt_after_subgraph="none"):
     logger.info(f"Main process is running with PID {os.getpid()}")
     
     # 启动定期发送邮件的线程
@@ -183,7 +183,7 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
                 frontend_update_node(state_name, config)
                 step_i += 1
                 
-                if state_name == interrupt_after:
+                if state_name == interrupt_after_subgraph:
                     logger.info(f"Interrupted after {state_name}")
                     
                     try:

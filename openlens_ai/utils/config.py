@@ -80,6 +80,8 @@ class Config(BaseModel):
     save_path: str = Field(default="outputs", description="Path to save outputs")
     thread_id: str = Field(default="", description="Thread ID for the experiment")
     question: str = Field(default="", description="Research question")
+    refine_suggestion: str = Field(default="", description="Human's feedback for refining the research, only needed when current result is not satisfactory")
+    important: str = Field(default="", description="Important points to consider in the research")
     dataset_path: str = Field(default="", description="Path to the dataset")
     notify_email: str = Field(default="", description="Email for notifications")
     domain: str = Field(default="medical", description="Domain for prompts: 'general' or 'medical'")

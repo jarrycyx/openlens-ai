@@ -68,6 +68,17 @@ print(similarity)
     --dataset-path "datasets/general_domain/loghub" \
     --thread-id "power_grid_fault_id" \
     --notify-email "dzdzzd@126.com" \
-    --interrupt-after "none" \
+    --interrupt-after-subgraph "none" \
     --language "eng" \
     --domain "general"
+
+
+
+python -m openlens_ai.main \
+    --resume-dir outputs/power_grid_fault_id \
+    --start-from-subgraph supervisor \
+    --start-from-subtask-index 1 \
+    --refine-suggestion "
+Try to run taylor analysis again to explain the cluster results, make sure each cluster has a clear and distinct pattern on important features.
+Make sure to include all files in the dataset.
+"

@@ -193,10 +193,15 @@ class BasicToolNode:
 
         tool_call = {"name": "none"}
         try:
-            if messages := state.get("messages", []):
+            messages = state.get("messages", [])
+            if messages:
                 message = messages[-1]
             else:
                 raise ValueError("No message found in input")
+            
+            if not hasattr(message, "tool_calls"):
+                raise ValueError("No tool call found in message")
+
             outputs = []
             for tool_call in message.tool_calls:
                 if "name" not in tool_call or "args" not in tool_call:

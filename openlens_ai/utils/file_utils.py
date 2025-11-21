@@ -121,7 +121,7 @@ def collect_files(config: Config, max_size: int = 10 * 1024 * 1024, compressed_d
     # 将文件打包成zip
     with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
         total_size = 0
-        for file in tqdm.tqdm(files, desc="压缩文件"):
+        for file in tqdm.tqdm(files, desc="Compressing files"):
             if "compressed" in file:
                 continue
             try:
@@ -143,26 +143,26 @@ def collect_files(config: Config, max_size: int = 10 * 1024 * 1024, compressed_d
                 
                 
     
-    # 创建以时间戳命名的zip文件
-    full_zip_filename = f"all_files.zip"
-    full_zip_filepath = os.path.join(compressed_dir, full_zip_filename)
+    # # 创建以时间戳命名的zip文件
+    # full_zip_filename = f"all_files.zip"
+    # full_zip_filepath = os.path.join(compressed_dir, full_zip_filename)
     
-    # 将文件打包成zip
-    with zipfile.ZipFile(full_zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        total_size = 0
-        for file in files:
-            if "compressed" in file:
-                continue
-            try:
-                # 检查有没有读取权限
-                with open(file, 'rb'):
-                    pass
+    # # 将文件打包成zip
+    # with zipfile.ZipFile(full_zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    #     total_size = 0
+    #     for file in files:
+    #         if "compressed" in file:
+    #             continue
+    #         try:
+    #             # 检查有没有读取权限
+    #             with open(file, 'rb'):
+    #                 pass
                     
-                # 将文件添加到zip中，保持相对路径结构
-                arcname = os.path.relpath(file, save_path)
-                zipf.write(file, arcname)
-            except Exception as e:
-                logger.info(f"警告: 无法读取文件 {file}，已跳过. 错误: {e}")
+    #             # 将文件添加到zip中，保持相对路径结构
+    #             arcname = os.path.relpath(file, save_path)
+    #             zipf.write(file, arcname)
+    #         except Exception as e:
+    #             logger.info(f"警告: 无法读取文件 {file}，已跳过. 错误: {e}")
     
     # # 按修改时间排序.md文件，返回最新的一个
     # md_files = [f for f in files if f.endswith('.md')]

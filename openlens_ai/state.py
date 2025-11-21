@@ -15,11 +15,11 @@ from langchain.load.dump import dumps
 from .utils.config import Config
 
 class State(TypedDict):
-    question: str
+    question: str # Can be different from config.question because refine suggestion maybe added
     messages: list
     plan: dict
     data_report: str
-    current_subtask_index: int = 0
+    current_subtask_index: int = 0 # 1 means the first subtask
     save_path: str
     thread_id: str = ""
     subplan: str = ""
@@ -44,13 +44,9 @@ def track_node_call(subgraph_name: str=""):
             return state
         
         def wrapper(state: State, **kwargs):
-            latest_state_path = os.path.join(state['save_path'], "latest_state.json")
-            with open(latest_state_path, "w") as f:
-                f.write(dumps(state, ensure_ascii=False, indent=4))
-            
             
             # 如果找到state参数，则记录函数调用
-            if state is not None:
+            if state:
                 if ('node_call_stack' not in state) or (not isinstance(state['node_call_stack'], list)):
                     state['node_call_stack'] = []
                 state['node_call_stack'].append(node_name)
@@ -60,10 +56,14 @@ def track_node_call(subgraph_name: str=""):
                     f.write(json.dumps(state['node_call_stack'], indent=4))
                 
                 if ("resume_node_call_stack" in state) and state["resume_node_call_stack"]:
-                    if node_name != state["resume_node_call_stack"][-1]:
+                    if node_name in state["resume_node_call_stack"]:
                         # 如果没有到resume的最后一个节点，则跳过
                         return skip_func(state, **kwargs)
             
+            latest_state_path = os.path.join(state['save_path'], "latest_state.json")
+            with open(latest_state_path, "w") as f:
+                f.write(dumps(state, ensure_ascii=False, indent=4))
+                
             # 找到了resume的节点
             state["resume_node_call_stack"] = []
             logger.info(f"Calling node: {node_name}")
@@ -83,8 +83,13 @@ def get_subplan(state: State) -> str:
         logger.warning(f"No subplan found. Error: {e}")
     return subplan
 
-def load_state(save_dir: str, copy_to_new: bool = False) -> tuple[Config, State]:
-    # 复制一遍save_dir，加上_resume
+def load_state(
+    save_dir: str, 
+    copy_to_new: bool = False, 
+    start_from_subgraph: str = "",
+    start_from_subtask_index: int = 0
+) -> tuple[Config, State]:
+    
     config_path = os.path.join(save_dir, "config.toml")
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found: {config_path}")
@@ -96,17 +101,17 @@ def load_state(save_dir: str, copy_to_new: bool = False) -> tuple[Config, State]
         os.system("cp -r " + save_dir + "/* " + new_save_dir)
         save_dir = new_save_dir
     
-    # 加载config并更新save_path和thread_id
+    # Load config and update save_path thread_id
     config = Config.from_toml(config_path)
     
     if copy_to_new:
         logger.info(f"Config save_path: {config.save_path} -> {save_dir}")
         config.save_path = save_dir
-        config.resume_from_id = config.thread_id
+        config.resume_dir_id = config.thread_id
         config.thread_id = os.path.basename(save_dir)
         config.save_toml(config_path)
     
-    # 加载logger
+    # Load logger
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     logger.remove()
     logger.add(os.path.join(save_dir, f"logs_{timestamp}_pid{os.getpid()}.log"), 
@@ -117,55 +122,50 @@ def load_state(save_dir: str, copy_to_new: bool = False) -> tuple[Config, State]
                    f"<cyan>{config.thread_id}</cyan>", 
                 colorize=True, level="INFO")
     
-    # 先尝试在state目录下加载state，这个是每个subgraph保存一次
-    state_dir = os.path.join(save_dir, "states")
-    # 遍历里面的文件，格式是step_i.json，找最大的
-    file_names = os.listdir(state_dir)
-    last_subgraph = None
-    if file_names:
-        file_indices = [int(file_name.split("_")[1]) for file_name in file_names if file_name.endswith(".json")]
-        max_index = max(file_indices)
-        max_file_name = glob.glob(os.path.join(state_dir, f"step_{max_index:04d}*.json"))[0]
-        
-        with open(max_file_name, "r") as f:
-            state_str = f.read()
-            state = loads(state_str)
-            last_subgraph = list(state.keys())[0]
-            state = state[last_subgraph]
-            logger.info(f"State save_path: {state['save_path']} -> {save_dir}")
-            state["save_path"] = save_dir
-        
-        logger.info(f"Loaded state from {max_file_name}, last subgraph: {last_subgraph}")
-    else:
-        state = {"question": config.question, "messages": [], "thread_id": config.thread_id, "save_path": config.save_path}
     
-    # 再尝试从latest_state.json加载，这个是每个node保存的
+    
+    # Load state from latest_state.json
     latest_state_file_name = os.path.join(save_dir, "latest_state.json")
     if os.path.exists(latest_state_file_name):
         with open(latest_state_file_name, "r", encoding="utf-8") as f:
             state = loads(f.read())
         
-        if "save_path" in state:
+        if ("save_path" in state) and (state["save_path"] != save_dir):
             logger.info(f"State save_path: {state['save_path']} -> {save_dir}")
             state["save_path"] = save_dir
+            
+    state["current_subtask_index"] = start_from_subtask_index
+    logger.info(f"Start from subtask index: {start_from_subtask_index}")
 
-    
+    # Load node_call_stack and get last subgraph
+    last_subgraph = None
     try:
-        node_call_stack_path = os.path.join(save_dir, 'node_call_stack.json')
-        with open(node_call_stack_path, 'r') as f:
-            node_call_stack = json.load(f)
-            state['resume_node_call_stack'] = node_call_stack
-            state['node_call_stack'] = []
+        node_call_stack = state["node_call_stack"]
+        
+        resume_node_call_stack = []
+        for node in node_call_stack:
+            # Only add nodes that are not end_node and not in start_from_subgraph, 
+            # task will skip nodes in resume_node_call_stack
+            if ("end_node" not in node) and (start_from_subgraph not in node):
+                resume_node_call_stack.append(node)
+                last_subgraph = node.split(".")[0].replace("subgraph_", "")
+            else:
+                break
+                
+        logger.info(f"Will skip nodes in resume_node_call_stack: {resume_node_call_stack}")
+                
+        state['resume_node_call_stack'] = resume_node_call_stack
     except Exception as e:
         logger.warning(f"Error loading node call stack: {e}")
         state['resume_node_call_stack'] = []
         state['node_call_stack'] = []
         
-    # 创建备份文件夹并复制openlens_ai文件夹和.env文件
+        
+    # Create backup folder
     backup_path = os.path.join(save_dir, "backup")
     os.makedirs(backup_path, exist_ok=True)
     
-    # 复制openlens_ai文件夹
+    # Copy openlens_ai folder
     if os.path.exists("openlens_ai"):
         shutil.copytree("openlens_ai", os.path.join(backup_path, "openlens_ai"), dirs_exist_ok=True)
     

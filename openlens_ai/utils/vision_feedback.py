@@ -124,6 +124,8 @@ def get_vision_feedback(image_base64: str, config: Config) -> str:
     prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain, "vision_feedback.md")
     with open(prompt_path, "r") as f:
         vision_feedback_prompt = f.read() + get_lang_prompt(config.llm.language)
+        if config.important:
+            vision_feedback_prompt += "\n## Important Instructions\n" + config.important
     
     for try_i in range(10):
         for this_formatter in [formatter_a, formatter_b]:
@@ -151,6 +153,8 @@ def get_latex_vision_feedback(image_base64: str, config: Config) -> str:
     prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain, "vision_latex_feedback.md")
     with open(prompt_path, "r") as f:
         vision_latex_feedback_prompt = f.read() + get_lang_prompt(config.llm.language)
+        if config.important:
+            vision_latex_feedback_prompt += "\n## Important Instructions\n" + config.important
     for try_i in range(10):
         try:
             # Call VLM to evaluate the image
@@ -186,6 +190,8 @@ def get_vision_classification(image_base64: str, config: Config) -> str:
     prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain, "vision_classify.md")
     with open(prompt_path, "r") as f:
         vision_classify_prompt = f.read() + get_lang_prompt(config.llm.language)
+        if config.important:
+            vision_classify_prompt += "\n## Important Instructions\n" + config.important
     for try_i in range(10):
         try:
             image_classification_message = HumanMessage(content=[

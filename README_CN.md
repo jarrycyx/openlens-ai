@@ -169,7 +169,7 @@ python -m openlens_ai.main \
   --dataset-path "datasets/eicu-demo" \
   --thread-id "pred_aki_trend_eicu_demo" \
   --notify-email "dzdzzd@126.com" \
-  --interrupt-after "none" \
+  --interrupt-after-subgraph "none" \
   --language "chs" \
   --domain "medical" # 领域设置："medical" 表示医疗，"general" 表示其他领域
 ```
