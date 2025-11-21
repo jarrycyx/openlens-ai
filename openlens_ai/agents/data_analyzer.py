@@ -56,7 +56,7 @@ def build_data_analyzer(config: Config) -> StateGraph:
         file_summary = FileSummary(config)
         
         # Get file tree with summaries
-        file_tree_with_summaries = file_summary.get_file_tree_with_summaries()
+        file_tree_with_summaries = file_summary.get_file_tree_with_summaries(max_token_cnt=20000)
         state["file_summary"] = file_summary.file_cache
         
         # Create output directory if it doesn't exist

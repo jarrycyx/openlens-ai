@@ -87,15 +87,15 @@ def save_llm_call(messages: list, config: Config):
 
 def call_vlm_with_prompt(image_base64: str, config: Config, prompt: str) -> str:
     """
-    通用的VLM调用函数，用于处理图像相关的请求
+    Generic VLM calling function for handling image-related requests
 
     Args:
-        image_base64: Base64编码的图像数据
-        config: 配置对象
-        prompt: 提示词文本
+        image_base64: Base64 encoded image data
+        config: Configuration object
+        prompt: Prompt text
 
     Returns:
-        VLM的响应内容
+        VLM response content
     """
 
     def formatter_a(prompt, image_base64):
@@ -105,7 +105,7 @@ def call_vlm_with_prompt(image_base64: str, config: Config, prompt: str) -> str:
         image_feedback_message = HumanMessage(
             content=[
                 {"type": "text", "text": prompt},
-                {"type": "image_url", "image_url": {"url": image_base64,},},
+                {"type": "image_url", "image_url": {"url": image_base64,}},
             ]
         )
         return image_feedback_message
@@ -122,7 +122,7 @@ def call_vlm_with_prompt(image_base64: str, config: Config, prompt: str) -> str:
 
     vlm = get_vlm(config)
 
-    # 选择使用的格式化器
+    # Select formatter to use
     formatters = [formatter_a, formatter_b]
 
     for try_i in range(10):
@@ -144,14 +144,14 @@ def call_vlm_with_prompt(image_base64: str, config: Config, prompt: str) -> str:
 
 def _load_prompt(config: Config, prompt_filename: str) -> str:
     """
-    加载提示词文本
+    Load prompt text
 
     Args:
-        config: 配置对象
-        prompt_filename: 提示词文件名
+        config: Configuration object
+        prompt_filename: Prompt file name
 
     Returns:
-        提示词文本
+        Prompt text
     """
     # Load prompt based on domain configuration
     domain = getattr(config, "domain", "general")
@@ -165,7 +165,7 @@ def _load_prompt(config: Config, prompt_filename: str) -> str:
 
 def get_vision_feedback(image_base64: str, config: Config) -> str:
     """
-    获取图像反馈
+    Get image feedback
     """
     prompt = _load_prompt(config, "vision_feedback.md")
     return call_vlm_with_prompt(image_base64, config, prompt)
@@ -173,7 +173,7 @@ def get_vision_feedback(image_base64: str, config: Config) -> str:
 
 def get_latex_vision_feedback(image_base64: str, config: Config) -> str:
     """
-    获取LaTeX图像反馈
+    Get LaTeX image feedback
     """
     prompt = _load_prompt(config, "vision_latex_feedback.md")
     return call_vlm_with_prompt(image_base64, config, prompt)
@@ -181,7 +181,7 @@ def get_latex_vision_feedback(image_base64: str, config: Config) -> str:
 
 def get_vision_classification(image_base64: str, config: Config) -> str:
     """
-    获取图像分类
+    Get image classification
     """
     prompt = _load_prompt(config, "vision_classify.md")
     return call_vlm_with_prompt(image_base64, config, prompt)

@@ -39,7 +39,7 @@ def frontend_add_message(new_message: Union[ToolMessage, HumanMessage, AIMessage
                 role = "tool"
                 title = ""
                 content = tool_show_message.get(new_message.name, f"Calling {new_message.name}...")
-                # 工具消息不保存
+                # Do not save tool messages
                 return
             elif isinstance(new_message, HumanMessage):
                 role = "user"
@@ -54,7 +54,7 @@ def frontend_add_message(new_message: Union[ToolMessage, HumanMessage, AIMessage
                 title = ""
                 content = new_message.content
 
-            # 保存消息数据而不是直接显示
+            # Save the message data
             message_data = {"timestamp": datetime.now().isoformat(), "type": "message", "role": role, "title": title, "content": content}
             _save_message(config, message_data)
         else:
@@ -68,7 +68,7 @@ def frontend_add_tool_call(tool_name: str, tool_args: dict, config: Config):
         tool_message = tool_show_message.get(tool_name, "Calling {tool_name}...")
         tool_message = tool_message.format(tool_name=tool_name, **tool_args)
 
-        # 保存工具调用数据
+        # Save the tool call data   
         message_data = {"timestamp": datetime.now().isoformat(), "type": "tool_call", "tool_name": tool_name, "content": tool_message}
         _save_message(config, message_data)
     except Exception as e:
@@ -80,7 +80,7 @@ def frontend_update_node(node_name: str, config: Config):
         global current_node
         current_node = node_name
 
-        # 保存节点更新数据
+        # Save the node update data
         message_data = {"timestamp": datetime.now().isoformat(), "type": "node_update", "node_name": node_name, "content": f"Subgraph complete: {node_name}"}
         _save_message(config, message_data)
     except Exception as e:
@@ -92,7 +92,7 @@ def frontend_add_file_msg(file_path, config: Optional[Config] = None, file_statu
     try:
         filename = os.path.basename(file_path)
 
-        # 如果提供了配置，则保存消息到缓存
+        # If provided with a config, save the file message to the cache
         if config:
             message_data = {
                 "timestamp": datetime.now().isoformat(),
@@ -108,14 +108,14 @@ def frontend_add_file_msg(file_path, config: Optional[Config] = None, file_statu
 
 
 def _save_message(config: Config, message_data: dict):
-    """保存消息到JSON文件，只保留最新的30条消息"""
+    """Save the message data to the JSON file, keeping only the latest 30 messages"""
         
     messages_file = _get_messages_file_path(config)
     message_file_all = messages_file.replace(".json", "_all.json")
     if not message_file_all:
         return
 
-    # 读取现有消息
+    # Read the existing messages
     messages = []
     if os.path.exists(message_file_all):
         try:
@@ -125,13 +125,13 @@ def _save_message(config: Config, message_data: dict):
             logger.warning(f"Failed to read messages file: {e}")
             messages = []
 
-    # 添加新消息
+    # Add the new message
     messages.append(message_data)
 
-    # 去重
+    # Remove duplicates
     messages = _message_remove_duplicates(messages)
 
-    # 保存回文件
+    # Save the messages back to the file
     try:
         with open(messages_file, "w") as f:
             # show_messages = messages[-30:] if len(messages) > 30 else messages
@@ -149,7 +149,7 @@ def _save_message(config: Config, message_data: dict):
 
 
 def _get_messages_file_path(config: Config):
-    """获取消息文件路径"""
+    """Get the path to the messages JSON file"""
     streamlit_dir = os.path.join(config.save_path, "streamlit")
     os.makedirs(streamlit_dir, exist_ok=True)
     return os.path.join(streamlit_dir, "messages.json")
@@ -160,7 +160,7 @@ def _message_remove_duplicates(messages: list):
         return msg["type"] + msg["content"]
 
     logger.debug(f"Removing duplicates from {len(messages)} messages")
-    # 对整个list去除重复
+    # Remove duplicates from the entire list
     messages_no_dup = []
     for message in messages:
         if to_string(message) not in [to_string(m) for m in messages_no_dup]:

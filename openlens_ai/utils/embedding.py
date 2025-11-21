@@ -20,19 +20,19 @@ import numpy as np
 
 def vector_search_match_type(message: str, rerank_model: str, rerank_api_key: str, rerank_base_url: str, query: str, token_cnt: int = 10000):
     """
-    根据消息类型执行向量搜索并保持消息类型一致
+    Perform vector search based on message type and maintain message type consistency
 
     Args:
-        message: 原始消息
-        query: 查询语句
-        token_cnt: 最大token数量
+        message: Original message
+        query: Query string
+        token_cnt: Maximum token count
 
     Returns:
-        处理后的消息，保持原始消息类型
+        Processed message, maintaining the original message type
     """
     message_type = type(message)
     short_messages = vector_search([message], rerank_model, rerank_api_key, rerank_base_url, query, token_cnt=token_cnt)
-    # 合并
+    # Merge
     all_content = [message.content for message in short_messages]
     if message_type == ToolMessage:
         return message_type(content="\n".join(all_content), tool_call_id=message.tool_call_id, name=message.name, status=message.status)
@@ -47,12 +47,12 @@ def perform_rerank(all_docs_str: list[str], query: str, token_cnt: int, rerank_m
 
     all_messages_with_score = []
     # for doc_str in all_docs_str:
-    # 如果len(all_docs_str)大于32，就分成很多个大小为32的块
+    # If len(all_docs_str) is greater than 32, split into chunks of size 32
     all_docs_chunks = [all_docs_str[i : i + 32] for i in range(0, len(all_docs_str), 32)]
 
     for docs_chunk in all_docs_chunks:
 
-        # 创建向量存储
+        # Create vector storage
         input_doc_list = docs_chunk
         payload = {"model": rerank_model, "query": query, "documents": input_doc_list, "return_raw_scores": True}
         api_key = rerank_api_key
@@ -113,15 +113,15 @@ def perform_rerank(all_docs_str: list[str], query: str, token_cnt: int, rerank_m
 
 def vector_search(messages: Union[list, str], rerank_model: str, rerank_api_key: str, rerank_base_url: str, query: str, token_cnt: int = 10000):
     """
-    使用向量搜索对长消息进行摘要，保留最相关的内容
+    Use vector search to summarize long messages, retaining the most relevant content
 
     Args:
-        messages: 消息列表
-        query: 查询语句，用于确定相关内容
-        token_cnt: 最大token数量限制
+        messages: Message list
+        query: Query string to determine relevant content
+        token_cnt: Maximum token count limit
 
     Returns:
-        经过向量搜索处理后的消息列表
+        Message list processed by vector search
     """
 
     if isinstance(messages, str):
@@ -132,9 +132,9 @@ def vector_search(messages: Union[list, str], rerank_model: str, rerank_api_key:
         logger.info(f"No need to use vector search, because token count ({this_token_cnt}) is less than {token_cnt}")
         return messages
 
-    # 文本切块
+    # Text chunking
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000, chunk_overlap=500)
-    # 获取所有消息的文本内容
+    # Get text content of all messages
     all_docs = []
     for message in messages:
         message_texts = get_buffer_string([message])
@@ -148,4 +148,4 @@ def vector_search(messages: Union[list, str], rerank_model: str, rerank_api_key:
     relevant_messages = [HumanMessage(content=msg) for msg in relevant_strs]
 
     logger.info(f"Message number: {len(messages)}, split number: {len(all_docs)}, " f"Relevant message number: {len(relevant_messages)}")
-    return relevant_messages[::-1]  # 倒序
+    return relevant_messages[::-1]  # Reverse order

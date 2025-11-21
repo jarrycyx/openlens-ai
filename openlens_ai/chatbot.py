@@ -28,25 +28,24 @@ from .utils.embedding import vector_search_match_type, perform_rerank, vector_se
 
 
 
-
 def react_pre_model_wrapper(vector_search_question: str, config: Config):
     """
-    创建一个预处理模型的包装器，用于在将消息传递给模型之前进行处理
+    Create a preprocessing model wrapper for processing messages before passing them to the model
 
     Args:
-        vector_search_question: 用于向量搜索的问题
+        vector_search_question: Question for vector search
 
     Returns:
-        一个预处理函数，用于处理状态中的消息
+        A preprocessing function for processing messages in the state
     """
 
     def react_pre_model_hook(state):
         """
-        在模型调用前处理状态中的消息，特别是处理过长的工具消息
+        Process messages in the state before model calls, especially handling overly long tool messages
         """
         max_tool_token_cnt = config.context.max_tool_token_cnt
         logger.info(f"React pre model hook called with llm input message len {len(state['messages'])}")
-        # 如果工具返回信息太多，用向量搜索
+        # If tool returns too much information, use vector search
         for message_i, message in enumerate(state["messages"]):
             if isinstance(message, ToolMessage):
                 token_cnt = count_tokens_approximately([message])
@@ -69,28 +68,28 @@ def chatbot_with_context_manager(
     force_stringify_context: bool = False,
 ):
     """
-    创建一个带上下文管理功能的聊天机器人
+    Create a chatbot with context management functionality
 
     Args:
-        config: 配置对象
-        llm: 语言模型
-        prompt: 提示词
-        context_manage: 上下文管理策略
-        only_last_human_message: 是否只保留最后一条人类消息
+        config: Configuration object
+        llm: Language model
+        prompt: Prompt string
+        context_manage: Context management strategy
+        only_last_human_message: Whether to keep only the last human message
 
     Returns:
-        聊天机器人函数
+        Chatbot function
     """
 
     def detect_error_message(state: State):
         """
-        检测状态中是否有错误消息
+        Detect if there are error messages in the state
 
         Args:
-            state: 当前状态
+            state: Current state
 
         Returns:
-            如果有错误消息则返回该消息，否则返回False
+            The error message if found, otherwise False
         """
         if ("messages" in state) and (len(state["messages"]) > 0):
             last_message = state["messages"][-1]
@@ -101,14 +100,14 @@ def chatbot_with_context_manager(
 
     def clamp_token_cnt(messages: list[dict], max_token_cnt: int):
         """
-        根据最大token数量限制消息列表
+        Limit the message list based on maximum token count
 
         Args:
-            messages: 消息列表
-            max_token_cnt: 最大token数量
+            messages: Message list
+            max_token_cnt: Maximum token count
 
         Returns:
-            裁剪后的消息列表
+            Clamped message list
         """
         token_cnt = 0
         context_messages = []
@@ -131,14 +130,14 @@ def chatbot_with_context_manager(
 
     def call_react(state: State, message_to_llm: list):
         """
-        调用React LLM处理消息
+        Call React LLM to process messages
 
         Args:
-            state: 当前状态
-            message_to_llm: 发送给LLM的消息列表
+            state: Current state
+            message_to_llm: Message list to send to LLM
 
         Returns:
-            更新后的状态
+            Updated state
         """
         # max_react_tool_call = int(config.max_tool_call) if hasattr(config, 'max_tool_call') else 10
         tool_call_interval = 5
@@ -176,7 +175,7 @@ def chatbot_with_context_manager(
                         f"token cnt: {count_tokens_approximately(all_messages)}"
                     )
 
-                    # 必须要完成了工具调用再中断
+                    # Must wait for tool calls to complete before interrupting
                     if node_name == "tools":
                         state["literature_tool_call_counter"] += 1
                         time.sleep(tool_call_interval)
@@ -184,27 +183,27 @@ def chatbot_with_context_manager(
                 logger.warning(f"React LLM exceeds recursion limit: {e}")
                 break
             except Exception as e:
-                # 有报错，则重试
+                # If there's an error, retry
                 logger.warning(f"React LLM error: {e}")
                 logger.warning(traceback.format_exc())
                 logger.warning("Retrying...")
                 tool_call_interval = min(tool_call_interval * 2, 60)
                 time.sleep(10)
                 continue
-            # 如果没遇到报错就跳出循环
+            # Break the loop if no error is encountered
             break
         state["messages"] += all_messages
         return state
 
     def format_prompt(state: State):
         """
-        格式化提示词，替换其中的占位符
+        Format the prompt, replacing placeholders
 
         Args:
-            state: 当前状态
+            state: Current state
 
         Returns:
-            格式化后的提示词
+            Formatted prompt
         """
         data_show = state["data_show"] if "data_show" in state else ""
         plan = state["plan"] if "plan" in state else ""
@@ -261,7 +260,7 @@ def chatbot_with_context_manager(
                 logger.warning("Error occurred when formatting subplan", str(e))
                 logger.warning(traceback.format_exc())
 
-        # 添加语言提示
+        # Add language prompt
         this_prompt += get_lang_prompt(config.llm.language)
         if config.important:
             this_prompt += "\n## Important Instructions\n" + config.important
@@ -271,23 +270,23 @@ def chatbot_with_context_manager(
     @track_node_call(calling_subgraph)
     def chatbot(state: State):
         """
-        聊天机器人主函数，处理不同类型的消息和上下文管理策略
+        Main chatbot function, handling different types of messages and context management strategies
 
         Args:
-            state: 当前状态
+            state: Current state
 
         Returns:
-            更新后的状态
+            Updated state
         """
         this_prompt = format_prompt(state)
 
         logger.info(f"Context management: {context_manage}")
         if context_manage == "last_message":
-            # 只保留最后一条消息
+            # Only keep the last message
             logger.info("Only keep the last message")
             message_to_llm = state["messages"][-1:]
         elif context_manage == "last_tool_message":
-            # 只保留最后一条tool消息（如果有的话）
+            # Only keep the last tool message (if any)
             logger.info("Keep to the last tool message")
             # tool_messages = [msg for msg in state["messages"] if isinstance(msg, ToolMessage)]
             last_tool_message_index = 0
@@ -297,9 +296,9 @@ def chatbot_with_context_manager(
                     break
             message_to_llm = state["messages"][last_tool_message_index:]
         elif context_manage == "vector_search":
-            # 使用向量搜索选择最相关的历史消息
+            # Use vector search to select the most relevant historical messages
             logger.info("Using vector search for context management")
-            # 使用当前prompt作为查询，搜索最相关的5条历史消息
+            # Use current prompt as query to search for the 5 most relevant historical messages
             message_to_llm = vector_search(
                 state["messages"], config.rerank.rerank_model, config.rerank.rerank_api_key, config.rerank.rerank_base_url, this_prompt, token_cnt=config.context.max_context_token_cnt
             )
@@ -307,7 +306,7 @@ def chatbot_with_context_manager(
             max_context_token_cnt_large = config.context.max_context_token_cnt_large
             logger.info(f"Use max_context_token_cnt_large: {max_context_token_cnt_large}")
             message_to_llm = clamp_token_cnt(state["messages"], max_context_token_cnt_large)
-        else:  # 默认为 token_cnt
+        else:  # Default is token_cnt
             max_context_token_cnt = config.context.max_context_token_cnt
             logger.info(f"Use max_context_token_cnt: {max_context_token_cnt}")
             message_to_llm = clamp_token_cnt(state["messages"], max_context_token_cnt)
@@ -329,7 +328,7 @@ def chatbot_with_context_manager(
             logger.info(f"Prompt: {this_prompt[:1000]}...")
             
 
-        # 只保留最后一条HumanMessage
+        # Only keep the last HumanMessage
         if only_last_human_message:
             if isinstance(message_to_llm[-1], HumanMessage):
                 last_human_message = message_to_llm[-1]

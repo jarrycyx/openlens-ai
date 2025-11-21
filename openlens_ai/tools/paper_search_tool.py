@@ -14,8 +14,6 @@ from .paper_search_mcp.academic_platforms.google_scholar import GoogleScholarSea
 from .paper_search_mcp.academic_platforms.iacr import IACRSearcher
 from .paper_search_mcp.academic_platforms.semantic import SemanticSearcher
 
-
-# 实例化搜索器
 arxiv_searcher = ArxivSearcher()
 pubmed_searcher = PubMedSearcher()
 biorxiv_searcher = BioRxivSearcher()
@@ -26,7 +24,6 @@ semantic_searcher = SemanticSearcher()
 
 
 def sync_to_async(func):
-    """装饰器：将同步函数包装为异步函数"""
     import asyncio
     import functools
 

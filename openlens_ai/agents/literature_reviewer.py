@@ -52,7 +52,7 @@ def load_prompt_file(config, filename):
 
 def build_literature_review_subgraph(config: Config):
     """
-    构建文献调研子图，使用paperscraper搜索文献并通过嵌入模型进行RAG处理生成文献调研报告
+    Build a subgraph for literature review using paperscraper to search for papers and RAG to generate a literature review report.
     """
     
     # Load prompts based on domain configuration

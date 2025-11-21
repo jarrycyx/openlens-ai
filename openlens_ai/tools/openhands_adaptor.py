@@ -32,7 +32,7 @@ def is_port_available(port):
     """Check if a port is available"""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         try:
-            s.bind(('localhost', port))
+            s.bind(("localhost", port))
             return True
         except OSError:
             return False
@@ -56,16 +56,21 @@ def fix_permissions_in_docker_container(oh_config_str: str):
         image_name = oh_config["sandbox"]["runtime_container_image"]
         volumes = oh_config["sandbox"]["volumes"]
         all_volumes = [v.strip() for v in volumes.split(",")]
-        cmd = ["docker", "run", "--rm", "-it",]
+        cmd = [
+            "docker",
+            "run",
+            "--rm",
+            "-it",
+        ]
         for v in all_volumes:
             cmd += ["-v", f"{v}"]
         cmd += [image_name, "bash", "-c", f"sudo chmod -R 777 /workspace"]
         logger.debug(f"Fix permissions command: {' '.join(cmd)}")
         result = subprocess.run(cmd, capture_output=True, text=True)
-        
+
         logger.debug(f"Fix permissions output: {result.stdout} \n {result.stderr}")
         logger.info(f"Fixed permissions in docker container {image_name} with volumes {volumes}")
-        
+
         # Clean cache
         result = subprocess.run(["docker", "system", "prune", "-f"], capture_output=True, text=True)
         logger.debug(f"Clean cache output: {result.stdout} \n {result.stderr}")
@@ -92,7 +97,9 @@ def run_openhands(
     for try_i in range(5):
         try:
             # Start subprocess (core of real-time stream processing)
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, shell=True)  # Merge stdout and stderr  # Line buffering mode
+            process = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, shell=True
+            )  # Merge stdout and stderr  # Line buffering mode
 
             with open(log_save_path, "a") as f:
                 f.write(f"Process pid: {process.pid}\n\n")
@@ -125,7 +132,9 @@ def run_openhands(
 
                     if "tenacity.RetryError" in output_line:
                         # TODO: I am not sure why this is happening in OpenHands currently, need further investigations. Related issues: https://github.com/All-Hands-AI/OpenHands/issues/8211, https://github.com/All-Hands-AI/OpenHands/issues/8211
-                        logger.warning(f"tenacity.RetryError occurred, killing docker process {process.pid} and retrying...")
+                        logger.warning(
+                            f"tenacity.RetryError occurred, killing docker process {process.pid} and retrying..."
+                        )
                         os.system(f"kill -9 {process.pid}")
                     output_chunk += output_line
                     # Also save to log collection
@@ -169,7 +178,9 @@ def monitor_process(pid: int, line_count: dict):
     # Check every 30 minutes if stuck
     while True:
         time.sleep(1800)
-        logger.info(f"Process {pid} has been running for 30 minutes, current line count: {line_count['count']}, last line count: {last_line_count}")
+        logger.info(
+            f"Process {pid} has been running for 30 minutes, current line count: {line_count['count']}, last line count: {last_line_count}"
+        )
         if line_count["count"] == last_line_count:
             try:
                 # Terminate process
@@ -189,7 +200,7 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
     """
     Run OpenHands prompts and return results
 
-    This function accepts one or more prompts, builds OpenHands commands for each prompt 
+    This function accepts one or more prompts, builds OpenHands commands for each prompt
     and executes them in Docker containers, finally returning the processed results.
 
     Args:
@@ -201,11 +212,11 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
     """
     if isinstance(prompts, str):
         prompts = [prompts]
-    
+
     # Get available port
     port = get_available_port(9077)
     logger.info(f"Starting VLM MCP server using port {port}")
-    
+
     vlm_mcp_process = multiprocessing.Process(target=run_server, args=(config, port))
     vlm_mcp_process.start()
 
@@ -215,15 +226,19 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
             # Initialize FileSummary to get file descriptions
             file_summary = FileSummary(config)
             # Get file tree with summaries
-            file_tree_with_summaries = file_summary.get_file_tree_with_summaries()
-            full_prompt = prompt + get_lang_prompt(config.llm.language) + f"\n\n\nFile tree with summaries:\n\n\n{file_tree_with_summaries}"
+            file_tree_with_summaries = file_summary.get_file_tree_with_summaries(max_token_cnt=1000, question=prompt)
+            full_prompt = (
+                prompt
+                + get_lang_prompt(config.llm.language)
+                + f"\n\n\nFile tree with summaries:\n\n\n{file_tree_with_summaries}"
+            )
             if config.important:
                 full_prompt += "\n## Important Instructions\n" + config.important
         else:
             full_prompt = prompt + get_lang_prompt(config.llm.language)
             if config.important:
                 full_prompt += "\n## Important Instructions\n" + config.important
-        
+
         pwd = os.getcwd()
         workspace_dir = os.path.join(pwd, config.save_path, "workspace")
         openhands_traj_path = os.path.join(pwd, config.save_path, "openhands_traj")
@@ -234,7 +249,7 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
         os.makedirs(os.path.join(workspace_dir, "data_analyze"), exist_ok=True)
         os.makedirs(openhands_traj_path, exist_ok=True)
         os.makedirs(openhands_llm_log_path, exist_ok=True)
-        
+
         time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
         prompt_file = os.path.join(pwd, config.save_path, "openhands_logs", f"prompt_{time_stamp}.txt")
         os.makedirs(os.path.dirname(prompt_file), exist_ok=True)
@@ -251,7 +266,7 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
         oh_config = oh_config.replace("{base_url}", config.llm.chat.base_url)
         oh_config = oh_config.replace("{code_model}", config.llm.chat.model)
         oh_config = oh_config.replace("{analyze_file_vlm_port}", str(port))
-        
+
         if config.llm.condenser.model:
             oh_config = oh_config.replace("{condenser_api_key}", config.llm.condenser.api_key)
             oh_config = oh_config.replace("{condenser_base_url}", config.llm.condenser.base_url)
@@ -261,7 +276,7 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
             oh_config = oh_config.replace("{condenser_api_key}", config.llm.chat.api_key)
             oh_config = oh_config.replace("{condenser_base_url}", config.llm.chat.base_url)
             oh_config = oh_config.replace("{code_condenser_model}", config.llm.chat.model)
-        
+
         oh_config = oh_config.replace("{tavily_key}", config.tools.tavily_api_key)
         oh_config = oh_config.replace("{openhands_traj_path}", openhands_traj_path)
         oh_config = oh_config.replace("{log_completions_folder}", openhands_llm_log_path)
@@ -289,7 +304,7 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
         with open(this_config_path, "w") as f:
             f.write(oh_config)
         logger.debug(f"Using OpenHands config: {oh_config}")
-        for try_i in range(2): # Try at most 2 times
+        for try_i in range(2):  # Try at most 2 times
             # Build the command to execute in Docker container
             cmd = (
                 ". openlens_ai/tools/openhands_configs/openhands_env.sh; "
@@ -315,7 +330,7 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
         # Add the result of the current prompt to the total result
         all_results += "=" * 20 + f"Prompt: {prompt[:20]}..." + "=" * 20
         all_results += "\n" + results
-        
+
     # vlm_mcp_process termination
     if vlm_mcp_process.is_alive():
         logger.info("Terminating vlm_mcp_process...")
@@ -325,7 +340,7 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
             logger.warning("vlm_mcp_process did not terminate gracefully. Force killing...")
             vlm_mcp_process.kill()  # Force kill if it doesn't terminate gracefully
             vlm_mcp_process.join()
-    
+
     # Limit result length to the last 3000 characters
     return all_results
 
@@ -373,7 +388,7 @@ def collect_info_and_run_openhands(prompt: str, config: Config, state: State):
 
 if __name__ == "__main__":
     from ..state import load_state
-    
+
     prompt = "Write a python script to draw a circle and save it as a png file. Then check if the content of the image using VLM tool (analyze_file_vlm)."
     # prompt = "Search on the internet for the latest news about the OpenHands project."
     dataset_path = "data/dataset.jsonl"

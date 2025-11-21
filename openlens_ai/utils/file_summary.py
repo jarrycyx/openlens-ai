@@ -325,15 +325,21 @@ class FileSummary:
             if question:
                 logger.info(f"Reranking result with question: {question}")
                 result = perform_rerank(result, question, max_token_cnt, 
-                                        config.rerank.rerank_model, 
-                                        config.rerank.rerank_api_key, 
-                                        config.rerank.rerank_base_url)
+                                        self.config.rerank.rerank_model, 
+                                        self.config.rerank.rerank_api_key, 
+                                        self.config.rerank.rerank_base_url)
             else:
                 logger.warning("No question provided for reranking. Directly truncate the result.")
                 truncated = []
+                current_token = 0
                 for line in result:
-                    if count_tokens_approximately([HumanMessage(content=line)]) <= max_token_cnt:
+                    token_cnt = count_tokens_approximately([HumanMessage(content=line)])
+                    if current_token + token_cnt <= max_token_cnt:
                         truncated.append(line)
+                        current_token += token_cnt
+                    else:
+                        break
+                
                 result = truncated
         
         return "\n".join(result)

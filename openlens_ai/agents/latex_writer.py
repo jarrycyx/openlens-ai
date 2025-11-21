@@ -93,7 +93,7 @@ def build_latex_writer(config: Config) -> StateGraph:
         
         this_prompt = introduction_prompt.replace("{question}", state["question"])
         
-        # 加入上一次的建议
+        # Add the last AI message with REASON to the prompt if exists
         ai_message = [m for m in state["messages"] if isinstance(m, AIMessage)]
         if len(ai_message) > 0 and "REASON:" in ai_message[-1].content:
             logger.info("Detected REASON in the last tool message, add to the prompt.")

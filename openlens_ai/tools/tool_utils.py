@@ -58,7 +58,7 @@ def route_by_tool_call(tool_name: str):
         if isinstance(state, list):
             ai_message = state[-1]
         elif messages := state.get("messages", []):
-            # 如果来自工具的信息报错，或者最后一条不是工具信息，就直接返回llm
+            # If from tool, and the tool call is the specified tool, return END
             if isinstance(messages[-1], ToolMessage):
                 # if messages[-1].name == "tool_error":
                 if "error" in messages[-1].status:

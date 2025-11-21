@@ -93,12 +93,12 @@ def sample_file_content(file_path: str, max_size: int = 100 * 1024 * 1024) -> Tu
 def collect_files(config: Config, max_size: int = 10 * 1024 * 1024, compressed_dir_name="compressed"):
     save_path = config.save_path
     
-    # 定义需要收集的文件类型，这里是包含优先级的
+    # Define the file patterns to collect, with priority order
     file_patterns = ['*.py', '*.md', '*.tex', '*.pdf', '*.json', '*.svg', '*.txt', '*.bib', '*.sty', '*.log',
                      '*.png', '*.jpg', '*.jpeg', '*']
     # file_patterns = ['*.py', '*.json', '*.md', '*.txt', '*.tex', '*.bib', '*.sty', '*.log', '*.pdf', '*']
     
-    # 收集所有匹配的文件
+    # Collect all matching files
     exclude_path = ["backup/openlens_ai"]
     files = []
     for pattern in file_patterns:
@@ -109,37 +109,37 @@ def collect_files(config: Config, max_size: int = 10 * 1024 * 1024, compressed_d
             if f not in files and os.path.isfile(f):
                 files.append(f)
     
-    # 创建压缩文件夹路径
+    # Create the compressed folder path
     compressed_dir = os.path.join(save_path, compressed_dir_name)
     os.makedirs(compressed_dir, exist_ok=True)
     
-    # 创建以时间戳命名的zip文件
+    # Create the zip file with timestamp
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     zip_filename = f"files_{timestamp}.zip"
     zip_filepath = os.path.join(compressed_dir, zip_filename)
     
-    # 将文件打包成zip
+    # Compress the files into the zip archive
     with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
         total_size = 0
         for file in tqdm.tqdm(files, desc="Compressing files"):
             if "compressed" in file:
                 continue
             try:
-                # 检查有没有读取权限
+                # Check if file has read permission
                 with open(file, 'rb'):
                     pass
-                # 检查添加此文件后是否会超过大小限制
+                # Check if adding this file will exceed the max_size
                 file_size = os.path.getsize(file)
                 if total_size + file_size > max_size:
                     # logger.info(f"警告: 添加文件 {file} 后zip文件大小将超过10MB限制，已跳过.")
                     continue
                     
-                # 将文件添加到zip中，保持相对路径结构
+                # Add the file to the zip archive, maintaining the relative path structure
                 arcname = os.path.relpath(file, save_path)
                 zipf.write(file, arcname)
                 total_size += file_size
             except Exception as e:
-                logger.info(f"警告: 无法读取文件 {file}，已跳过. 错误: {e}")
+                logger.warning(f"Warning: Cannot add file {file} to zip archive. Error: {e}")
                 
                 
     
@@ -191,7 +191,7 @@ def collect_files(config: Config, max_size: int = 10 * 1024 * 1024, compressed_d
     except Exception as e:
         logger.warning(f"Error collecting token usage: {e}")
         
-    return zip_filepath, latest_md[:10000]  # 只返回前10000字符，防止邮件过大
+    return zip_filepath, latest_md[:10000]  # Only return the first 10000 characters to prevent email size limit
 
 
 

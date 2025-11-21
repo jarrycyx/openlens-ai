@@ -22,7 +22,7 @@ from .agents.coder import build_coder
 from .agents.data_analyzer import build_data_analyzer
 from .agents.literature_reviewer import build_literature_review_subgraph
 from .agents.latex_writer import build_latex_writer
-from .state import State, load_state, track_node_call  # 从state模块导入load_state函数
+from .state import State, load_state, track_node_call  # Import load_state function from state module
 from .utils.frontend_messages import frontend_add_message, frontend_add_tool_call, frontend_update_node
 from .utils.config import Config
 
@@ -32,16 +32,16 @@ all_subgraphs = ["literature_reviewer", "data_analyzer", "supervisor", "coder", 
 
 
 def send_periodic_emails(config: Config):
-    """每60分钟发送一次进度邮件"""
+    """Send progress emails every 60 minutes"""
     logger.info("Starting to send periodic emails...")
     
     cnt = 0
     while not stop_sending_emails.wait(600):
-        # 每10分钟更新一次文件压缩包和token usage
+        # Update file compression package and token usage every 10 minutes
         try:
             zipfile, latest_md = collect_files(config)
             cnt += 1
-            # 每30*10分钟发送一次邮件
+            # Send email every 30*10 minutes
             if cnt % 30 == 0:
                 send_localized_email(
                     config=config,
@@ -79,7 +79,6 @@ def build_graph(config: Config, start_subgraph: str = None):
         graph_builder.add_node("end", end_node)
 
 
-
         
         if start_subgraph and (start_subgraph in all_subgraphs):
             graph_builder.add_edge(START, start_subgraph)
@@ -109,7 +108,7 @@ def build_graph(config: Config, start_subgraph: str = None):
                 error_info = traceback.format_exc()
                 logger.info(f'Failed to build mermaid graph: {e}')
                 graph_image = graph.get_graph(xray=True).draw_png()
-            # 保存
+            # Save
             with open(os.path.join(config.save_path, "overall_graph_image.png"), "wb") as f:
                 f.write(graph_image)
             # with open(os.path.join(config.save_path, "workspace", "graph_mermaid.txt"), "w") as f:
@@ -160,16 +159,16 @@ def get_last_node(graph: CompiledStateGraph, this_node_name: str):
 def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, interrupt_after_subgraph="none"):
     logger.info(f"Main process is running with PID {os.getpid()}")
     
-    # 启动定期发送邮件的线程
+    # Start thread for sending periodic emails
     email_thread = threading.Thread(target=send_periodic_emails, args=(config,), daemon=True)
     email_thread.start()
     
     try:
         
         step_i = 0
-        # 先尝试在state目录下加载state，这个是每个subgraph保存一次
+        # First try to load state in the state directory, this is saved once for each subgraph
         state_dir = os.path.join(config.save_path, "states")
-        # 遍历里面的文件，格式是step_i.json，找最大的
+        # Traverse the files inside, format is step_i.json, find the largest
         file_names = os.listdir(state_dir)
         if file_names:
             file_indices = [int(file_name.split("_")[1]) for file_name in file_names if file_name.endswith(".json")]
@@ -206,7 +205,7 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
                 with open(os.path.join(config.save_path, "states", f"step_{step_i:04d}_{state_name}.json"), "w") as f:
                     json_str = dumps(event, ensure_ascii=False, indent=4)
                     f.write(json_str)
-                # 发送进度邮件
+                # Send progress email
                 try:
                     zipfile, latest_md = collect_files(config)
                 except Exception as e:
@@ -247,7 +246,7 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
         email_thread.join(timeout=5)
         sys.exit(0)
     finally:
-        # 停止定期发送邮件
+        # Stop sending periodic emails
         send_localized_email(
         config=config,
         template_key="job_complete",
@@ -258,4 +257,3 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
         stop_sending_emails.set()
         email_thread.join(timeout=5)
         sys.exit(0)
-

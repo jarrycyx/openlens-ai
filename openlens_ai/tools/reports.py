@@ -60,7 +60,7 @@ class ReportReaderTool(BaseTool):
         self.file_name = file_name
         
     def _run(self, file_name: str) -> str:
-        """读取实验计划的主要方法"""
+        """Read a report from a fixed location."""
         if self.file_name:
             file_name = self.file_name
         try:

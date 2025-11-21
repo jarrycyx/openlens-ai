@@ -14,7 +14,7 @@ import markdown
 
 from .config import Config
 
-# 多语言邮件模板
+# Multilingual email templates
 EMAIL_TEMPLATES = {
     "chs": {
         "job_start": "OpenLens 任务已启动 | {thread_id}",
@@ -49,9 +49,9 @@ EMAIL_TEMPLATES = {
 }
 
 def get_email_content(template_key: str, language: str, **kwargs) -> str:
-    """根据语言和模板键获取邮件内容"""
+    """Get the email content based on the template key and language"""
     if language not in EMAIL_TEMPLATES:
-        language = "chs"  # 默认使用中文
+        language = "chs"  # Default to Chinese if language not found
     
     template = EMAIL_TEMPLATES[language].get(template_key, "")
     return template.format(**kwargs)
@@ -59,10 +59,10 @@ def get_email_content(template_key: str, language: str, **kwargs) -> str:
 def send_localized_email(config: Config, template_key: str, recipients: Union[str, List[str]], 
                         attachments: Optional[Union[str, List[str]]] = None, **kwargs):
     try:
-        """发送本地化邮件"""
+        """Send a localized email"""
         language = config.llm.language
         
-        # 根据模板键确定邮件主题
+        # Determine email subject based on template key
         subject_key = template_key
         if template_key == "job_still_running":
             subject_key = "job_progress"
@@ -75,14 +75,14 @@ def send_localized_email(config: Config, template_key: str, recipients: Union[st
         elif template_key == "failed_to_build":
             subject_key = "job_failed"
         
-        # 获取本地化的主题和内容
+        # Get localized subject and content
         subject = get_email_content(subject_key, language, thread_id=config.thread_id)
         content = get_email_content(template_key, language, 
                                 thread_id=config.thread_id,
                                 url="https://app.openlens.icu/",
                                 **kwargs)
         
-        # 发送邮件
+        # Send email
         send_email(config, subject, content, recipients, attachments)
     except Exception as e:
         logger.error(f"Failed to send localized email: {e}")
@@ -91,19 +91,19 @@ def send_localized_email(config: Config, template_key: str, recipients: Union[st
 
 def send_email(config: Config, subject: str, content: str, recipients: Union[str, List[str]], attachments: Optional[Union[str, List[str]]] = None):
     """
-    发送邮件，支持任意主题、内容和附件
+    Send email with support for arbitrary subject, content and attachments
     
     Args:
-        subject (str): 邮件主题
-        content (str): 邮件正文内容
-        attachments (List[str], optional): 附件文件路径列表
-        recipients (List[str], optional): 收件人列表，默认使用环境变量中的EMAIL_TO
+        subject (str): Email subject
+        content (str): Email body content
+        attachments (List[str], optional): List of attachment file paths
+        recipients (List[str], optional): List of recipients, defaults to EMAIL_TO from environment variables
     """
     
-    SMTP_SERVER = config.email_server.smtp_server  # SMTP服务器地址
-    SMTP_PORT = config.email_server.smtp_port  # SMTP端口号
-    EMAIL_USER = config.email_server.email_user  # 发件人邮箱
-    EMAIL_PASSWORD = config.email_server.email_password  # 发件人邮箱密码
+    SMTP_SERVER = config.email_server.smtp_server  # SMTP server address
+    SMTP_PORT = config.email_server.smtp_port  # SMTP port number
+    EMAIL_USER = config.email_server.email_user  # Sender email
+    EMAIL_PASSWORD = config.email_server.email_password  # Sender email password
     logger.debug(f"SMTP_SERVER: {SMTP_SERVER}")
     logger.debug(f"SMTP_PORT: {SMTP_PORT}")
     logger.debug(f"EMAIL_USER: {EMAIL_USER}")
@@ -114,7 +114,7 @@ def send_email(config: Config, subject: str, content: str, recipients: Union[str
         logger.warning("SMTP server not configured, please check environment variables SMTP_SERVER and SMTP_PORT")
         return
     
-    # 如果没有提供收件人，则使用环境变量中的默认收件人
+    # If no recipients are provided, use the default recipients from environment variables
     if not recipients:
         logger.warning("Email recipients not configured, please check environment variable EMAIL_TO or pass argument --email")
         return
@@ -129,12 +129,12 @@ def send_email(config: Config, subject: str, content: str, recipients: Union[str
     msg['To'] = ', '.join(recipients)
     msg['Subject'] = subject
 
-    # 添加邮件正文
+    # Add email body
     html_content = markdown.markdown(content)
     msg.attach(MIMEText(html_content, "html"))
     # print(html_content)
 
-    # 添加附件
+    # Add attachments
     if attachments:
         for file_path in attachments:
             if os.path.isfile(file_path):
@@ -148,25 +148,25 @@ def send_email(config: Config, subject: str, content: str, recipients: Union[str
                     )
                     msg.attach(part)
             else:
-                logger.info(f"警告: 附件 {file_path} 不存在，已跳过")
+                logger.info(f"Warning: Attachment {file_path} does not exist, skipped")
 
-    # 连接SMTP服务器并发送邮件
+    # Connect to SMTP server and send email
     try:
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
         server.login(EMAIL_USER, EMAIL_PASSWORD)
         result = server.sendmail(EMAIL_USER, recipients, msg.as_string())
-        logger.debug(f"邮件发送结果: {result}")
+        logger.debug(f"Email sending result: {result}")
         server.quit()
-        logger.info(f"邮件已发送至 {', '.join(recipients)}")
+        logger.info(f"Email sent to {', '.join(recipients)}")
     except Exception as e:
-        logger.warning(f"发送邮件时出错: {e}")
+        logger.warning(f"Error sending email: {e}")
         
 
 if __name__ == "__main__":
-    # 测试邮件发送功能
-    subject = "测试邮件"
-    content = "这是一封测试邮件，请忽略。"
+    # Test email sending functionality
+    subject = "Test Email"
+    content = "This is a test email, please ignore."
     recipients = ["dzdzzd@126.com"]
     attachments = ["openlens_ai/utils/send_email.py"]
     config = Config.from_toml("config.toml")
