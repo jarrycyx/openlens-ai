@@ -21,6 +21,9 @@ RQ：如何利用深度学习模型，将海量、非结构化的运维日志（
 
 优势： 完全无监督，无需任何人工标注，结果可解释。
 
+    ' \
+    --code-hint '
+
 建议使用Qwen3-Embedding-0.6B作为文本嵌入模型，通过modelscope download --model Qwen/Qwen3-Embedding-0.6B --cache_dir /workspace下载
 
 使用方式如下
@@ -63,7 +66,7 @@ print(similarity)
 # tensor([[0.7646, 0.1414],
 #         [0.1355, 0.6000]])
     
-    ' \
+    '\
     --config "exp/power_grid/config.toml" \
     --dataset-path "datasets/general_domain/loghub" \
     --thread-id "power_grid_fault_id" \
@@ -74,11 +77,11 @@ print(similarity)
 
 
 
-python -m openlens_ai.main \
-    --resume-dir outputs/power_grid_fault_id \
-    --start-from-subgraph supervisor \
-    --start-from-subtask-index 1 \
-    --refine-suggestion "
-Try to run taylor analysis again to explain the cluster results, make sure each cluster has a clear and distinct pattern on important features.
-Make sure to include all files in the dataset.
-"
+# python -m openlens_ai.main \
+#     --resume-dir outputs/power_grid_fault_id \
+#     --start-from-subgraph supervisor \
+#     --start-from-subtask-index 1 \
+#     --refine-suggestion "
+# Try to run taylor analysis again to explain the cluster results, make sure each cluster has a clear and distinct pattern on important features.
+# Make sure to include all files in the dataset.
+# "

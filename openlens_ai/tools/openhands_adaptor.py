@@ -232,12 +232,12 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
                 + get_lang_prompt(config.llm.language)
                 + f"\n\n\nFile tree with summaries:\n\n\n{file_tree_with_summaries}"
             )
-            if config.important:
-                full_prompt += "\n## Important Instructions\n" + config.important
+            if config.code_hint:
+                full_prompt += "\n## Important Instructions\n" + config.code_hint
         else:
             full_prompt = prompt + get_lang_prompt(config.llm.language)
-            if config.important:
-                full_prompt += "\n## Important Instructions\n" + config.important
+            if config.code_hint:
+                full_prompt += "\n## Important Instructions\n" + config.code_hint
 
         pwd = os.getcwd()
         workspace_dir = os.path.join(pwd, config.save_path, "workspace")

@@ -75,7 +75,7 @@ def parse_args():
     # Core arguments
     parser.add_argument("--question", type=str, help="The research question to investigate")
     parser.add_argument("--refine-suggestion", type=str, help="Human's feedback for refining the research, only needed when resuming from a result.")
-    parser.add_argument("--important", type=str, help="Important points to consider in the research")
+    parser.add_argument("--code-hint", type=str, help="Important points to consider in the research")
     parser.add_argument("--dataset-path", type=str, help="Path to the dataset")
     parser.add_argument("--thread-id", type=str, help="Thread ID for the run")
     parser.add_argument("--notify-email", type=str, help="Email address for notifications", default="")
@@ -112,8 +112,8 @@ def cli_main():
         if args.thread_id:
             logger.error("--thread-id should not be provided when resuming from a directory.")
             sys.exit(1)
-        if args.important:
-            logger.error("--important should not be provided when resuming from a directory.")
+        if args.code_hint:
+            logger.error("--code-hint should not be provided when resuming from a directory.")
             sys.exit(1)
         
         logger.info(f"Resuming from {args.resume_dir}")
@@ -132,8 +132,7 @@ def cli_main():
         config = Config.from_toml(args.config)
         # Create config from environment variables and command line arguments
         if args.question and args.dataset_path and args.notify_email:
-            question = args.question
-            notify_email = args.notify_email
+            pass
         else:
             logger.error("Please provide a question, dataset path, and email.")
             sys.exit(1)
@@ -146,11 +145,11 @@ def cli_main():
             # # 使用当前日期
             # question_show = re.sub(r"[^\w]", "_", question.strip())
 
-        config.question = question
-        config.important = args.important
-        config.dataset_path = dataset_path
-        config.thread_id = thread_id
-        config.notify_email = notify_email
+        config.question = args.question
+        config.code_hint = args.code_hint
+        config.dataset_path = args.dataset_path
+        config.thread_id = args.thread_id
+        config.notify_email = args.notify_email
         config.llm.language = args.language
         config.domain = args.domain
 

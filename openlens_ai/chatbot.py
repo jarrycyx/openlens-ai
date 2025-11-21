@@ -262,8 +262,6 @@ def chatbot_with_context_manager(
 
         # Add language prompt
         this_prompt += get_lang_prompt(config.llm.language)
-        if config.important:
-            this_prompt += "\n## Important Instructions\n" + config.important
 
         return this_prompt
 

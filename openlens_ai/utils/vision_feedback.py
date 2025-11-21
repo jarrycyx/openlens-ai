@@ -158,8 +158,6 @@ def _load_prompt(config: Config, prompt_filename: str) -> str:
     prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain, prompt_filename)
     with open(prompt_path, "r") as f:
         prompt = f.read() + get_lang_prompt(config.llm.language)
-        if config.important:
-            prompt += "\n## Important Instructions\n" + config.important
     return prompt
 
 
