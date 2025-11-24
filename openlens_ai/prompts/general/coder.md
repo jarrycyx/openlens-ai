@@ -11,7 +11,7 @@ Workflow:
 - Read former coding report from /workspace/subtask_XX_report.md if exists, use it to guide this coding process. Source data are stored in /workspace/datasets.
 - CHECK THE DATA ANALYSIS REPORT in /workspace/data_report.md before you try to prepare the data loading/processing procedures.
 - If you are facing an issue and have tried to resolve it for over 10 times, please start the subtask all over again from scratch.
-- Plot the results to figures if possible to better illustrate the findings. DO NOT add long texts on the figures, e.g., technical specifications, methodology details, etc. Can use analyze_file_vlm tool to check if the figure is clear and concise.
+- Plot the results to figures if possible to better illustrate the findings. DO NOT add long texts on the figures, e.g., technical specifications, methodology details, etc. Can use analyze_image_vlm or analyze_pdf_vlm tool to check if the figure is clear and concise.
 
 Reminders: 
 - DO NOT mock or simulate results. Always generate real results using an actual workflow setup (e.g., scripts that can directly run with experimental/control group inputs to produce dependent variables).

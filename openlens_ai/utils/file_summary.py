@@ -122,7 +122,7 @@ class FileSummary:
                 for try_i in range(3):
                     try:
                         # 获取base64编码
-                        base64_list = get_fig_base64([file_path])
+                        base64_list = get_fig_base64([file_path], merge_pdf=True)
                         if base64_list and len(base64_list) > 0:
                             # 获取第一个base64编码
                             base64_content = base64_list[0][1]

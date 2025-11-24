@@ -88,11 +88,71 @@ def analyze_latex_image(image_base64: str) -> str:
         return f"Error analyzing LaTeX image: {str(e)}\n{traceback.format_exc()}"
 
 
+
 @mcp.tool(
-    name="analyze_file_vlm",
-    description="Analyze a file (image or PDF) using VLM.",
+    name="analyze_pdf_vlm",
+    description="Analyze a file (pdf) using VLM.",
 )
-def analyze_file_vlm(file_path: Annotated[str, Field(description="ABSOLUTE Path to the file (supports png, jpg, jpeg, pdf)")], 
+def analyze_pdf_vlm(file_path: Annotated[str, Field(description="ABSOLUTE Path to the file (supports pdf)")], 
+                     prompt: Annotated[str, Field(description="Analysis instruction for the file, i.e., 'Describe the figure in detail.', 'Does the result contain any error?'")],
+                     pdf_page: Annotated[Union[int, str], Field(description="Page number of the PDF to analyze (starts from 1), set to \"merge\" to analyze all pages at once but with lower precision.")] = "merge",
+                     security_risk: Annotated[str, Field(description="Security risk level for the file, i.e., 'Low', 'Medium', 'High'")] = "Low") -> str:
+    """Analyze a file (image or PDF) using VLM.
+    
+    Args:
+        file_path: Path to the file (supports png, jpg, jpeg, pdf)
+        prompt: Optional custom prompt for analysis
+    
+    Returns:
+        VLM analysis result
+    """
+    config = get_config()
+    if file_path.startswith("/workspace"):
+        file_path = file_path.replace("/workspace", os.path.join(config.save_path, "workspace"))
+    
+    logger.info(f"MCP analyze_image_vlm: Analyzing file: {file_path}")
+    if not os.path.exists(file_path):
+        return f"Error: File not found at {file_path}"
+    
+    ext = os.path.splitext(file_path)[1].lower()
+    
+    if pdf_page != "merge":
+        try:
+            pdf_page = int(pdf_page)
+        except ValueError:
+            pass
+    
+    if ext in ['.pdf']:
+        # Handle PDF file
+        if isinstance(pdf_page, int):
+            # Analyze specific page
+            page_images = get_fig_base64([file_path])
+            if pdf_page > 0 and pdf_page <= len(page_images):
+                fig, fig_base64 = page_images[pdf_page - 1]
+                page_prompt = f"Page {pdf_page}: {prompt}" if prompt else f"Analyze page {pdf_page} of the PDF."
+                return analyze_image(fig_base64, page_prompt)
+            else:
+                return f"Error: Page number {pdf_page} is out of range. PDF has {len(page_images)} pages, page number starts from 1."
+        elif pdf_page == "merge":
+            # Merge all pages and analyze
+            page_images = get_fig_base64([file_path], merge_pdf=True)
+            if page_images:
+                fig, fig_base64 = page_images[0]
+                merge_prompt = f"Analyze the merged PDF pages. {prompt}" if prompt else "Analyze the merged PDF pages."
+                return analyze_image(fig_base64, merge_prompt)
+            else:
+                return f"Error: Failed to merge PDF pages."
+        else:
+            return "Error: Invalid pdf_page value. Please provide a valid page number or 'merge'."
+    else:
+        return f"Error: Unsupported file format {ext}. Supported formats: pdf"
+
+
+@mcp.tool(
+    name="analyze_image_vlm",
+    description="Analyze a file (png, jpg, jpeg) using VLM.",
+)
+def analyze_image_vlm(file_path: Annotated[str, Field(description="ABSOLUTE Path to the file (supports png, jpg, jpeg, pdf)")], 
                      prompt: Annotated[str, Field(description="Analysis instruction for the file, i.e., 'Describe the figure in detail.', 'Does the result contain any error?'")],
                      security_risk: Annotated[str, Field(description="Security risk level for the file, i.e., 'Low', 'Medium', 'High'")]) -> str:
     """Analyze a file (image or PDF) using VLM.
@@ -108,33 +168,23 @@ def analyze_file_vlm(file_path: Annotated[str, Field(description="ABSOLUTE Path 
     if file_path.startswith("/workspace"):
         file_path = file_path.replace("/workspace", os.path.join(config.save_path, "workspace"))
     
-    logger.info(f"MCP analyze_file_vlm: Analyzing file: {file_path}")
+    logger.info(f"MCP analyze_image_vlm: Analyzing file: {file_path}")
     if not os.path.exists(file_path):
         return f"Error: File not found at {file_path}"
     
     ext = os.path.splitext(file_path)[1].lower()
     
-    if ext in ['.png', '.jpg', '.jpeg', '.pdf']:
+    if ext in ['.png', '.jpg', '.jpeg']:
         # Handle PDF file
         page_images = get_fig_base64([file_path])
-        if len(page_images) == 1:
+        if len(page_images) >= 1:
             fig, fig_base64 = page_images[0]
             # Single page PDF, analyze directly
             return analyze_image(fig_base64, prompt)
-        
-        # Analyze each page and combine results
-        results = []
-        for i, (fig, fig_base64) in enumerate(page_images):
-            page_prompt = f"Analyze page {i+1} of the PDF."
-            if prompt:
-                page_prompt = f"Page {i+1}: {prompt}"
-            
-            result = analyze_image(fig_base64, page_prompt)
-            results.append(f"--- Page {i+1} ---\n{result}")
-        
-        return "\n\n".join(results)
+        else:
+            return f"Reading {file_path} failed. Please check the file format."
     else:
-        return f"Error: Unsupported file format {ext}. Supported formats: png, jpg, jpeg, pdf"
+        return f"Error: Unsupported file format {ext}. Supported formats: png, jpg, jpeg"
 
 
 def run_server(config: Union[Config, str], port: int = 9077):

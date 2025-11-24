@@ -389,10 +389,11 @@ def collect_info_and_run_openhands(prompt: str, config: Config, state: State):
 if __name__ == "__main__":
     from ..state import load_state
 
-    prompt = "Write a python script to draw a circle and save it as a png file. Then check if the content of the image using VLM tool (analyze_file_vlm)."
+    # prompt = "Write a python script to draw a circle and save it as a png file. Then check if the content of the image using VLM tool (analyze_image_vlm and analyze_pdf_vlm)."
+    prompt = "Check /workspace/manuscript/main.pdf to review if the paper is properly formatted."
     # prompt = "Search on the internet for the latest news about the OpenHands project."
     dataset_path = "data/dataset.jsonl"
-    config, state, last_subgraph = load_state("outputs/pred_aki_trend_eicu_demo")
+    config, state, last_subgraph = load_state("outputs/power_grid_fault_id_20251121164412")
     result = run_openhands_prompt(prompt, config)
     with open("result.txt", "w") as f:
         f.write(result)

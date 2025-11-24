@@ -77,11 +77,11 @@ print(similarity)
 
 
 
-# python -m openlens_ai.main \
-#     --resume-dir outputs/power_grid_fault_id \
-#     --start-from-subgraph supervisor \
-#     --start-from-subtask-index 1 \
-#     --refine-suggestion "
-# Try to run taylor analysis again to explain the cluster results, make sure each cluster has a clear and distinct pattern on important features.
-# Make sure to include all files in the dataset.
-# "
+python -m openlens_ai.main \
+    --resume-dir outputs/power_grid_fault_id \
+    --start-from-subgraph supervisor \
+    --start-from-subtask-index 1 \
+    --refine-suggestion "
+Must show the visualization of the cluster results.
+Analyze the rationality of the deep taylor analysis results, e.g., what each cluster represents, and whether the important features are consistent with the domain knowledge. Draw comprehensive visualizations to support your analysis.
+"

@@ -6,6 +6,7 @@ Please analyze this page of LaTeX-compiled PDF document for me. Conduct a compre
     *   Are the page breaks logical, or do they create awkward gaps (e.g., a header alone at the bottom of a page) or split content poorly (e.g., a table across two pages)?
     *   Is the formatting consistent throughout (e.g., consistent font sizes for headings, body text, and captions)?
     *   Does the visual elements overlap with each other, and cause hampered visual quality?
+    *   Does the paper show multiple copies of the same figure or table (i.e., the same chart or table repeated multiple times)?
 
 2.  **Completeness & Placement:**
     *   If this page contains "Experiments" and "Methods" sections, does it contain an appropriate number of visual aids (e.g., charts, diagrams, plots, tables)?
