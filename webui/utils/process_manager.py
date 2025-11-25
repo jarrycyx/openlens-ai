@@ -13,7 +13,7 @@ class ProcessManager:
     """
     Class for managing OpenLens AI processes
     """
-    MAX_PROCESSES = 1
+    MAX_PROCESSES = 10
 
     def __init__(self):
         """Initialize process manager"""

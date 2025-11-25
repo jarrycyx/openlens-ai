@@ -94,13 +94,13 @@ def build_literature_review_subgraph(config: Config):
 
     # 使用项目中的chatbot接口
     literature_search_chatbot = chatbot_with_context_manager(
-        config, llm_react, search_prompt_template, context_manage="vector_search", calling_subgraph="literature_review"
+        config, llm_react, search_prompt_template, context_manage="vector_search", calling_subgraph="literature_reviewer"
     )
     write_report_chatbot = chatbot_with_context_manager(
-        config, llm_report_writer, report_prompt_template, context_manage="token_cnt_large", calling_subgraph="literature_review", force_stringify_context=True
+        config, llm_report_writer, report_prompt_template, context_manage="token_cnt_large", calling_subgraph="literature_reviewer", force_stringify_context=True
     )
     
-    @track_node_call("literature_review")
+    @track_node_call("literature_reviewer")
     def clear_literature_state(state: State):
         state["messages"] = []
         literature_review_path = os.path.join(config.save_path, "workspace", "literature_review.md")

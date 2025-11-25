@@ -200,7 +200,8 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
                         state_name=state_name,
                         latest_md=latest_md
                     )
-                    break
+                    # Do not send success email
+                    return
                 
                 with open(os.path.join(config.save_path, "states", f"step_{step_i:04d}_{state_name}.json"), "w") as f:
                     json_str = dumps(event, ensure_ascii=False, indent=4)

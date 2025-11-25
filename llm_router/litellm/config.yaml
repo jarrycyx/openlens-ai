@@ -2,6 +2,10 @@ litellm_settings:
   num_retries: 3
   callbacks:
     - litellm_logger.proxy_handler_instance
+  cache: True
+  cache_params:
+    type: disk
+    disk_cache_dir: outputs/.litellm_cache
 model_list:
   - litellm_params:
       api_base: https://cloud.infini-ai.com/maas/v1/

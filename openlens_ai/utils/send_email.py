@@ -1,5 +1,3 @@
-
-
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -10,6 +8,7 @@ from typing import List, Optional, Union
 from datetime import datetime
 from loguru import logger
 import markdown
+import traceback
 
 
 from .config import Config
@@ -29,7 +28,7 @@ EMAIL_TEMPLATES = {
         "failed_to_run": "运行失败：{error}\n{error_info}\n\n{latest_md}",
         "all_subgraphs_completed": "所有子图已成功完成。",
         "job_complete": "任务已成功完成。\n\n{latest_md}",
-        "failed_to_build": "构建失败：{error}\n{error_info}"
+        "failed_to_build": "构建失败：{error}\n{error_info}",
     },
     "eng": {
         "job_start": "OpenLens Job Started | {thread_id}",
@@ -44,24 +43,31 @@ EMAIL_TEMPLATES = {
         "failed_to_run": "Failed to run graph: {error}\n{error_info}\n\n{latest_md}",
         "all_subgraphs_completed": "All subgraphs completed successfully.",
         "job_complete": "Job completed successfully.\n\n{latest_md}",
-        "failed_to_build": "Failed to run build: {error}\n{error_info}"
-    }
+        "failed_to_build": "Failed to run build: {error}\n{error_info}",
+    },
 }
+
 
 def get_email_content(template_key: str, language: str, **kwargs) -> str:
     """Get the email content based on the template key and language"""
     if language not in EMAIL_TEMPLATES:
         language = "chs"  # Default to Chinese if language not found
-    
+
     template = EMAIL_TEMPLATES[language].get(template_key, "")
     return template.format(**kwargs)
 
-def send_localized_email(config: Config, template_key: str, recipients: Union[str, List[str]], 
-                        attachments: Optional[Union[str, List[str]]] = None, **kwargs):
+
+def send_localized_email(
+    config: Config,
+    template_key: str,
+    recipients: Union[str, List[str]],
+    attachments: Optional[Union[str, List[str]]] = None,
+    **kwargs,
+):
     try:
         """Send a localized email"""
         language = config.llm.language
-        
+
         # Determine email subject based on template key
         subject_key = template_key
         if template_key == "job_still_running":
@@ -74,32 +80,39 @@ def send_localized_email(config: Config, template_key: str, recipients: Union[st
             subject_key = "job_successful"
         elif template_key == "failed_to_build":
             subject_key = "job_failed"
-        
+        elif template_key == "subgraph_paused":
+            subject_key = "job_paused"
+
         # Get localized subject and content
         subject = get_email_content(subject_key, language, thread_id=config.thread_id)
-        content = get_email_content(template_key, language, 
-                                thread_id=config.thread_id,
-                                url="https://app.openlens.icu/",
-                                **kwargs)
-        
+        content = get_email_content(
+            template_key, language, thread_id=config.thread_id, url="https://app.openlens.icu/", **kwargs
+        )
+
         # Send email
         send_email(config, subject, content, recipients, attachments)
     except Exception as e:
         logger.error(f"Failed to send localized email: {e}")
         logger.error(traceback.format_exc())
-        
 
-def send_email(config: Config, subject: str, content: str, recipients: Union[str, List[str]], attachments: Optional[Union[str, List[str]]] = None):
+
+def send_email(
+    config: Config,
+    subject: str,
+    content: str,
+    recipients: Union[str, List[str]],
+    attachments: Optional[Union[str, List[str]]] = None,
+):
     """
     Send email with support for arbitrary subject, content and attachments
-    
+
     Args:
         subject (str): Email subject
         content (str): Email body content
         attachments (List[str], optional): List of attachment file paths
         recipients (List[str], optional): List of recipients, defaults to EMAIL_TO from environment variables
     """
-    
+
     SMTP_SERVER = config.email_server.smtp_server  # SMTP server address
     SMTP_PORT = config.email_server.smtp_port  # SMTP port number
     EMAIL_USER = config.email_server.email_user  # Sender email
@@ -108,26 +121,27 @@ def send_email(config: Config, subject: str, content: str, recipients: Union[str
     logger.debug(f"SMTP_PORT: {SMTP_PORT}")
     logger.debug(f"EMAIL_USER: {EMAIL_USER}")
     logger.debug(f"EMAIL_PASSWORD: {EMAIL_PASSWORD}")
-    
-    
+
     if not SMTP_SERVER:
         logger.warning("SMTP server not configured, please check environment variables SMTP_SERVER and SMTP_PORT")
         return
-    
+
     # If no recipients are provided, use the default recipients from environment variables
     if not recipients:
-        logger.warning("Email recipients not configured, please check environment variable EMAIL_TO or pass argument --email")
+        logger.warning(
+            "Email recipients not configured, please check environment variable EMAIL_TO or pass argument --email"
+        )
         return
-        
+
     if isinstance(recipients, str):
         recipients = [recipients]
     if isinstance(attachments, str):
         attachments = [attachments]
-    
+
     msg = MIMEMultipart()
-    msg['From'] = EMAIL_USER
-    msg['To'] = ', '.join(recipients)
-    msg['Subject'] = subject
+    msg["From"] = EMAIL_USER
+    msg["To"] = ", ".join(recipients)
+    msg["Subject"] = subject
 
     # Add email body
     html_content = markdown.markdown(content)
@@ -138,14 +152,11 @@ def send_email(config: Config, subject: str, content: str, recipients: Union[str
     if attachments:
         for file_path in attachments:
             if os.path.isfile(file_path):
-                with open(file_path, 'rb') as attachment:
-                    part = MIMEBase('application', 'octet-stream')
+                with open(file_path, "rb") as attachment:
+                    part = MIMEBase("application", "octet-stream")
                     part.set_payload(attachment.read())
                     encoders.encode_base64(part)
-                    part.add_header(
-                        'Content-Disposition', 
-                        f'attachment; filename={os.path.basename(file_path)}'
-                    )
+                    part.add_header("Content-Disposition", f"attachment; filename={os.path.basename(file_path)}")
                     msg.attach(part)
             else:
                 logger.info(f"Warning: Attachment {file_path} does not exist, skipped")
@@ -161,7 +172,7 @@ def send_email(config: Config, subject: str, content: str, recipients: Union[str
         logger.info(f"Email sent to {', '.join(recipients)}")
     except Exception as e:
         logger.warning(f"Error sending email: {e}")
-        
+
 
 if __name__ == "__main__":
     # Test email sending functionality

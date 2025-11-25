@@ -36,7 +36,7 @@ def main_resume(
                                               start_from_subgraph=start_from_subgraph, 
                                               start_from_subtask_index=start_from_subtask_index)
     config.refine_suggestion = refine_suggestion
-    if config.refine_suggestion.strip():
+    if config.refine_suggestion and config.refine_suggestion.strip():
         state["question"] = f"# Refine suggestion: {refine_suggestion}\n\n\n # Original question: {config.question}"
         logger.info(f"Refine suggestion: {refine_suggestion}")  
     if last_subgraph:

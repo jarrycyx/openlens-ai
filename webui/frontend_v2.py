@@ -202,14 +202,14 @@ def build_sidebar():
                             else:
                                 raise FileNotFoundError("No config.json or config.toml found in project directory")
 
-                        config = Config(**config_data)
-                        st.session_state.config = config
+                            config = Config(**config_data)
+                            st.session_state.config = config
 
-                        # If there is an old monitoring thread, stop it
-                        if st.session_state.monitor_thread:
-                            st.session_state.monitor_thread.stop()
+                            # If there is an old monitoring thread, stop it
+                            if st.session_state.monitor_thread:
+                                st.session_state.monitor_thread.stop()
 
-                        st.rerun()
+                            st.rerun()
                     except Exception as e:
                         logger.warning(f"Failed to load config from {project['path']}: {e}")
                         continue
@@ -587,8 +587,8 @@ def main():
 
 
         with st.container(horizontal=True):
-            # submit_button = st.button(f"🚀 **{t('start_research')}**", help=t("start_research"), type="secondary")
-            submit_button = st.button(f"🚀 {t('start_research_maintenance')}", type="secondary", disabled=True)
+            submit_button = st.button(f"🚀 **{t('start_research')}**", help=t("start_research"), type="secondary")
+            # submit_button = st.button(f"🚀 {t('start_research_maintenance')}", type="secondary", disabled=True)
 
             st.caption(t("start_research_note"))
 
@@ -641,3 +641,5 @@ def main():
                             st.rerun()
     
     st.caption(t("note"))
+    # time.sleep(10)
+    # st.rerun()
