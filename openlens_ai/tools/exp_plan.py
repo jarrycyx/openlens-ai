@@ -49,16 +49,15 @@ class PlanWriterTool(BaseTool):
             if len(sub_task) < 500:
                 raise ValueError("Please provide a more detailed sub-task description. Remeber: Argument sub_tasks must be a LIST OF STRINGS, make sure each string is detailed enough (at least 500 characters), and there should be at least 3 sub tasks")
         
-        workspace_dir = os.path.join(self.config.save_path, "workspace")
         # 写入JSON格式的计划文件
-        with open(f"{workspace_dir}/plan.json", "w") as f:
+        with open(os.path.join(self.config.save_path, "plan.json"), "w") as f:
             json.dump(plan_data, f, indent=2, ensure_ascii=False)
             
         plan_markdown = f"# Experiment Plan\n\nObjective: {objective}\n\nSub Tasks:\n"
         for i, task in enumerate(sub_tasks):
             plan_markdown += f"\n\n# SUBTASK{i+1:02d}\n {task}\n"
         plan_markdown += f"\nExpected Result: {expected_result}"
-        with open(os.path.join(self.config.save_path, "plan.md"), "w") as f:
+        with open(os.path.join(self.config.save_path, "workspace", "plan.md"), "w") as f:
             f.write(plan_markdown)
             
         return f"Plan written successfully with objective: {objective}"
@@ -80,8 +79,7 @@ class PlanReaderTool(BaseTool):
     def _run(self) -> str:
         """读取结构化实验计划的主要方法"""
         try:
-            workspace_dir = os.path.join(self.config.save_path, "workspace")
-            with open(f"{workspace_dir}/plan.json", "r") as f:
+            with open(os.path.join(self.config.save_path, "plan.json"), "r") as f:
                 plan_data = json.load(f)
             return plan_data
         except FileNotFoundError:

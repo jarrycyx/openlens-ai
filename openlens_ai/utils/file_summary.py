@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import traceback
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -75,6 +76,19 @@ class FileSummary:
                 json.dump(self.file_cache, f, ensure_ascii=False, indent=2)
         except Exception as e:
             logger.warning(f"Failed to save file cache: {e}")
+    
+    def get_file_summaries(self, file_path: str):
+        try:
+            abs_path = os.path.abspath(file_path)
+            if self._is_file_updated(abs_path):
+                summary = self._summarize_file(abs_path)
+                self._update_file_cache(abs_path, summary)
+            
+            return self.file_cache[abs_path]
+        except Exception as e:
+            logger.warning(f"Failed to get file summaries {abs_path}: {e}")
+            logger.warning(traceback.format_exc())
+            return f"Error: Failed to get file summaries {abs_path}: {e}"
     
     def _get_file_mtime(self, file_path: str) -> float:
         """

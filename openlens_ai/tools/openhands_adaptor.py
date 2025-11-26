@@ -24,7 +24,7 @@ from ..state import State
 from ..utils.frontend_messages import frontend_add_message, frontend_add_tool_call
 from ..utils.config import Config, get_lang_prompt
 from ..chatbot import chatbot_with_context_manager
-from .vlm_mcp.server import run_server
+from .openhands_mcp.server import run_server
 from ..utils.file_summary import FileSummary
 from ..utils.file_manager import FileManager
 
@@ -218,8 +218,8 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
     port = get_available_port(9077)
     logger.info(f"Starting VLM MCP server using port {port}")
 
-    vlm_mcp_process = multiprocessing.Process(target=run_server, args=(config, port))
-    vlm_mcp_process.start()
+    openhands_mcp_process = multiprocessing.Process(target=run_server, args=(config, port))
+    openhands_mcp_process.start()
 
     all_results = ""
     for prompt in prompts:
@@ -335,15 +335,15 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
         all_results += "=" * 20 + f"Prompt: {prompt[:20]}..." + "=" * 20
         all_results += "\n" + results
 
-    # vlm_mcp_process termination
-    if vlm_mcp_process.is_alive():
-        logger.info("Terminating vlm_mcp_process...")
-        vlm_mcp_process.terminate()
-        vlm_mcp_process.join(timeout=5)  # Wait up to 5 seconds for process to terminate
-        if vlm_mcp_process.is_alive():
-            logger.warning("vlm_mcp_process did not terminate gracefully. Force killing...")
-            vlm_mcp_process.kill()  # Force kill if it doesn't terminate gracefully
-            vlm_mcp_process.join()
+    # openhands_mcp_process termination
+    if openhands_mcp_process.is_alive():
+        logger.info("Terminating openhands_mcp_process...")
+        openhands_mcp_process.terminate()
+        openhands_mcp_process.join(timeout=5)  # Wait up to 5 seconds for process to terminate
+        if openhands_mcp_process.is_alive():
+            logger.warning("openhands_mcp_process did not terminate gracefully. Force killing...")
+            openhands_mcp_process.kill()  # Force kill if it doesn't terminate gracefully
+            openhands_mcp_process.join()
 
     # Limit result length to the last 3000 characters
     return all_results

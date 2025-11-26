@@ -165,14 +165,14 @@ Result: Yes
             
             # Build detection prompt
             prompt = f"""
-Please analyze the following file and determine if it contains simulated, fake, mock data or minified, demo, small subset version of real data.
+Please analyze the following file and determine if it contains simulated, fake, or mock data.
 
 File: {file_name}
 Path: {file_path}
 Content:
 {content}
 
-Please respond with concise reasons (less than 100 words) and then "Yes" if the file contains simulated, fake, mock data or minified, demo, small subset version of real data, or "No" if it contains real data.
+Please respond with concise reasons (less than 100 words) and then "Yes" if the file contains simulated, fake, mock data, or "No" if it contains real data.
 
 Example:
 Reason: The line "data = np.random.rand(100, 100)" generates random data for testing purposes.
@@ -267,6 +267,10 @@ Result: Yes
                 continue
             
             if not os.path.exists(file_path):
+                continue
+            
+            # Do not compare markdown files because they are usually reports
+            if ".md" in file_path:
                 continue
                 
             # Get the parent directory of the current file

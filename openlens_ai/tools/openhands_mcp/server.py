@@ -16,16 +16,20 @@ from fastmcp import FastMCP
 from ...utils.vision_feedback import get_vlm, get_vision_feedback, get_vision_classification, get_latex_vision_feedback, get_fig_base64, call_vlm_with_prompt
 from ...utils.config import Config
 from ...state import load_state
+from ...utils.file_summary import FileSummary
 
 
 # Global config variable
 _config = None
-
+file_summary = None
 
 def set_config(config: Config):
     """Set the global config"""
     global _config
     _config = config
+    
+    global file_summary
+    file_summary = FileSummary(config)
 
 
 def get_config() -> Config:
@@ -187,6 +191,31 @@ def analyze_image_vlm(file_path: Annotated[str, Field(description="ABSOLUTE Path
         return f"Error: Unsupported file format {ext}. Supported formats: png, jpg, jpeg"
 
 
+@mcp.tool(
+    name="get_summary",
+    description="Get the text summary of the file to help understandding the file content.",
+)
+def get_summary(file_path: Annotated[str, Field(description="ABSOLUTE Path to the file")]) -> str:
+    """Get the text summary of the file.
+    
+    Args:
+        file_path: Path to the file
+    
+    Returns:
+        Text summary of the file
+    """
+    config = get_config()
+    if file_path.startswith("/workspace"):
+        file_path = file_path.replace("/workspace", os.path.join(config.save_path, "workspace"))
+    
+    if not os.path.exists(file_path):
+        return f"Error: File not found at {file_path}"
+    
+    ext = os.path.splitext(file_path)[1].lower()
+    summary = file_summary.get_file_summaries(file_path)
+    return str(summary["summary"])
+    
+
 def run_server(config: Union[Config, str], port: int = 9077):
     """Run the VLM MCP server with the provided config.
     
@@ -211,4 +240,4 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=9077,
                         help="Port number to run the server on (default: 9077)")
     args = parser.parse_args()
-    run_server(args.config)
+    run_server(args.config, port=args.port)
