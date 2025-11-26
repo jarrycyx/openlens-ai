@@ -81,7 +81,7 @@ if __name__ == "__main__":
     parser.add_argument("--log-to-file", action="store_true", help="Log to file")
     parser.add_argument("--enforce-eager", action="store_true", help="Enable eager mode")
     # 后面可以附加更多参数，比如--dtype
-    parser.add_argument("--extra", nargs=argparse.REMAINDER, type=str, help="Additional arguments for vLLM")
+    parser.add_argument("--extra", nargs=argparse.REMAINDER, type=str, help="Additional arguments for vLLM", default="")
     
     args = parser.parse_args()
     

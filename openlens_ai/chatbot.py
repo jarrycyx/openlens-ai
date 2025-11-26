@@ -26,8 +26,6 @@ from .utils.config import Config, get_lang_prompt
 from .utils.embedding import vector_search_match_type, perform_rerank, vector_search
 
 
-
-
 def react_pre_model_wrapper(vector_search_question: str, config: Config):
     """
     Create a preprocessing model wrapper for processing messages before passing them to the model
@@ -50,8 +48,18 @@ def react_pre_model_wrapper(vector_search_question: str, config: Config):
             if isinstance(message, ToolMessage):
                 token_cnt = count_tokens_approximately([message])
                 if token_cnt > max_tool_token_cnt * 2:
-                    short_message = vector_search_match_type(message, config.rerank.rerank_model, config.rerank.rerank_api_key, config.rerank.rerank_base_url, vector_search_question, config.context.max_tool_token_cnt)
-                    logger.info(f"Message is too long ({token_cnt}), " f"use vector search to summarize to ({count_tokens_approximately([short_message])})")
+                    short_message = vector_search_match_type(
+                        message,
+                        config.rerank.rerank_model,
+                        config.rerank.rerank_api_key,
+                        config.rerank.rerank_base_url,
+                        vector_search_question,
+                        config.context.max_tool_token_cnt,
+                    )
+                    logger.info(
+                        f"Message is too long ({token_cnt}), "
+                        f"use vector search to summarize to ({count_tokens_approximately([short_message])})"
+                    )
                     state["messages"][message_i] = short_message
         return state
 
@@ -62,7 +70,9 @@ def chatbot_with_context_manager(
     config: Config,
     llm: BaseChatModel,
     prompt: str,
-    context_manage: Literal["token_cnt", "token_cnt_large", "last_message", "last_tool_message", "vector_search"] = "vector_search",
+    context_manage: Literal[
+        "token_cnt", "token_cnt_large", "last_message", "last_tool_message", "vector_search"
+    ] = "vector_search",
     only_last_human_message: bool = False,
     calling_subgraph: str = "",
     force_stringify_context: bool = False,
@@ -116,8 +126,10 @@ def chatbot_with_context_manager(
             if token_cnt + this_token_cnt > max_token_cnt:
                 message_clamped = message.copy()
                 try:
-                    message_clamped.content = message_clamped.content[:(max_token_cnt - token_cnt)*4]
-                    logger.debug(f"Clamped message content from {len(message.content)} to {len(message_clamped.content)}")
+                    message_clamped.content = message_clamped.content[: (max_token_cnt - token_cnt) * 4]
+                    logger.debug(
+                        f"Clamped message content from {len(message.content)} to {len(message_clamped.content)}"
+                    )
                     context_messages.insert(0, message_clamped)
                 except Exception as e:
                     logger.warning(f"Error clamping message content: {e}")
@@ -150,8 +162,7 @@ def chatbot_with_context_manager(
                     node_name = list(event.keys())[0]
                     new_state = event[node_name]
                     all_messages = new_state["messages"]
-                    
-                    
+
                     time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
                     save_path = os.path.join(config.save_path, "llm_calls", f"{time_stamp}.json")
                     os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -159,7 +170,7 @@ def chatbot_with_context_manager(
                     with open(save_path, "w") as f:
                         # f.write(get_buffer_string(message_to_llm))
                         f.write(dumps(all_messages, indent=4, ensure_ascii=False))
-                    
+
                     if len(all_messages) > 0:
                         show_message = all_messages[-1]
                         frontend_add_message(show_message, config)
@@ -217,7 +228,14 @@ def chatbot_with_context_manager(
             try:
                 if len(data_show) > 32000 * 4:
                     logger.warning("data_show is too long, clamping with vector search")
-                    data_show = vector_search(data_show, config.rerank.rerank_model, config.rerank.rerank_api_key, config.rerank.rerank_base_url, prompt, token_cnt=32000)
+                    data_show = vector_search(
+                        data_show,
+                        config.rerank.rerank_model,
+                        config.rerank.rerank_api_key,
+                        config.rerank.rerank_base_url,
+                        prompt,
+                        token_cnt=32000,
+                    )
                 this_prompt = this_prompt.replace("{data_show}", str(data_show))
             except Exception as e:
                 logger.warning("Error occurred when formatting data show", str(e))
@@ -228,7 +246,12 @@ def chatbot_with_context_manager(
                 if len(literature_report) > 4000 * 4:
                     logger.warning("Literature report is too long, clamping with vector search")
                     literature_report = vector_search(
-                        literature_report, config.rerank.rerank_model, config.rerank.rerank_api_key, config.rerank.rerank_base_url, prompt, token_cnt=4000
+                        literature_report,
+                        config.rerank.rerank_model,
+                        config.rerank.rerank_api_key,
+                        config.rerank.rerank_base_url,
+                        prompt,
+                        token_cnt=4000,
                     )
                 this_prompt = this_prompt.replace("{literature_report}", str(literature_report))
             except Exception as e:
@@ -298,7 +321,12 @@ def chatbot_with_context_manager(
             logger.info("Using vector search for context management")
             # Use current prompt as query to search for the 5 most relevant historical messages
             message_to_llm = vector_search(
-                state["messages"], config.rerank.rerank_model, config.rerank.rerank_api_key, config.rerank.rerank_base_url, this_prompt, token_cnt=config.context.max_context_token_cnt
+                state["messages"],
+                config.rerank.rerank_model,
+                config.rerank.rerank_api_key,
+                config.rerank.rerank_base_url,
+                this_prompt,
+                token_cnt=config.context.max_context_token_cnt,
             )
         elif context_manage == "token_cnt_large":
             max_context_token_cnt_large = config.context.max_context_token_cnt_large
@@ -308,7 +336,7 @@ def chatbot_with_context_manager(
             max_context_token_cnt = config.context.max_context_token_cnt
             logger.info(f"Use max_context_token_cnt: {max_context_token_cnt}")
             message_to_llm = clamp_token_cnt(state["messages"], max_context_token_cnt)
-            
+
         if force_stringify_context:
             logger.warning("Force stringify context, this may cause loss of information.")
             message_to_llm = [HumanMessage(content=str(message_to_llm))]
@@ -316,6 +344,9 @@ def chatbot_with_context_manager(
         last_error_message = detect_error_message(state)
         if last_error_message:
             logger.warning("Error message detected, do not add prompt to context.")
+            # If all messages are HumanMessage, then the tool error message may cause error, convert to HumanMessage
+            if all([isinstance(msg, HumanMessage) for msg in message_to_llm]):
+                last_error_message = HumanMessage(content=str(last_error_message))
             message_to_llm.append(last_error_message)
         else:
             # state["messages"].append({"role": "user", "content": this_prompt})
@@ -324,7 +355,6 @@ def chatbot_with_context_manager(
             if not isinstance(llm, CompiledStateGraph):
                 frontend_add_message(state["messages"][-1], config)
             logger.info(f"Prompt: {this_prompt[:1000]}...")
-            
 
         # Only keep the last HumanMessage
         if only_last_human_message:
@@ -334,7 +364,9 @@ def chatbot_with_context_manager(
                 message_to_llm = message_no_human + [last_human_message]
                 logger.info("Only keep the last human message")
 
-        logger.info(f"Message count to LLM: {len(message_to_llm)}, token count: {count_tokens_approximately(message_to_llm)}")
+        logger.info(
+            f"Message count to LLM: {len(message_to_llm)}, token count: {count_tokens_approximately(message_to_llm)}"
+        )
 
         time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
         save_path = os.path.join(config.save_path, "llm_calls", f"{time_stamp}.json")
@@ -357,7 +389,9 @@ def chatbot_with_context_manager(
                     frontend_add_message(state["messages"][-1], config)
                     break
                 except Exception as e:
-                    logger.warning(f"Error when calling llm: {e}")
+                    # Force to convert to all HumanMessage
+                    logger.warning(f"Error when calling llm: {e}, force convert to all HumanMessage")
+                    message_to_llm = [HumanMessage(content=str(msg)) for msg in message_to_llm]
                     logger.warning(traceback.format_exc())
                     logger.warning("Retrying...")
                     time.sleep(5)
@@ -379,7 +413,9 @@ if __name__ == "__main__":
             HumanMessage(content="The meaning of life is 42."),
             HumanMessage(content="What is the meaning of water?"),
         ],
-        config.rerank.rerank_model, config.rerank.rerank_api_key, config.rerank.rerank_base_url,
+        config.rerank.rerank_model,
+        config.rerank.rerank_api_key,
+        config.rerank.rerank_base_url,
         "What is the meaning of life?",
         k=1,
     )

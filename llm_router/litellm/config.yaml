@@ -20,6 +20,11 @@ model_list:
   - litellm_params:
       api_base: https://cloud.infini-ai.com/maas/v1/
       api_key: sk-uewsuzpc332yhydw
+      model: openai/minimax-m2
+    model_name: minimax-m2
+  - litellm_params:
+      api_base: https://cloud.infini-ai.com/maas/v1/
+      api_key: sk-uewsuzpc332yhydw
       model: openai/glm-4.1v-9b-thinking
     model_name: glm-4.1v-9b-thinking
   - litellm_params:

@@ -21,6 +21,7 @@ api_key = "<YOUR API KEY>"  # API key for accessing the vision model
 rerank_model = "bge-reranker-v2-m3"  # The reranking model used to improve search result relevance
 rerank_api_key = "<YOUR API KEY>" # API key for accessing the reranking model (infiniai service)
 rerank_base_url = "https://cloud.infini-ai.com/maas/v1/"  # Base URL for the reranking model API service
+file_duplicate_threshold = 0.8  # Threshold for considering files as duplicates based on reranking score
 
 [tools]
 tavily_api_key = "<YOUR API KEY>"  # API key for Tavily search service used for web search

@@ -26,6 +26,7 @@ from ..utils.config import Config, get_lang_prompt
 from ..chatbot import chatbot_with_context_manager
 from .vlm_mcp.server import run_server
 from ..utils.file_summary import FileSummary
+from ..utils.file_manager import FileManager
 
 
 def is_port_available(port):
@@ -316,6 +317,9 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
             )
             results = run_openhands(cmd, config)
             fix_permissions_in_docker_container(oh_config)
+            file_manager = FileManager(config)
+            file_manager.clean_repository()
+            
             # Remove ANSI escape sequences (color codes, etc.)
             results = re.sub(r"\033\[[\d;]*m", "", results)
             results = split_and_clean_log(results)

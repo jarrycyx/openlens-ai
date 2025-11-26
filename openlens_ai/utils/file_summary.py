@@ -61,6 +61,12 @@ class FileSummary:
         """
         Save file cache
         """
+        # Delete files that does not exists
+        for file_path in list(self.file_cache.keys()):
+            if not os.path.exists(file_path):
+                logger.debug(f"File {file_path} does not exist, remove from cache")
+                del self.file_cache[file_path]
+        
         try:
             cache_dir = os.path.dirname(self.file_cache_path)
             if cache_dir:  # Ensure directory path is not empty

@@ -18,7 +18,9 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 import numpy as np
 
 
-def vector_search_match_type(message: str, rerank_model: str, rerank_api_key: str, rerank_base_url: str, query: str, token_cnt: int = 10000):
+def vector_search_match_type(
+    message: str, rerank_model: str, rerank_api_key: str, rerank_base_url: str, query: str, token_cnt: int = 10000
+):
     """
     Perform vector search based on message type and maintain message type consistency
 
@@ -35,12 +37,16 @@ def vector_search_match_type(message: str, rerank_model: str, rerank_api_key: st
     # Merge
     all_content = [message.content for message in short_messages]
     if message_type == ToolMessage:
-        return message_type(content="\n".join(all_content), tool_call_id=message.tool_call_id, name=message.name, status=message.status)
+        return message_type(
+            content="\n".join(all_content), tool_call_id=message.tool_call_id, name=message.name, status=message.status
+        )
     else:
         return message_type("\n".join(all_content))
 
 
-def perform_rerank(all_docs_str: list[str], query: str, token_cnt: int, rerank_model: str, rerank_api_key: str, rerank_base_url: str):
+def perform_rerank(
+    all_docs_str: list[str], query: str, token_cnt: int, rerank_model: str, rerank_api_key: str, rerank_base_url: str
+):
     if len(query) > 2000:
         logger.warning("Query is too long, truncating to 2000 characters: " + query[:2000])
         query = query[:2000]
@@ -69,11 +75,18 @@ def perform_rerank(all_docs_str: list[str], query: str, token_cnt: int, rerank_m
                     if ("document" in res) and isinstance(res["document"], str):
                         messages_with_score.append({"text": res["document"], "score": res["relevance_score"]})
 
-                    elif ("document" in res) and ("text" in res["document"]) and isinstance(res["document"], dict) and isinstance(res["document"]["text"], str):
+                    elif (
+                        ("document" in res)
+                        and ("text" in res["document"])
+                        and isinstance(res["document"], dict)
+                        and isinstance(res["document"]["text"], str)
+                    ):
 
                         messages_with_score.append({"text": res["document"]["text"], "score": res["relevance_score"]})
                     elif "index" in res:
-                        messages_with_score.append({"text": input_doc_list[int(res["index"])], "score": res["relevance_score"]})
+                        messages_with_score.append(
+                            {"text": input_doc_list[int(res["index"])], "score": res["relevance_score"]}
+                        )
                     else:
                         raise ValueError("Invalid document type")
 
@@ -96,9 +109,9 @@ def perform_rerank(all_docs_str: list[str], query: str, token_cnt: int, rerank_m
         all_messages_with_score.extend(messages_with_score)
     all_messages_with_score = sorted(all_messages_with_score, key=lambda x: x["score"], reverse=True)
     all_rerank_scores = [m["score"] for m in all_messages_with_score]
-    logger.info(f"All rerank scores max: {max(all_rerank_scores):.3f}, min: {min(all_rerank_scores):.3f}, avg: {sum(all_rerank_scores) / len(all_rerank_scores):.3f}")
-
-
+    logger.info(
+        f"All rerank scores max: {max(all_rerank_scores):.3f}, min: {min(all_rerank_scores):.3f}, avg: {sum(all_rerank_scores) / len(all_rerank_scores):.3f}"
+    )
 
     all_str = []
     current_token_cnt = 0
@@ -111,7 +124,14 @@ def perform_rerank(all_docs_str: list[str], query: str, token_cnt: int, rerank_m
     return all_str
 
 
-def vector_search(messages: Union[list, str], rerank_model: str, rerank_api_key: str, rerank_base_url: str, query: str, token_cnt: int = 10000):
+def vector_search(
+    messages: Union[list, str],
+    rerank_model: str,
+    rerank_api_key: str,
+    rerank_base_url: str,
+    query: str,
+    token_cnt: int = 10000,
+):
     """
     Use vector search to summarize long messages, retaining the most relevant content
 
@@ -147,5 +167,29 @@ def vector_search(messages: Union[list, str], rerank_model: str, rerank_api_key:
     relevant_strs = perform_rerank(all_docs_str, query, token_cnt, rerank_model, rerank_api_key, rerank_base_url)
     relevant_messages = [HumanMessage(content=msg) for msg in relevant_strs]
 
-    logger.info(f"Message number: {len(messages)}, split number: {len(all_docs)}, " f"Relevant message number: {len(relevant_messages)}")
+    logger.info(
+        f"Message number: {len(messages)}, split number: {len(all_docs)}, "
+        f"Relevant message number: {len(relevant_messages)}"
+    )
     return relevant_messages[::-1]  # Reverse order
+
+
+
+
+"""
+curl --request POST \
+  --url https://cloud.infini-ai.com/maas/v1/rerank \
+  --header "Authorization: Bearer $API_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+      "model": "bge-reranker-v2-m3",
+      "query": "This log documents a cardiac arrest cohort analysis workflow that loads multiple ICU patient datasets (demographics, diagnoses, vital signs, APACHE variables) totaling millions of rows to identify and analyze cardiac arrest patients.",
+      "documents": [
+          "The file implements a cardiac arrest cohort workflow that creates both cardiac arrest and control patient cohorts from real patient data (with a 3:1 control ratio) or generates simulated patient data when real data is unavailable, outputting results to a specified workspace directory.",
+          "The file is a CSV containing admission‑diagnosis records for ICU patients, with columns for diagnosis IDs, patient IDs, time offsets, hierarchical diagnosis paths, and diagnosis names/notes."
+      ]
+    }'
+
+
+
+"""

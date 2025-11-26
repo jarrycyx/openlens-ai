@@ -26,6 +26,7 @@ class RerankConfig(BaseModel):
     rerank_api_key: Optional[str] = Field(default=None, description="API key for rerank service")
     rerank_base_url: Optional[str] = Field(default=None, description="Base URL for rerank service")
     rerank_model: str = Field(default="BAAI/bge-reranker-v2-m3", description="Rerank model name")
+    file_duplicate_threshold: float = Field(default=0.8, description="Threshold for considering files as duplicates based on reranking score")
 
 
 class ToolsConfig(BaseModel):
