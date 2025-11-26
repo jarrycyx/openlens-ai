@@ -426,7 +426,7 @@ Result: Yes
 if __name__ == "__main__":
     from ..state import load_state
     
-    config, state, last_subgraph = load_state("outputs/pred_aki_trend_eicu_demo_20251125181239")
+    config, state, last_subgraph = load_state("outputs/power_grid_fault_id_20251121164412")
     
     # Create file manager
     file_manager = FileManager(config)

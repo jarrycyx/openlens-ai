@@ -19,7 +19,7 @@ class State(TypedDict):
     messages: list
     plan: dict
     data_report: str
-    current_subtask_index: int = 0 # 1 means the first subtask
+    current_subtask_index: int = 1 # 1 means the first subtask
     save_path: str
     thread_id: str = ""
     subplan: str = ""
@@ -87,7 +87,7 @@ def load_state(
     save_dir: str, 
     copy_to_new: bool = False, 
     start_from_subgraph: str = "",
-    start_from_subtask_index: int = 0
+    start_from_subtask_index: int = 1
 ) -> tuple[Config, State]:
     
     config_path = os.path.join(save_dir, "config.toml")
@@ -143,12 +143,15 @@ def load_state(
         node_call_stack = state["node_call_stack"]
         
         resume_node_call_stack = []
+        all_subgraphs = [node.split(".")[0].replace("subgraph_", "") for node in node_call_stack]
+        # Deduplicate but preserve order
+        all_subgraphs = list(dict.fromkeys(all_subgraphs))
         for node in node_call_stack:
             # Only add nodes that are not end_node and not in start_from_subgraph, 
             # task will skip nodes in resume_node_call_stack
             if ("end_node" not in node) and (start_from_subgraph not in node):
                 resume_node_call_stack.append(node)
-                last_subgraph = node.split(".")[0].replace("subgraph_", "")
+                last_subgraph = all_subgraphs[-2]
             else:
                 break
                 

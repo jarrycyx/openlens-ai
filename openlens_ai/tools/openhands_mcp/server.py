@@ -205,6 +205,8 @@ def get_summary(file_path: Annotated[str, Field(description="ABSOLUTE Path to th
         Text summary of the file
     """
     config = get_config()
+    if file_path.startswith("/workspace/datasets"):
+        file_path = file_path.replace("/workspace/datasets", config.dataset_path)
     if file_path.startswith("/workspace"):
         file_path = file_path.replace("/workspace", os.path.join(config.save_path, "workspace"))
     
