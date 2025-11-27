@@ -196,7 +196,7 @@ class FileSummary:
                 file_ext = os.path.splitext(file_path)[1].lower()
                 if file_ext in ['.png', '.jpg', '.jpeg', '.pdf']:
                     # For image and PDF files, _read_file_content already returns the vision model summary
-                    return content
+                    return content.replace("\n", " ")
                 
                 # Limit content length to avoid excessive size
                 if len(content) > 2000:
@@ -220,7 +220,7 @@ class FileSummary:
                 if len(summary) > 500:
                     summary = summary[:500] + "..."
                     
-                return summary
+                return summary.replace("\n", " ")
             except Exception as e:
                 logger.warning(f"Failed to summarize file {file_path}: {e}")
         return f"Summary failed after {try_i} attempts"

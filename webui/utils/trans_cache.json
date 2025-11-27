@@ -61,6 +61,19 @@
     "Establishing a machine learning prediction model for intracranial infections in ICU patients after n...": "在神经重症监护患者中建立一种机器学习预测模型，用于预测颅内感染...",
     "Establishing a machine learning prediction model for intracranial infections in ICU patients after neurosurgery.": "建立神经外科ICU患者颅内感染的机器学习预测模型",
     "建立神经外科ICU患者颅内感染的机器学习预测模型": "建立神经外科ICU患者颅内感染的机器学习预测模型",
-    "临床医学": "临床医学"
+    "临床医学": "临床医学",
+    "   我是一位北京中医药大学的博士生，12.25日将进行博士...": "我是一名北京中医药大学的博士生，12月25日将进行博士...",
+    "upload_20251126_224907_7699": "上传_20251126_224907_7699",
+    "   我是一位北京中医药大学的博士生，12.25日将进行博士开题。今年5-7月开展了RM-1细胞-前列腺癌C57小鼠的造模实验，但未进行中药干预。现开题报告的内容大致分为以上几个部分：一、综述 ；二、研究内容 1、Meta分析慢性前列腺炎与前列腺癌的关系；2、回顾性队列研究：前列腺癌伴或不伴慢性前列腺炎患者的中医临床特征及危险因素；3、建立PCa小鼠，予药物干预四周，揭示中药新配方（未定）通过调控炎症通路治疗PCa的具体分子机制；请根据以上内容评价其合理性并主要梳理完善研究方案等内容，并给出具体的实施方案以便我在12.25日顺利完成自己的博士开题答辩。\n\n": "我是一名北京中医药大学的博士生，将于12月25日进行博士开题答辩。今年5月至7月期间开展了RM-1细胞与前列腺癌C57小鼠的造模实验，但未进行中药干预。目前开题报告内容大致分为以下几个部分：一、综述；二、研究内容，包括1、Meta分析慢性前列腺炎与前列腺癌的关系；2、回顾性队列研究：前列腺癌伴或不伴慢性前列腺炎患者的中医临床特征及危险因素；3、建立前列腺癌小鼠模型，进行四周药物干预，揭示中药新配方（尚未确定）通过调控炎症通路治疗前列腺癌的具体分子机制。请根据以上内容评估其合理性，并主要梳理和完善研究方案内容，给出具体的实施方案，以便我在12月25日顺利完成博士开题答辩。",
+    "Compile into a review article": "编译成综述文章",
+    "upload_20251127_002450_7801": "上传_20251127_002450_7801",
+    "upload_20251127_002546_9076": "上传_20251127_002546_9076",
+    "upload_20251127_002947_9979": "上传_20251127_002947_9979",
+    "在小鼠模型中，聚苯乙烯微塑料暴露如何影响认知功能？请整合现有...": "在小鼠模型中，聚苯乙烯微塑料暴露如何影响认知功能？请整合现有",
+    "在小鼠模型中，聚苯乙烯微塑料暴露如何影响认知功能？请整合现有文献，重点分析糖酵解通路（glycolysis pathway）是否通过介导组蛋白乳酸化修饰（histone lactylation）导致神经炎症或海马区功能障碍。假设聚苯乙烯诱导的氧化应激会增强乳酸产生，从而促进H3K18la等修饰；从PubMed和相关数据库中提取关键证据，生成一个机制模型，并建议3-5个潜在的调控基因或蛋白作为后续验证目标。考虑批次效应和暴露剂量变量。": "在小鼠模型中，聚苯乙烯微塑料暴露如何影响认知功能？请整合现有文献，重点分析糖酵解通路是否通过介导组蛋白乳酸化修饰导致神经炎症或海马区功能障碍。假设聚苯乙烯诱导的氧化应激会增强乳酸产生，从而促进H3K18la等修饰；从PubMed和相关数据库中提取关键证据，生成一个机制模型，并建议3-5个潜在的调控基因或蛋白作为后续验证目标。考虑批次效应和暴露剂量变量。",
+    "How does exposure to polystyrene microplastics (PS-MPs) impact cognitive function in mouse models? P...": "聚苯乙烯微塑料（PS-MPs）暴露对小鼠模型认知功能有何影响？",
+    "upload_20251127_003636_5160": "upload_20251127_003636_5160",
+    "How does exposure to polystyrene microplastics (PS-MPs) impact cognitive function in mouse models? Please synthesize existing literature, focusing on an analysis of whether the glycolysis pathway mediates neuroinflammation or hippocampal dysfunction through histone lactylation.\n\nBased on the hypothesis that polystyrene-induced oxidative stress enhances lactate production, thereby promoting modifications such as H3K18la, please extract key evidence from PubMed and relevant databases to generate a mechanistic model. Additionally, suggest 3–5 potential regulatory genes or proteins as targets for subsequent validation, while taking into account batch effects and exposure dosage variables.": "暴露于聚苯乙烯微塑料（PS-MPs）会对小鼠模型的认知功能产生什么影响？请综合现有文献，重点分析组蛋白乳酸化是否通过糖酵解途径介导神经炎症或海马功能障碍。\n\n基于聚苯乙烯诱导氧化应激增强乳酸生成的假设，从而促进H3K18la等修饰的假说，请从PubMed及相关数据库中提取关键证据以构建机制模型。此外，请提出3–5个潜在的调控基因或蛋白作为后续验证的目标，同时考虑批次效应和暴露剂量变量。",
+    "构建肺炎的并发症的预测模型\n": "构建肺炎并发症的预测模型"
   }
 }

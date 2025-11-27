@@ -363,9 +363,9 @@ Result: Yes
                 
                 # Remove the older file
                 if mtime1 < mtime2:
-                    self._delete_file(file1, "Older duplicate")
+                    self._delete_file(file1, f"Older duplicate version of {file2}")
                 else:
-                    self._delete_file(file2, "Older duplicate")
+                    self._delete_file(file2, f"Older duplicate version of {file1}")
             except Exception as e:
                 logger.warning(f"Failed to compare modification times for {file1} and {file2}: {e}")
     
@@ -416,10 +416,7 @@ Result: Yes
         
         logger.info("Repository cleaning process completed")
         
-        return {
-            "deleted_files": self.deleted_files,
-            "duplicate_pairs": self.duplicate_pairs
-        }
+        return self.deleted_files
 
 
 # Example usage

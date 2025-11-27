@@ -211,8 +211,23 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
     Returns:
         str: Processed execution result, limited to the last 3000 characters
     """
+    
+    
     if isinstance(prompts, str):
         prompts = [prompts]
+    
+    file_manager = FileManager(config)
+    deleted_files = file_manager.clean_repository()
+    if len(deleted_files) > 0:
+        deletion_report = f"""
+Some files are deleted because they may be duplicates of implement different versions of the same functionality (e.g. one is the improved/optimized version of the other), or they contain simulated, fake, or mock data.
+These are STRICTLY PROHIBITED in coding, please KEEP IN MIND that:
+* NEVER create multiple versions of the same file with different suffixes (e.g., file_test.py, file_fix.py, file_simple.py).
+* DO NOT mock or simulate results. Always generate real results using an actual workflow setup (e.g., scripts that can directly run with experimental/control group inputs to produce dependent variables).
+Deleted files: {str(deleted_files)}
+Keeping the above in mind, check if the remaining files are valid and follow the coding standards.
+"""
+        prompts.insert(0, deletion_report)
 
     # Get available port
     port = get_available_port(9077)
@@ -317,8 +332,6 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
             )
             results = run_openhands(cmd, config)
             fix_permissions_in_docker_container(oh_config)
-            file_manager = FileManager(config)
-            file_manager.clean_repository()
             
             # Remove ANSI escape sequences (color codes, etc.)
             results = re.sub(r"\033\[[\d;]*m", "", results)
@@ -383,7 +396,9 @@ class OpenHandsTool(BaseTool):
         """Main method for executing OpenHands operations"""
         logger.info(f"Starting OpenHands with prompt: {prompts}")
         # return str([random.randint(1000, 9999) for _ in range(10000)])
-        return run_openhands_prompt(prompts, self.config)
+        
+        all_results = run_openhands_prompt(prompts, self.config)
+        return all_results
 
 
 def collect_info_and_run_openhands(prompt: str, config: Config, state: State):
