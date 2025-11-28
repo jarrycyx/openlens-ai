@@ -1,3 +1,6 @@
 [submodule "modules/OpenHands"]
 	path = modules/OpenHands
 	url = git@github.com:jarrycyx/OpenHands.git
+[submodule "modules/file1agent"]
+	path = modules/file1agent
+	url = git@github.com:jarrycyx/file1agent.git

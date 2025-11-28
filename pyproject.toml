@@ -44,7 +44,8 @@ dependencies = [
   "vllm",
   "pillow",
   "Authlib", 
-  "fastmcp"
+  "fastmcp",
+  "graphviz"
 ]
 
 [project.scripts]

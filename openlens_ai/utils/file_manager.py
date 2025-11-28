@@ -8,6 +8,7 @@ from typing import Dict, List, Optional, Tuple, Set
 from loguru import logger
 import tqdm
 import numpy as np
+import re
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage
 from langchain_core.messages.utils import count_tokens_approximately
@@ -16,6 +17,18 @@ from .config import Config
 from .file_summary import FileSummary
 from .embedding import perform_rerank
 from ..state import load_state
+
+try:
+    import graphviz
+    GRAPHVIZ_AVAILABLE = True
+except ImportError:
+    GRAPHVIZ_AVAILABLE = False
+    logger.warning("graphviz not installed. build_graph function will not be available.")
+
+
+GRAPH_IGNORE_FILE_EXT = ['.md']
+GRAPH_NO_CHILD_FILE_EXT = ['.png', '.jpg', '.jpeg', '.pdf', '.zip', '.tar', '.gz', '.exe', '.dll', '.so', '.dylib', '.csv', '.xlsx']
+
 
 class FileManager:
     """
@@ -417,18 +430,178 @@ Result: Yes
         logger.info("Repository cleaning process completed")
         
         return self.deleted_files
+    
+    def build_graph(self) -> Dict[str, List[str]]:
+        """
+        Build a directed graph of file relationships based on file name references
+        
+        Returns:
+            Dictionary mapping file paths to list of referenced file paths
+        """
+        if not GRAPHVIZ_AVAILABLE:
+            logger.error("graphviz is not installed. Cannot build file relationship graph.")
+            return {}
+            
+        logger.info("Building file relationship graph")
+        
+        # Get all files from file_summary
+        self.file_summary.get_file_tree_with_summaries()
+        all_files = list(self.file_summary.file_cache.keys())
+        
+        # Create a dictionary to store file relationships
+        file_relationships = {}
+        
+        
+        # For each file, find references to other files
+        for file_path in tqdm.tqdm(all_files, desc="Building file relationship graph"):
+            # Skip non-existent files
+            if not os.path.exists(file_path):
+                continue
+                
+            # Get file extension
+            _, ext = os.path.splitext(file_path)
+            
+            if ext.lower() in GRAPH_IGNORE_FILE_EXT:
+                continue
+            
+            # Check if this is a binary file
+            is_no_child = ext.lower() in GRAPH_NO_CHILD_FILE_EXT
+            
+            # Skip binary files for content scanning (they can't reference others)
+            if is_no_child:
+                continue
+                
+            # Read file content
+            content = self._read_file_content(file_path)
+            
+            # Find references to other files
+            referenced_files = []
+            
+            # For each other file, check if its name is referenced in the current file
+            for other_file_path in all_files:
+                if other_file_path == file_path:
+                    continue
+                    
+                # Get just the filename without path
+                other_filename = os.path.basename(other_file_path)
+                other_basename = os.path.splitext(other_filename)[0]
+                
+                _, ext = os.path.splitext(other_file_path)
+                if ext.lower() in GRAPH_IGNORE_FILE_EXT:
+                    continue
+                
+                # Check if the filename or basename is referenced in the content
+                # Using word boundaries to avoid partial matches
+                if re.search(r'\b' + re.escape(other_filename) + r'\b', content):
+                    referenced_files.append(os.path.relpath(other_file_path, self.config.save_path))
+                elif re.search(r'\b' + re.escape(other_basename) + r'\b', content):
+                    referenced_files.append(os.path.relpath(other_file_path, self.config.save_path))
+            
+            # Store the relationships
+            if referenced_files:
+                file_relationships[os.path.relpath(file_path, self.config.save_path)] = referenced_files
+        
+        # Save the file relationships to JSON
+        self._save_relationships_to_json(file_relationships)
+        
+        # Create and save the graph visualization
+        self._visualize_graph(file_relationships, all_files)
+        
+        logger.info(f"Built file relationship graph with {len(file_relationships)} nodes")
+        return file_relationships
+    
+    def _save_relationships_to_json(self, file_relationships: Dict[str, List[str]]) -> None:
+        """
+        Save the file relationships dictionary to a JSON file
+        
+        Args:
+            file_relationships: Dictionary mapping file paths to list of referenced file paths
+        """
+        try:
+            # Create a more readable version with just filenames
+            for file_path, referenced_files in file_relationships.items():
+                filename = os.path.basename(file_path)
+            
+            # Save both the full path version and the readable version
+            json_path = os.path.join(self.config.save_path, "file_relationships.json")
+            with open(json_path, 'w', encoding='utf-8') as f:
+                json.dump(file_relationships, f, indent=2)
+            
+            logger.info(f"File relationships saved to {json_path}")
+        except Exception as e:
+            logger.error(f"Error saving file relationships to JSON: {e}")
+    
+    def _visualize_graph(self, file_relationships: Dict[str, List[str]], all_files: List[str]) -> None:
+        """
+        Visualize the file relationship graph using graphviz
+        
+        Args:
+            file_relationships: Dictionary mapping file paths to list of referenced file paths
+            all_files: List of all files in the project (including binary files)
+        """
+        if not GRAPHVIZ_AVAILABLE:
+            logger.error("graphviz is not available. Cannot visualize graph.")
+            return
+            
+        # Create a directed graph with optimized layout
+        dot = graphviz.Digraph(
+            comment='File Relationship Graph',
+            graph_attr={
+                'rankdir': 'LR',  # Left to right layout instead of top to bottom
+                'splines': 'ortho',  # Use orthogonal lines for cleaner look
+                'nodesep': '0.8',  # Increase separation between nodes
+                'ranksep': '1.0',  # Increase separation between ranks
+                'fontname': 'Arial',
+                'fontsize': '12',
+                'concentrate': 'true'  # Merge parallel edges
+            },
+            node_attr={
+                'shape': 'box',
+                'style': 'rounded,filled',
+                'fillcolor': 'lightblue',
+                'fontname': 'Arial',
+                'fontsize': '10'
+            },
+            edge_attr={
+                'fontname': 'Arial',
+                'fontsize': '9'
+            }
+        )
+        
+        # Then, add edges for file relationships
+        for file_path, referenced_files in file_relationships.items():
+            filename = os.path.basename(file_path)
+            dot.node(file_path, filename)
+            # Add edges to referenced files
+            for ref_file in referenced_files:
+                # Add an edge from the current file to the referenced file
+                dot.edge(file_path, ref_file)
+        
+        # Save the graph
+        output_path = os.path.join(self.config.save_path, "file_relation")
+        dot.render(output_path, format='png', cleanup=True)
+        
+        logger.info(f"File relationship graph saved to {output_path}.png")
 
 
 # Example usage
 if __name__ == "__main__":
     from ..state import load_state
     
-    config, state, last_subgraph = load_state("outputs/power_grid_fault_id_20251121164412")
+    config, state, last_subgraph = load_state("outputs/pred_aki_trend_eicu_demo")
     
     # Create file manager
     file_manager = FileManager(config)
     
     # Clean the repository
     result = file_manager.clean_repository()
-    print(f"Deleted {len(result['deleted_files'])} files")
-    print(f"Found {len(result['duplicate_pairs'])} duplicate pairs")
+    print(f"Deleted {len(result)} files")
+    print(f"Found {len(result)} duplicate pairs")
+    
+    # Build and visualize the file relationship graph
+    file_relationships = file_manager.build_graph()
+    print(f"File relationships: {file_relationships}")
+    
+    # Print the paths to the saved files
+    print(f"\nGraph saved to: {os.path.join(config.save_path, 'file_relation.png')}")
+    print(f"JSON file saved to: {os.path.join(config.save_path, 'file_relationships.json')}")

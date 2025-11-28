@@ -74,6 +74,14 @@
     "How does exposure to polystyrene microplastics (PS-MPs) impact cognitive function in mouse models? P...": "聚苯乙烯微塑料（PS-MPs）暴露对小鼠模型认知功能有何影响？",
     "upload_20251127_003636_5160": "upload_20251127_003636_5160",
     "How does exposure to polystyrene microplastics (PS-MPs) impact cognitive function in mouse models? Please synthesize existing literature, focusing on an analysis of whether the glycolysis pathway mediates neuroinflammation or hippocampal dysfunction through histone lactylation.\n\nBased on the hypothesis that polystyrene-induced oxidative stress enhances lactate production, thereby promoting modifications such as H3K18la, please extract key evidence from PubMed and relevant databases to generate a mechanistic model. Additionally, suggest 3–5 potential regulatory genes or proteins as targets for subsequent validation, while taking into account batch effects and exposure dosage variables.": "暴露于聚苯乙烯微塑料（PS-MPs）会对小鼠模型的认知功能产生什么影响？请综合现有文献，重点分析组蛋白乳酸化是否通过糖酵解途径介导神经炎症或海马功能障碍。\n\n基于聚苯乙烯诱导氧化应激增强乳酸生成的假设，从而促进H3K18la等修饰的假说，请从PubMed及相关数据库中提取关键证据以构建机制模型。此外，请提出3–5个潜在的调控基因或蛋白作为后续验证的目标，同时考虑批次效应和暴露剂量变量。",
-    "构建肺炎的并发症的预测模型\n": "构建肺炎并发症的预测模型"
+    "构建肺炎的并发症的预测模型\n": "构建肺炎并发症的预测模型",
+    "仔细阅读excle，着重关注每位病人的   RNA时间\t蜡块...": "仔细阅读Excel，重点关注每位病人的RNA时间、蜡块...",
+    "仔细阅读excle，着重关注每位病人的   RNA时间\t蜡块病变\t蜡块正常  这三项数据，研究他们是否与手术方式有关\n\n": "仔细阅读Excel，重点关注每位病人的RNA时间、蜡块病变、蜡块正常这三项数据，研究它们是否与手术方式有关",
+    "upload_20251128_154302_9873": "上传_20251128_154302_9873",
+    "请针对“GLP-1受体激动剂对非酒精性脂肪肝病（NAFLD/...": "请针对“GLP-1受体激动剂对非酒精性脂肪肝病（NAFLD/",
+    "请针对“GLP-1受体激动剂对非酒精性脂肪肝病（NAFLD/MASLD）的疗效和机制”进行自动化文献综述，要求：\n- 搜索近5年（2020-2025）的英文和中文文献\n- 提取所有相关临床试验和Meta分析的主要结果\n- 总结可能的分子机制（重点关注肝脏炎症、纤维化和肠-肝轴）\n- 输出中英文双语总结，并给出PubMed ID和DOI列表": "请对“GLP-1受体激动剂对非酒精性脂肪肝病（NAFLD/MASLD）的疗效和机制”进行自动化文献综述，要求：\n- 搜索近5年（2020-2025）的英文和中文文献\n- 提取所有相关临床试验和Meta分析的主要结果\n- 总结可能的分子机制（重点关注肝脏炎症、纤维化和肠-肝轴）\n- 输出中英文双语总结，并给出PubMed ID和DOI列表",
+    "我上传了一个CSV文件“diabetic_retinopat...": "我上传了一个CSV文件“糖尿病视网膜病变...",
+    "upload_20251128_161145_4763": "上传_20251128_161145_4763",
+    "我上传了一个CSV文件“diabetic_retinopathy_dataset.csv”，请完成以下分析并生成完整报告：\n- 描述性统计 + 数据质量检查\n- 用糖尿病病程、HbA1c、血压预测糖尿病视网膜病变严重程度（多分类logistic或随机森林均可）\n- 特征重要性排序 + SHAP图\n- 用中文写出《结果》与《讨论》部分，可直接用于论文": "我上传了一个CSV文件“diabetic_retinopathy_dataset.csv”，请完成以下分析并生成完整报告：  \n- 描述性统计 + 数据质量检查  \n- 利用糖尿病病程、HbA1c、血压预测糖尿病视网膜病变严重程度（可使用多分类logistic或随机森林）  \n- 特征重要性排序 + SHAP图  \n- 用中文写出《结果》与《讨论》部分，可直接用于论文"
   }
 }
