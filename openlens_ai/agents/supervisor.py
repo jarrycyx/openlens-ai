@@ -8,6 +8,8 @@ from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
 from langchain_tavily import TavilySearch
 
+from file1agent.file_manager import FileManager
+
 from ..tools.tool_utils import BasicToolNode, route_tools, route_by_tool_call, route_by_file_existence
 from ..tools.exp_plan import PlanWriterTool, PlanReaderTool
 from ..tools.reports import ReportReaderTool
@@ -30,7 +32,7 @@ def load_prompt_file(config: Config, filename: str) -> str:
 prompt = None
 alter_prompt = None
 
-def build_supervisor(config: Config) -> StateGraph:
+def build_supervisor(config: Config, file_manager: FileManager) -> StateGraph:
     # Load prompts based on domain configuration
     global prompt, alter_prompt
     prompt = load_prompt_file(config, "supervisor_plan.md")
@@ -90,7 +92,7 @@ def build_supervisor(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/OL_20250826181001_What_is_the_pre_istorical_data__dzdzzd_126_com_6373")
-    graph = build_supervisor(config)
+    config, state, last_subgraph, file_manager = load_state("outputs/OL_20250826181001_What_is_the_pre_istorical_data__dzdzzd_126_com_6373")
+    graph = build_supervisor(config, file_manager)
 
     graph.invoke(state)

@@ -20,13 +20,13 @@ from langchain_core.tools import BaseTool
 from langchain.load.dump import dumps
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 
+from file1agent.file_manager import FileManager
+
 from ..state import State
 from ..utils.frontend_messages import frontend_add_message, frontend_add_tool_call
 from ..utils.config import Config, get_lang_prompt
 from ..chatbot import chatbot_with_context_manager
 from .openhands_mcp.server import run_server
-from ..utils.file_summary import FileSummary
-from ..utils.file_manager import FileManager
 
 
 def is_port_available(port):
@@ -197,7 +197,7 @@ def monitor_process(pid: int, line_count: dict):
         last_line_count = line_count["count"]
 
 
-def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True):
+def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True, file_manager: FileManager = None):
     """
     Run OpenHands prompts and return results
 
@@ -216,7 +216,6 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True)
     if isinstance(prompts, str):
         prompts = [prompts]
     
-    file_manager = FileManager(config)
     deleted_files = file_manager.clean_repository()
     if len(deleted_files) > 0:
         deletion_report = f"""
@@ -239,10 +238,11 @@ Keeping the above in mind, check if the remaining files are valid and follow the
     all_results = ""
     for prompt in prompts:
         if add_file_summary:
-            # Initialize FileSummary to get file descriptions
-            file_summary = FileSummary(config)
+            if not file_manager:
+                logger.warning("file_manager is None, skip adding file summary")
+                continue
             # Get file tree with summaries
-            file_tree_with_summaries = file_summary.get_file_tree_with_summaries(max_token_cnt=1000, question=prompt)
+            file_tree_with_summaries = file_manager.search_workspace(question=prompt, max_token_cnt=1000, use_graph=True)
             full_prompt = (
                 prompt
                 + get_lang_prompt(config.llm.language)
@@ -388,16 +388,17 @@ class OpenHandsTool(BaseTool):
     args_schema: Type[BaseModel] = OpenhandsToolInput
     config: Optional[dict] = None
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, file_manager: FileManager):
         super().__init__()
         self.config = config
+        self.file_manager = file_manager
 
     def _run(self, prompts: Union[list, str]) -> str:
         """Main method for executing OpenHands operations"""
         logger.info(f"Starting OpenHands with prompt: {prompts}")
         # return str([random.randint(1000, 9999) for _ in range(10000)])
         
-        all_results = run_openhands_prompt(prompts, self.config)
+        all_results = run_openhands_prompt(prompts, self.config, file_manager=self.file_manager)
         return all_results
 
 
@@ -412,8 +413,8 @@ if __name__ == "__main__":
     prompt = "Check /workspace/manuscript/main.pdf to review if the paper is properly formatted."
     # prompt = "Search on the internet for the latest news about the OpenHands project."
     dataset_path = "data/dataset.jsonl"
-    config, state, last_subgraph = load_state("outputs/power_grid_fault_id_20251121164412")
-    result = run_openhands_prompt(prompt, config)
+    config, state, last_subgraph, file_manager = load_state("outputs/power_grid_fault_id_20251121164412")
+    result = run_openhands_prompt(prompt, config, file_manager=file_manager)
     with open("result.txt", "w") as f:
         f.write(result)
 

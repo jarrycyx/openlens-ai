@@ -4,7 +4,6 @@ import traceback
 import threading
 
 
-
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.state import CompiledStateGraph
 from langchain.load.dump import dumps
@@ -13,6 +12,8 @@ from langchain_core.messages import AIMessage
 # pip install langgraph-checkpoint-sqlite pysqlite3
 
 from loguru import logger
+
+from file1agent.file_manager import FileManager
 
 from .utils.file_utils import collect_files
 from .utils.send_email import send_email, send_localized_email
@@ -34,7 +35,7 @@ all_subgraphs = ["literature_reviewer", "data_analyzer", "supervisor", "coder", 
 def send_periodic_emails(config: Config):
     """Send progress emails every 60 minutes"""
     logger.info("Starting to send periodic emails...")
-    
+
     cnt = 0
     while not stop_sending_emails.wait(600):
         # Update file compression package and token usage every 10 minutes
@@ -48,29 +49,31 @@ def send_periodic_emails(config: Config):
                     template_key="job_still_running",
                     recipients=config.notify_email,
                     attachments=zipfile,
-                    latest_md=latest_md
+                    latest_md=latest_md,
                 )
                 cnt = 0
         except Exception as e:
             logger.error(f"Error sending periodic email: {e}")
 
-def build_graph(config: Config, start_subgraph: str = None):
+
+def build_graph(config: Config, start_subgraph: str = None, file_manager: FileManager = None):
     @track_node_call(subgraph_name="end")
     def end_node(state: State):
         state["status"] = "completed"
         return state
-    
+
     try:
+
         graph_builder = StateGraph(State)
 
         keywords_router = route_by_keywords(["DECISION: ALTER_PLAN", "DECISION: REANALYZE_DATA"])
 
-        supervisor_subgraph = build_supervisor(config)
-        coder_subgraph = build_coder(config)
-        data_analyzer_subgraph = build_data_analyzer(config)
-        literature_review_subgraph = build_literature_review_subgraph(config)
-        latex_writer_subgraph = build_latex_writer(config)
-        
+        supervisor_subgraph = build_supervisor(config, file_manager)
+        coder_subgraph = build_coder(config, file_manager)
+        data_analyzer_subgraph = build_data_analyzer(config, file_manager)
+        literature_review_subgraph = build_literature_review_subgraph(config, file_manager)
+        latex_writer_subgraph = build_latex_writer(config, file_manager)
+
         graph_builder.add_node("supervisor", supervisor_subgraph)
         graph_builder.add_node("coder", coder_subgraph)
         graph_builder.add_node("data_analyzer", data_analyzer_subgraph)
@@ -78,8 +81,6 @@ def build_graph(config: Config, start_subgraph: str = None):
         graph_builder.add_node("latex_writer", latex_writer_subgraph)
         graph_builder.add_node("end", end_node)
 
-
-        
         if start_subgraph and (start_subgraph in all_subgraphs):
             graph_builder.add_edge(START, start_subgraph)
         else:
@@ -101,12 +102,12 @@ def build_graph(config: Config, start_subgraph: str = None):
         try:
             with open(os.path.join(config.save_path, "graph_mermaid.txt"), "w") as f:
                 f.write(graph.get_graph(xray=True).draw_mermaid())
-                
+
             try:
                 graph_image = graph.get_graph(xray=True).draw_mermaid_png()
             except Exception as e:
                 error_info = traceback.format_exc()
-                logger.info(f'Failed to build mermaid graph: {e}')
+                logger.info(f"Failed to build mermaid graph: {e}")
                 graph_image = graph.get_graph(xray=True).draw_png()
             # Save
             with open(os.path.join(config.save_path, "overall_graph_image.png"), "wb") as f:
@@ -116,13 +117,13 @@ def build_graph(config: Config, start_subgraph: str = None):
         except Exception as e:
             error_info = traceback.format_exc()
             frontend_add_message(AIMessage(content=f"Error: {e}\n{error_info}"), config)
-            logger.info(f'Failed to build graph: {e}')
+            logger.info(f"Failed to build graph: {e}")
             logger.info(error_info)
         return graph
     except Exception as e:
         error_info = traceback.format_exc()
         frontend_add_message(AIMessage(content=f"Error: {e}\n{error_info}"), config)
-        logger.info(f'Failed to build graph: {e}')
+        logger.info(f"Failed to build graph: {e}")
         logger.info(error_info)
         send_localized_email(
             config=config,
@@ -130,7 +131,7 @@ def build_graph(config: Config, start_subgraph: str = None):
             recipients=config.notify_email,
             attachments=None,
             error=str(e),
-            error_info=error_info
+            error_info=error_info,
         )
 
 
@@ -144,27 +145,27 @@ def build_graph(config: Config, start_subgraph: str = None):
 #             f.write(json_str)
 
 
-
 def get_next_node(graph: CompiledStateGraph, this_node_name: str):
-    for (a, b) in graph.builder.edges:
+    for a, b in graph.builder.edges:
         if a == this_node_name:
             return b
-        
+
+
 def get_last_node(graph: CompiledStateGraph, this_node_name: str):
-    for (a, b) in graph.builder.edges:
+    for a, b in graph.builder.edges:
         if a == this_node_name:
             return b
 
 
 def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, interrupt_after_subgraph="none"):
     logger.info(f"Main process is running with PID {os.getpid()}")
-    
+
     # Start thread for sending periodic emails
     email_thread = threading.Thread(target=send_periodic_emails, args=(config,), daemon=True)
     email_thread.start()
-    
+
     try:
-        
+
         step_i = 0
         # First try to load state in the state directory, this is saved once for each subgraph
         state_dir = os.path.join(config.save_path, "states")
@@ -181,10 +182,10 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
                 state_name = list(event.keys())[0]
                 frontend_update_node(state_name, config)
                 step_i += 1
-                
+
                 if state_name == interrupt_after_subgraph:
                     logger.info(f"Interrupted after {state_name}")
-                    
+
                     try:
                         zipfile, latest_md = collect_files(config)
                     except Exception as e:
@@ -198,11 +199,11 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
                         recipients=config.notify_email,
                         attachments=zipfile,
                         state_name=state_name,
-                        latest_md=latest_md
+                        latest_md=latest_md,
                     )
                     # Do not send success email
                     return
-                
+
                 with open(os.path.join(config.save_path, "states", f"step_{step_i:04d}_{state_name}.json"), "w") as f:
                     json_str = dumps(event, ensure_ascii=False, indent=4)
                     f.write(json_str)
@@ -220,12 +221,12 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
                     recipients=config.notify_email,
                     attachments=zipfile,
                     state_name=state_name,
-                    latest_md=latest_md
+                    latest_md=latest_md,
                 )
     except Exception as e:
         error_info = traceback.format_exc()
         frontend_add_message(AIMessage(content=f"Error: {e}\n{error_info}"), config)
-        logger.info(f'Failed to run graph: {e}')
+        logger.info(f"Failed to run graph: {e}")
         logger.info(error_info)
         try:
             zipfile, latest_md = collect_files(config)
@@ -241,7 +242,7 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
             attachments=zipfile,
             error=str(e),
             error_info=error_info,
-            latest_md=latest_md
+            latest_md=latest_md,
         )
         stop_sending_emails.set()
         email_thread.join(timeout=5)
@@ -249,12 +250,12 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
     finally:
         # Stop sending periodic emails
         send_localized_email(
-        config=config,
-        template_key="job_complete",
-        recipients=config.notify_email,
-        attachments=zipfile,
-        latest_md=latest_md
-    )
+            config=config,
+            template_key="job_complete",
+            recipients=config.notify_email,
+            attachments=zipfile,
+            latest_md=latest_md,
+        )
         stop_sending_emails.set()
         email_thread.join(timeout=5)
         sys.exit(0)

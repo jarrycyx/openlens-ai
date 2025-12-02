@@ -14,6 +14,8 @@ from langchain_core.messages.utils import count_tokens_approximately, get_buffer
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 from langchain_tavily import TavilySearch
 
+from file1agent.file_manager import FileManager
+
 from ..state import State, track_node_call
 from ..chatbot import chatbot_with_context_manager, react_pre_model_wrapper
 from ..tools.reports import ReportWriterTool
@@ -29,7 +31,7 @@ from ..tools.paper_search_tool import (
     SearchSemanticTool,
     ReadSemanticPaperTool,
 )
-from ..utils.file_utils import prepare_files_folders
+from ..state import prepare_state
 from ..utils.config import Config
 
 
@@ -50,7 +52,7 @@ def load_prompt_file(config, filename):
         return f.read()
 
 
-def build_literature_review_subgraph(config: Config):
+def build_literature_review_subgraph(config: Config, file_manager: FileManager):
     """
     Build a subgraph for literature review using paperscraper to search for papers and RAG to generate a literature review report.
     """
@@ -136,7 +138,7 @@ def build_literature_review_subgraph(config: Config):
 
 
 if __name__ == "__main__":
-    init_state, config, save_path = prepare_files_folders(
+    init_state, config, save_path = prepare_state(
         "literature_search_test_20250813", 
         "What are the latest advancements in medical AI agents that can analyze multi-format datasets, answer research questions, and produce experimental reports?", 
         ""

@@ -189,10 +189,10 @@ def collect_files(config: Config, max_size: int = 10 * 1024 * 1024, compressed_d
 
     latest_md = f"## Question\n{config.question}\n\n## Dataset\n{config.dataset_path}\n\n## Job progress:\n"
     try:
-        node_call_stack_path = os.path.join(config.save_path, "node_call_stack.json")
-        with open(node_call_stack_path, "r") as f:
-            node_call_stack = json.load(f)
-        latest_md += "\n\n".join(node_call_stack)
+        state_path = os.path.join(config.save_path, "latest_state.json")
+        with open(state_path, "r") as f:
+            state = json.load(f)
+        latest_md += "\n\n".join(state["node_call_stack"])
     except Exception as e:
         logger.warning(f"Error loading node call stack: {e}")
 
@@ -342,84 +342,6 @@ def collect_token_usage(config: Config, overall: bool = True) -> str:
     # Return both string summary and DataFrame
     return output_str, df
 
-
-def prepare_files_folders(config: Config) -> Config:
-    save_path = os.path.join("./outputs", config.thread_id)
-    if os.path.exists(save_path):
-        config.thread_id = config.thread_id + "_" + datetime.now().strftime("%Y%m%d%H%M%S")
-        save_path = os.path.join("./outputs", config.thread_id)
-    config.save_path = save_path
-    os.makedirs(save_path, exist_ok=True)
-
-    # os.makedirs(os.path.join("outputs", "log"), exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    logger.remove()
-    logger.add(
-        os.path.join(save_path, f"logs_{timestamp}_pid{os.getpid()}.log"),
-        format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|" + config.thread_id,
-        colorize=False,
-        rotation="10 MB",
-        level="DEBUG",
-    )
-    logger.add(
-        sys.stdout,
-        format="<green>{time:YYYYMMDDHHmmss}</green>|<level>{level}</level>|{message}|<yellow>{file}:{line}</yellow>|"
-        + f"<cyan>{config.thread_id}</cyan>",
-        colorize=True,
-        level="INFO",
-    )
-
-    # 创建备份文件夹并复制openlens_ai文件夹和.env文件
-    backup_path = os.path.join(save_path, "backup")
-    os.makedirs(backup_path, exist_ok=True)
-
-    # 复制openlens_ai文件夹
-    if os.path.exists("openlens_ai"):
-        shutil.copytree(
-            "openlens_ai",
-            os.path.join(backup_path, "openlens_ai"),
-            dirs_exist_ok=True,
-            ignore=shutil.ignore_patterns(".*", "*.iso", "windows-fonts", "*.tar.gz"),
-        )
-
-    # 保存config为toml
-    config.save_toml(os.path.join(save_path, "config.toml"))
-    logger.info(f"Config saved to {os.path.join(save_path, 'config.toml')}")
-
-    # 准备openhands_config.toml
-    with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
-        oh_config_template = f.read()
-    oh_config = oh_config_template.replace("{api_key}", config.llm.chat.api_key)
-    oh_config = oh_config.replace("{base_url}", config.llm.chat.base_url)
-    oh_config = oh_config.replace("{code_model}", config.llm.chat.model)
-    oh_config = oh_config.replace("{api_key}", config.llm.chat.api_key)
-
-    if config.llm.condenser.model:
-        oh_config = oh_config.replace("{condenser_api_key}", config.llm.condenser.api_key)
-        oh_config = oh_config.replace("{condenser_base_url}", config.llm.condenser.base_url)
-        oh_config = oh_config.replace("{code_condenser_model}", config.llm.condenser.model)
-    else:
-        logger.warning("Condenser model not specified, using chat model as condenser model.")
-        oh_config = oh_config.replace("{condenser_api_key}", config.llm.chat.api_key)
-        oh_config = oh_config.replace("{condenser_base_url}", config.llm.chat.base_url)
-        oh_config = oh_config.replace("{code_condenser_model}", config.llm.chat.model)
-
-    oh_config = oh_config.replace("{tavily_key}", config.tools.tavily_api_key)
-    this_config_path = os.path.join(save_path, "openhands_config.toml")
-    with open(this_config_path, "w") as f:
-        f.write(oh_config)
-    logger.debug(f"Using OpenHands config: {oh_config}")
-
-    init_state = {"question": config.question, "messages": [], "thread_id": config.thread_id, "save_path": save_path}
-    os.makedirs(os.path.join(save_path, "states"), exist_ok=True)
-
-    # 创建workdir
-    os.makedirs(os.path.join(save_path, "workspace"), exist_ok=True)
-    os.makedirs(os.path.join(save_path, "states"), exist_ok=True)
-
-    os.makedirs(os.path.join(save_path, "openhands_traj"))
-
-    return init_state, config
 
 
 if __name__ == "__main__":
