@@ -3,7 +3,7 @@ import requests
 import os
 from datetime import datetime, timedelta
 from ..paper import Paper
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 class PaperSource:
     """Abstract base class for paper sources"""

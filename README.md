@@ -112,11 +112,13 @@ docker tag <IMAGE_ID> openlens-ai:runtime-latest
 ```
 
 2. Install dependencies:
-First install OpenHands:
+First install [file1.agent](https://github.com/jarrycyx/file1agent):
 ```bash
-cd modules/OpenHands
+cd modules/file1agent
+pip install -e .
+cd ../../
 ```
-Then install OpenHands following the [instructions](https://github.com/All-Hands-AI/OpenHands/blob/main/Development.md).
+Then ````cd modules/OpenHands``` and install OpenHands following the [instructions](https://github.com/All-Hands-AI/OpenHands/blob/main/Development.md).
 
 Install python dependencies:
 ```bash

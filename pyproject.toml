@@ -36,7 +36,7 @@ dependencies = [
   "numpy",
   "pydantic",
   "pymupdf",
-  "pypdf2",
+  "pypdf",
   "python-dotenv>=1.0.1",
   "streamlit",
   "streamlit[pdf]",
