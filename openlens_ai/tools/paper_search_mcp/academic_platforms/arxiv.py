@@ -4,7 +4,7 @@ from datetime import datetime
 import requests
 import feedparser
 from ..paper import Paper
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 import os
 
 class PaperSource:

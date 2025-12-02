@@ -101,11 +101,14 @@ docker tag <IMAGE_ID> openlens-ai:runtime-latest
 ```
 
 2. 安装依赖：
-首先安装 OpenHands：
+
+首先安装 [file1.agent](https://github.com/jarrycyx/file1agent):
 ```bash
-cd modules/OpenHands
+cd modules/file1agent
+pip install -e .
+cd ../../
 ```
-然后按照[说明](https://github.com/All-Hands-AI/OpenHands/blob/main/Development.md)安装 OpenHands。
+然后 ```cd modules/OpenHands``` 并按照 [instructions](https://github.com/All-Hands-AI/OpenHands/blob/main/Development.md) 安装 OpenHands。
 
 安装 Python 依赖：
 ```bash

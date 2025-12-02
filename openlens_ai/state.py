@@ -216,19 +216,6 @@ def prepare_state(config: Config) -> Config:
         colorize=True,
         level="INFO",
     )
-    
-    file_manager = FileManager(
-        analyze_dir=os.path.join(config.save_path, "workspace"),
-        config={
-            "llm": {
-                "chat": dict(config.llm.chat),
-                "vision": dict(config.llm.vision),
-            },
-            "rerank": dict(config.rerank),
-        },
-        realloc_log=False, # Already configured loguru
-        backup_path=os.path.join(config.save_path, "backup", "deleted"),
-    )
 
     # 创建备份文件夹并复制openlens_ai文件夹和.env文件
     backup_path = os.path.join(save_path, "backup")
@@ -279,5 +266,20 @@ def prepare_state(config: Config) -> Config:
     os.makedirs(os.path.join(save_path, "states"), exist_ok=True)
 
     os.makedirs(os.path.join(save_path, "openhands_traj"))
+    
+    
+    
+    file_manager = FileManager(
+        analyze_dir=os.path.join(config.save_path, "workspace"),
+        config={
+            "llm": {
+                "chat": dict(config.llm.chat),
+                "vision": dict(config.llm.vision),
+            },
+            "rerank": dict(config.rerank),
+        },
+        realloc_log=False, # Already configured loguru
+        backup_path=os.path.join(config.save_path, "backup", "deleted"),
+    )
 
     return init_state, config, file_manager

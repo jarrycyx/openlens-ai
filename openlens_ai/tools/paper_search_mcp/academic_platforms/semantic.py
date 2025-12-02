@@ -6,7 +6,7 @@ import time
 import random
 from ..paper import Paper
 import logging
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 import os
 import re
 
