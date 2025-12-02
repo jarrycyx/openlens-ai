@@ -376,7 +376,7 @@ def get_vision_classification(image_base64: str, config: Config) -> str:
 
 if __name__ == "__main__":
 
-    config, state, last_subgraph = load_state("outputs/power_grid_fault_id")
+    config, state, last_subgraph, file_manager = load_state("outputs/power_grid_fault_id")
 
     test_image = "outputs/power_grid_fault_id/workspace/subtask_01/processed_data/figures/domain_distribution_improved.png"
     image_base64 = get_fig_base64([test_image])[0][1]

@@ -9,6 +9,8 @@ from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
+from file1agent.file_manager import FileManager
+
 from ..tools.tool_utils import BasicToolNode, route_tools, route_by_keywords, route_by_tool_call, route_by_subtask_redo_counter_wrapper
 from ..tools.openhands_adaptor import OpenHandsTool, run_openhands_prompt
 from ..tools.exp_plan import PlanReaderTool, PlanWriterTool, subtask_route_tools
@@ -17,8 +19,6 @@ from ..state import State, load_state, get_subplan, track_node_call
 from ..chatbot import chatbot_with_context_manager
 from ..utils.config import Config
 from ..utils.vision_feedback import collect_fig_files, get_fig_base64, get_vision_feedback
-from ..utils.file_summary import FileSummary
-
 
 
 fig_files_extensions = [".png", ".jpg", ".jpeg", ".pdf", ".svg"]
@@ -38,7 +38,7 @@ coder_concluder_prompt = None
 coder_router_prompt = None
 
 
-def build_coder(config: Config) -> StateGraph:
+def build_coder(config: Config, file_manager: FileManager) -> StateGraph:
     # Load prompts based on domain configuration
     global prompt, validator_prompt, coder_concluder_prompt, coder_router_prompt
     prompt = load_prompt_file(config, "coder.md")
@@ -80,17 +80,15 @@ def build_coder(config: Config) -> StateGraph:
             logger.info("No REASON in the AI tool message, use the default prompt.")
             reason = ""
             
-        results = run_openhands_prompt([this_prompt], config, add_file_summary=True)
+        results = run_openhands_prompt([this_prompt], config, add_file_summary=True, file_manager=file_manager)
         state["messages"] += [HumanMessage(content=results)]
-        file_summary = FileSummary(config)
-        state["file_summary"] = file_summary.file_cache
         return state
 
     @track_node_call("coder")
     def openhands_validation_node(state: State):
         subplan = get_subplan(state)
         this_prompt = validator_prompt.format(question=state["question"], subplan=subplan)
-        results = run_openhands_prompt([this_prompt], config, add_file_summary=True)
+        results = run_openhands_prompt([this_prompt], config, add_file_summary=True, file_manager=file_manager)
         state["messages"] += [HumanMessage(content=results)]
         
         ## Check for generated images using vision-language model
@@ -120,7 +118,7 @@ def build_coder(config: Config) -> StateGraph:
             return state   
         this_prompt = f"Based on the following vision feedback, please modify the python code to improve the experiments. " + \
             f"Vision feedback: " + all_feedback
-        results = run_openhands_prompt([this_prompt], config, add_file_summary=True)
+        results = run_openhands_prompt([this_prompt], config, add_file_summary=True, file_manager=file_manager)
             
         
         return state
@@ -213,7 +211,7 @@ def build_coder(config: Config) -> StateGraph:
 
 
 if __name__ == "__main__":
-    config, state, last_subgraph = load_state("outputs/pred_aki_dy_mimic_icu_csv")
+    config, state, last_subgraph, file_manager = load_state("outputs/pred_aki_dy_mimic_icu_csv")
     graph = build_coder(config)
 
     graph.invoke(state, {"recursion_limit": 100})

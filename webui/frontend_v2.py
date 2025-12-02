@@ -587,16 +587,20 @@ def main():
 
 
         with st.container(horizontal=True):
-            submit_button = st.button(f"🚀 **{t('start_research')}**", help=t("start_research"), type="secondary")
-            # submit_button = st.button(f"🚀 {t('start_research_maintenance')}", type="secondary", disabled=True)
+            submit_button = st.button(t('start_research'), help=t("start_research"), type="secondary")
+            # submit_button = st.button(t('start_research_maintenance'), type="secondary", disabled=True)
 
-            st.caption(t("start_research_note"))
-
+        @st.dialog(t("confirm_submission"))
+        def confirm(question, dataset_path, email, language_selected):
+            st.markdown(t("confirm_submission_warning"))
+            if st.button(t("confirm")):
+                start_job(question, dataset_path, email, language_selected)
         
         # Handle submission
         if submit_button:
             if st.user.is_logged_in:
-                start_job(question, dataset_path, st.session_state.email, st.session_state.language_selected)
+                # Alert window to confirm
+                confirm(question, dataset_path, st.session_state.email, st.session_state.language_selected)
             else:
                 st.login()
 

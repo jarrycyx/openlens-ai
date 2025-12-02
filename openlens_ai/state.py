@@ -12,6 +12,8 @@ from datetime import datetime
 from langchain_core.load.load import loads
 from langchain.load.dump import dumps
 
+from file1agent.file_manager import FileManager
+
 from .utils.config import Config
 
 class State(TypedDict):
@@ -57,15 +59,14 @@ def track_node_call(subgraph_name: str=""):
                 if ('node_call_stack' not in state) or (not isinstance(state['node_call_stack'], list)):
                     state['node_call_stack'] = []
                 state['node_call_stack'].append(node_name)
-
-                node_call_stack_path = os.path.join(state['save_path'], 'node_call_stack.json')
-                with open(node_call_stack_path, 'w') as f:
-                    f.write(json.dumps(state['node_call_stack'], indent=4))
                 
                 if ("resume_node_call_stack" in state) and state["resume_node_call_stack"]:
                     if node_name in state["resume_node_call_stack"]:
                         # 如果没有到resume的最后一个节点，则跳过
                         return skip_func(state, **kwargs)
+            
+            # 调用原始函数
+            _return = func(state, **kwargs)
             
             latest_state_path = os.path.join(state['save_path'], "latest_state.json")
             with open(latest_state_path, "w") as f:
@@ -74,8 +75,7 @@ def track_node_call(subgraph_name: str=""):
             # 找到了resume的节点
             state["resume_node_call_stack"] = []
             logger.info(f"Calling node: {node_name}")
-            # 调用原始函数
-            return func(state, **kwargs)
+            return _return
         
         return wrapper
     return track_node_call_inner
@@ -131,6 +131,19 @@ def load_state(
     
     
     
+    file_manager = FileManager(
+        analyze_dir=os.path.join(config.save_path, "workspace"),
+        config={
+            "llm": {
+                "chat": dict(config.llm.chat),
+                "vision": dict(config.llm.vision),
+            },
+            "rerank": dict(config.rerank),
+        },
+        realloc_log=False, # Already configured loguru
+        backup_path=os.path.join(config.save_path, "backup", "deleted"),
+    )
+    
     # Load state from latest_state.json
     latest_state_file_name = os.path.join(save_dir, "latest_state.json")
     if os.path.exists(latest_state_file_name):
@@ -158,7 +171,7 @@ def load_state(
             # task will skip nodes in resume_node_call_stack
             if ("end_node" not in node) and (start_from_subgraph not in node):
                 resume_node_call_stack.append(node)
-                last_subgraph = all_subgraphs[-2]
+                last_subgraph = all_subgraphs[-2] if len(all_subgraphs) > 1 else None
             else:
                 break
                 
@@ -180,5 +193,98 @@ def load_state(
         shutil.copytree("openlens_ai", os.path.join(backup_path, "openlens_ai"), dirs_exist_ok=True)
     
         
-    return config, state, last_subgraph
+    return config, state, last_subgraph, file_manager
      
+     
+
+def prepare_state(config: Config) -> Config:
+    
+    save_path = os.path.join("./outputs", config.thread_id)
+    if os.path.exists(save_path):
+        config.thread_id = config.thread_id + "_" + datetime.now().strftime("%Y%m%d%H%M%S")
+        save_path = os.path.join("./outputs", config.thread_id)
+    config.save_path = save_path
+    os.makedirs(save_path, exist_ok=True)
+
+    # os.makedirs(os.path.join("outputs", "log"), exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    logger.remove()
+    logger.add(
+        os.path.join(save_path, f"logs_{timestamp}_pid{os.getpid()}.log"),
+        format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|" + config.thread_id,
+        colorize=False,
+        rotation="10 MB",
+        level="DEBUG",
+    )
+    logger.add(
+        sys.stdout,
+        format="<green>{time:YYYYMMDDHHmmss}</green>|<level>{level}</level>|{message}|<yellow>{file}:{line}</yellow>|"
+        + f"<cyan>{config.thread_id}</cyan>",
+        colorize=True,
+        level="INFO",
+    )
+    
+    file_manager = FileManager(
+        analyze_dir=os.path.join(config.save_path, "workspace"),
+        config={
+            "llm": {
+                "chat": dict(config.llm.chat),
+                "vision": dict(config.llm.vision),
+            },
+            "rerank": dict(config.rerank),
+        },
+        realloc_log=False, # Already configured loguru
+        backup_path=os.path.join(config.save_path, "backup", "deleted"),
+    )
+
+    # 创建备份文件夹并复制openlens_ai文件夹和.env文件
+    backup_path = os.path.join(save_path, "backup")
+    os.makedirs(backup_path, exist_ok=True)
+
+    # 复制openlens_ai文件夹
+    if os.path.exists("openlens_ai"):
+        shutil.copytree(
+            "openlens_ai",
+            os.path.join(backup_path, "openlens_ai"),
+            dirs_exist_ok=True,
+            ignore=shutil.ignore_patterns(".*", "*.iso", "windows-fonts", "*.tar.gz"),
+        )
+
+    # 保存config为toml
+    config.save_toml(os.path.join(save_path, "config.toml"))
+    logger.info(f"Config saved to {os.path.join(save_path, 'config.toml')}")
+
+    # 准备openhands_config.toml
+    with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
+        oh_config_template = f.read()
+    oh_config = oh_config_template.replace("{api_key}", config.llm.chat.api_key)
+    oh_config = oh_config.replace("{base_url}", config.llm.chat.base_url)
+    oh_config = oh_config.replace("{code_model}", config.llm.chat.model)
+    oh_config = oh_config.replace("{api_key}", config.llm.chat.api_key)
+
+    if config.llm.condenser.model:
+        oh_config = oh_config.replace("{condenser_api_key}", config.llm.condenser.api_key)
+        oh_config = oh_config.replace("{condenser_base_url}", config.llm.condenser.base_url)
+        oh_config = oh_config.replace("{code_condenser_model}", config.llm.condenser.model)
+    else:
+        logger.warning("Condenser model not specified, using chat model as condenser model.")
+        oh_config = oh_config.replace("{condenser_api_key}", config.llm.chat.api_key)
+        oh_config = oh_config.replace("{condenser_base_url}", config.llm.chat.base_url)
+        oh_config = oh_config.replace("{code_condenser_model}", config.llm.chat.model)
+
+    oh_config = oh_config.replace("{tavily_key}", config.tools.tavily_api_key)
+    this_config_path = os.path.join(save_path, "openhands_config.toml")
+    with open(this_config_path, "w") as f:
+        f.write(oh_config)
+    logger.debug(f"Using OpenHands config: {oh_config}")
+
+    init_state = {"question": config.question, "messages": [], "thread_id": config.thread_id, "save_path": save_path}
+    os.makedirs(os.path.join(save_path, "states"), exist_ok=True)
+
+    # 创建workdir
+    os.makedirs(os.path.join(save_path, "workspace"), exist_ok=True)
+    os.makedirs(os.path.join(save_path, "states"), exist_ok=True)
+
+    os.makedirs(os.path.join(save_path, "openhands_traj"))
+
+    return init_state, config, file_manager

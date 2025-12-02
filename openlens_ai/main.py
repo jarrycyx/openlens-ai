@@ -8,7 +8,8 @@ from loguru import logger
 from datetime import datetime
 import random
 
-from .utils.file_utils import prepare_files_folders, collect_files
+from .state import prepare_state
+from .utils.file_utils import collect_files
 from .utils.send_email import send_email, send_localized_email
 from .utils.config import Config
 from .state import State, load_state
@@ -16,8 +17,8 @@ from .build_graph import build_graph, run_graph, all_subgraphs
 
 
 def main(config: Config, interrupt_after_subgraph="none") -> None:
-    init_state, config = prepare_files_folders(config)
-    graph = build_graph(config, None)
+    init_state, config, file_manager = prepare_state(config)
+    graph = build_graph(config, None, file_manager)
     # 发送进度邮件
     send_localized_email(
         config=config,
@@ -32,9 +33,9 @@ def main(config: Config, interrupt_after_subgraph="none") -> None:
 def main_resume(
     save_dir: str, refine_suggestion: str = "", start_from_subgraph: str = "none", start_from_subtask_index: int = 1, interrupt_after_subgraph="none"
 ) -> None:
-    config, state, last_subgraph = load_state(save_dir, 
-                                              start_from_subgraph=start_from_subgraph, 
-                                              start_from_subtask_index=start_from_subtask_index)
+    config, state, last_subgraph, file_manager = load_state(save_dir, 
+                                                            start_from_subgraph=start_from_subgraph, 
+                                                            start_from_subtask_index=start_from_subtask_index)
     config.refine_suggestion = refine_suggestion
     if config.refine_suggestion and config.refine_suggestion.strip():
         state["question"] = f"# Refine suggestion: {refine_suggestion}\n\n\n # Original question: {config.question}"
@@ -65,7 +66,7 @@ def main_resume(
         )
         start_from = all_subgraphs[last_subgraph_index + 1]
         logger.info(f"Resuming from subgraph {start_from}")
-        graph = build_graph(config, start_from)
+        graph = build_graph(config, start_subgraph=start_from, file_manager=file_manager)
         run_graph(config, graph, state, interrupt_after_subgraph=interrupt_after_subgraph)
 
 

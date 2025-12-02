@@ -13,23 +13,37 @@ from loguru import logger
 import fitz
 from fastmcp import FastMCP
 
+from file1agent.file_manager import FileManager
+
 from ...utils.vision_feedback import get_vlm, get_vision_feedback, get_vision_classification, get_latex_vision_feedback, get_fig_base64, call_vlm_with_prompt
 from ...utils.config import Config
 from ...state import load_state
-from ...utils.file_summary import FileSummary
 
 
 # Global config variable
 _config = None
 file_summary = None
+file_manager = None
 
 def set_config(config: Config):
     """Set the global config"""
     global _config
     _config = config
     
-    global file_summary
-    file_summary = FileSummary(config)
+    global file_summary, file_manager
+    file_manager = FileManager(
+        analyze_dir=os.path.join(config.save_path, "workspace"),
+        config={
+            "llm": {
+                "chat": dict(config.llm.chat),
+                "vision": dict(config.llm.vision),
+            },
+            "rerank": dict(config.rerank),
+        },
+        realloc_log=False, # Already configured loguru
+        backup_path=os.path.join(config.save_path, "backup", "deleted"),
+    )
+    file_summary = file_manager.file_summary
 
 
 def get_config() -> Config:
@@ -214,7 +228,7 @@ def get_summary(file_path: Annotated[str, Field(description="ABSOLUTE Path to th
         return f"Error: File not found at {file_path}"
     
     ext = os.path.splitext(file_path)[1].lower()
-    summary = file_summary.get_file_summaries(file_path)
+    summary = file_summary.get_file_summary(file_path)
     return str(summary["summary"])
     
 
