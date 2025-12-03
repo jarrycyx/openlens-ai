@@ -16,12 +16,13 @@ from file1agent.file_manager import FileManager
 
 from .utils.config import Config
 
+
 class State(TypedDict):
-    question: str # Can be different from config.question because refine suggestion maybe added
+    question: str  # Can be different from config.question because refine suggestion maybe added
     messages: list
     plan: dict
     data_report: str
-    current_subtask_index: int = 1 # 1 means the first subtask
+    current_subtask_index: int = 1  # 1 means the first subtask
     save_path: str
     thread_id: str = ""
     subplan: str = ""
@@ -45,92 +46,100 @@ class State(TypedDict):
     artifact_repo_url: str | None
 
 
-def track_node_call(subgraph_name: str=""):
+def track_node_call(subgraph_name: str = ""):
     def track_node_call_inner(func):
         node_name = f"subgraph_{subgraph_name}.{func.__name__}"
+
         def skip_func(state: State, **kwargs):
             logger.info(f"Skiping {node_name}")
             return state
-        
+
         def wrapper(state: State, **kwargs):
-            
+
             # 如果找到state参数，则记录函数调用
             if state:
-                if ('node_call_stack' not in state) or (not isinstance(state['node_call_stack'], list)):
-                    state['node_call_stack'] = []
-                state['node_call_stack'].append(node_name)
-                
+                if ("node_call_stack" not in state) or (not isinstance(state["node_call_stack"], list)):
+                    state["node_call_stack"] = []
+                state["node_call_stack"].append(node_name)
+
                 if ("resume_node_call_stack" in state) and state["resume_node_call_stack"]:
                     if node_name in state["resume_node_call_stack"]:
                         # 如果没有到resume的最后一个节点，则跳过
                         return skip_func(state, **kwargs)
-            
+
             # 调用原始函数
             _return = func(state, **kwargs)
-            
-            latest_state_path = os.path.join(state['save_path'], "latest_state.json")
+
+            latest_state_path = os.path.join(state["save_path"], "latest_state.json")
             with open(latest_state_path, "w") as f:
                 f.write(dumps(state, ensure_ascii=False, indent=4))
-                
+
             # 找到了resume的节点
             state["resume_node_call_stack"] = []
             logger.info(f"Calling node: {node_name}")
             return _return
-        
+
         return wrapper
+
     return track_node_call_inner
+
 
 def get_subplan(state: State) -> str:
     try:
         current_subplan_index = state["current_subtask_index"] if "current_subtask_index" in state else 1
-        subplan_text = state["plan"]["sub_tasks"][current_subplan_index-1] # current_subplan_index从1开始，但是列表是从0开始
+        subplan_text = state["plan"]["sub_tasks"][
+            current_subplan_index - 1
+        ]  # current_subplan_index从1开始，但是列表是从0开始
         subplan = f"\n\n# SUBTASK{current_subplan_index:02d}\n {subplan_text}\n"
     except Exception as e:
         subplan = ""
         logger.warning(f"No subplan found. Error: {e}")
     return subplan
 
+
 def load_state(
-    save_dir: str, 
-    copy_to_new: bool = False, 
-    start_from_subgraph: str = "",
-    start_from_subtask_index: int = 1
+    save_dir: str, copy_to_new: bool = False, start_from_subgraph: str = "", start_from_subtask_index: int = 1
 ) -> tuple[Config, State]:
-    
+
     config_path = os.path.join(save_dir, "config.toml")
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found: {config_path}")
-    
+
     if copy_to_new:
         # 复制一遍save_dir，加上_resume_时间戳
         new_save_dir = save_dir + "_resume_" + datetime.now().strftime("%Y%m%d%H%M%S")
         os.makedirs(new_save_dir, exist_ok=True)
         os.system("cp -r " + save_dir + "/* " + new_save_dir)
         save_dir = new_save_dir
-    
+
     # Load config and update save_path thread_id
     config = Config.from_toml(config_path)
-    
+
     if copy_to_new:
         logger.info(f"Config save_path: {config.save_path} -> {save_dir}")
         config.save_path = save_dir
         config.resume_dir_id = config.thread_id
         config.thread_id = os.path.basename(save_dir)
         config.save_toml(config_path)
-    
+
     # Load logger
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     logger.remove()
-    logger.add(os.path.join(save_dir, f"logs_{timestamp}_pid{os.getpid()}.log"), 
-               format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|"+config.thread_id, 
-               colorize=False, rotation="10 MB", level="DEBUG")
-    logger.add(sys.stdout, 
-               format="<green>{time:YYYYMMDDHHmmss}</green>|<level>{level}</level>|{message}|<yellow>{file}:{line}</yellow>|"+\
-                   f"<cyan>{config.thread_id}</cyan>", 
-                colorize=True, level="INFO")
-    
-    
-    
+    logger.add(
+        os.path.join(save_dir, f"logs_{timestamp}_pid{os.getpid()}.log"),
+        format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|" + config.thread_id,
+        colorize=False,
+        rotation="10 MB",
+        level="DEBUG",
+    )
+    logger.add(
+        sys.stdout,
+        format="<green>{time:YYYYMMDDHHmmss}</green>|<level>{level}</level>|{message}|<yellow>{file}:{line}</yellow>|"
+        + f"<cyan>{config.thread_id}</cyan>",
+        colorize=True,
+        level="INFO",
+    )
+
     file_manager = FileManager(
         analyze_dir=os.path.join(config.save_path, "workspace"),
         config={
@@ -140,20 +149,22 @@ def load_state(
             },
             "rerank": dict(config.rerank),
         },
-        realloc_log=False, # Already configured loguru
+        realloc_log=False,  # Already configured loguru
         backup_path=os.path.join(config.save_path, "backup", "deleted"),
+        file_relationships_save_path=os.path.join(config.save_path, ".f1a_cache", "file_relationships.json"),
+        summary_cache_path=os.path.join(config.save_path, ".f1a_cache", "file_summary_cache.json"),
     )
-    
+
     # Load state from latest_state.json
     latest_state_file_name = os.path.join(save_dir, "latest_state.json")
     if os.path.exists(latest_state_file_name):
         with open(latest_state_file_name, "r", encoding="utf-8") as f:
             state = loads(f.read())
-        
+
         if ("save_path" in state) and (state["save_path"] != save_dir):
             logger.info(f"State save_path: {state['save_path']} -> {save_dir}")
             state["save_path"] = save_dir
-            
+
     state["current_subtask_index"] = start_from_subtask_index
     logger.info(f"Start from subtask index: {start_from_subtask_index}")
 
@@ -161,44 +172,41 @@ def load_state(
     last_subgraph = None
     try:
         node_call_stack = state["node_call_stack"]
-        
+
         resume_node_call_stack = []
         all_subgraphs = [node.split(".")[0].replace("subgraph_", "") for node in node_call_stack]
         # Deduplicate but preserve order
         all_subgraphs = list(dict.fromkeys(all_subgraphs))
         for node in node_call_stack:
-            # Only add nodes that are not end_node and not in start_from_subgraph, 
+            # Only add nodes that are not end_node and not in start_from_subgraph,
             # task will skip nodes in resume_node_call_stack
             if ("end_node" not in node) and (start_from_subgraph not in node):
                 resume_node_call_stack.append(node)
                 last_subgraph = all_subgraphs[-2] if len(all_subgraphs) > 1 else None
             else:
                 break
-                
+
         logger.info(f"Will skip nodes in resume_node_call_stack: {resume_node_call_stack}")
-                
-        state['resume_node_call_stack'] = resume_node_call_stack
+
+        state["resume_node_call_stack"] = resume_node_call_stack
     except Exception as e:
         logger.warning(f"Error loading node call stack: {e}")
-        state['resume_node_call_stack'] = []
-        state['node_call_stack'] = []
-        
-        
+        state["resume_node_call_stack"] = []
+        state["node_call_stack"] = []
+
     # Create backup folder
     backup_path = os.path.join(save_dir, "backup")
     os.makedirs(backup_path, exist_ok=True)
-    
+
     # Copy openlens_ai folder
     if os.path.exists("openlens_ai"):
         shutil.copytree("openlens_ai", os.path.join(backup_path, "openlens_ai"), dirs_exist_ok=True)
-    
-        
+
     return config, state, last_subgraph, file_manager
-     
-     
+
 
 def prepare_state(config: Config) -> Config:
-    
+
     save_path = os.path.join("./outputs", config.thread_id)
     if os.path.exists(save_path):
         config.thread_id = config.thread_id + "_" + datetime.now().strftime("%Y%m%d%H%M%S")
@@ -273,9 +281,7 @@ def prepare_state(config: Config) -> Config:
     os.makedirs(os.path.join(save_path, "states"), exist_ok=True)
 
     os.makedirs(os.path.join(save_path, "openhands_traj"))
-    
-    
-    
+
     file_manager = FileManager(
         analyze_dir=os.path.join(config.save_path, "workspace"),
         config={
@@ -285,8 +291,10 @@ def prepare_state(config: Config) -> Config:
             },
             "rerank": dict(config.rerank),
         },
-        realloc_log=False, # Already configured loguru
+        realloc_log=False,  # Already configured loguru
         backup_path=os.path.join(config.save_path, "backup", "deleted"),
+        file_relationships_save_path=os.path.join(config.save_path, ".f1a_cache", "file_relationships.json"),
+        summary_cache_path=os.path.join(config.save_path, ".f1a_cache", "file_summary_cache.json"),
     )
 
     return init_state, config, file_manager
