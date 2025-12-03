@@ -49,27 +49,28 @@ def track_node_call(subgraph_name: str = ""):
 
         def wrapper(state: State, **kwargs):
 
-            # 如果找到state参数，则记录函数调用
+            # Log the node call if state is provided
             if state:
                 if ("node_call_stack" not in state) or (not isinstance(state["node_call_stack"], list)):
                     state["node_call_stack"] = []
                 state["node_call_stack"].append(node_name)
 
                 if ("resume_node_call_stack" in state) and state["resume_node_call_stack"]:
-                    if node_name in state["resume_node_call_stack"]:
-                        # 如果没有到resume的最后一个节点，则跳过
+                    if node_name != state["resume_node_call_stack"][-1]:
+                        # Skip if not the last node in resume_node_call_stack
                         return skip_func(state, **kwargs)
 
-            # 调用原始函数
-            _return = func(state, **kwargs)
+            # 找到了resume的节点
+            state["resume_node_call_stack"] = []
 
             latest_state_path = os.path.join(state["save_path"], "latest_state.json")
             with open(latest_state_path, "w") as f:
                 f.write(dumps(state, ensure_ascii=False, indent=4))
 
-            # 找到了resume的节点
-            state["resume_node_call_stack"] = []
             logger.info(f"Calling node: {node_name}")
+            # 调用原始函数
+            _return = func(state, **kwargs)
+            
             return _return
 
         return wrapper
@@ -179,7 +180,7 @@ def load_state(
             else:
                 break
 
-        logger.info(f"Will skip nodes in resume_node_call_stack: {resume_node_call_stack}")
+        logger.info(f"Will skip nodes in resume_node_call_stack until the last: {resume_node_call_stack}")
 
         state["resume_node_call_stack"] = resume_node_call_stack
     except Exception as e:
