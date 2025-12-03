@@ -237,6 +237,72 @@ openlens_ai/
 └── state.py             # State management
 ```
 
+## 🧩 Optional: GitHub Integration (Automatic Artifact Publishing)
+
+OpenLens AI can **optionally** publish generated code artifacts to GitHub.
+If you don't configure this section, nothing will be pushed.
+
+### 1. Configure GitHub in `config.toml`
+
+Add or edit the `[git]` section:
+
+```toml
+[git]
+# Optional: fixed repository to push to
+# repo_url = "git@github.com:<YOUR_USERNAME>/<YOUR_REPO>.git"
+repo_url    = ""
+
+branch      = "main"                # Target branch for commits
+token       = "<YOUR GITHUB TOKEN>" # GitHub Personal Access Token (PAT)
+repo_prefix = "openlens-"           # Prefix for auto-created repo names
+private     = true                  # Whether auto-created repos should be private
+```
+If `repo_url` is **set** → artifacts are pushed to that repository.
+
+If `repo_url` is **empty** but token is set → OpenLens AI may automatically create a new repo under your GitHub account and push there.
+
+>💡 Recommended: put your real token only in a local `config.local.toml` (ignored by Git) and keep `config.full-example.toml` as a public template with `<YOUR GITHUB TOKEN>` placeholders.
+
+### 2. How to generate a GitHub token (short version)
+1. Go to **GitHub → Settings → Developer settings → Personal access tokens**
+
+2. Create a new token:
+
+     - Fine-grained PAT (recommended) or classic PAT
+     
+3. Repository access scope:
+
+    - ✅ All repositories — required if you want OpenLens AI to **automatically create new repositories** under your GitHub account.
+    - ✅ Only select repositories — **more secure**, recommended if you only need to **push to a pre-existing fixed repository**.
+
+
+4. Give it minimal permissions, typically:
+
+     - Contents → Read and write: Permission to read/write contents
+
+     - Administration → Read and write: Access to repositories under your account
+
+5. Copy the token and fill it into:
+
+```toml
+[git]
+token = "github_pat_XXXXXXXXXXXXXXXX"
+```
+or set it as an environment variable GITHUB_TOKEN.
+
+### 3. Security notes
+- 🔒 Treat your GitHub token like a password:
+
+   - **Do not commit it to Git**, especially in public repositories
+
+  - Store it only in local config files (e.g., `config.local.toml`, `.env`) that are in `.gitignore`
+
+- 🧹 If you suspect a leak:
+
+  - Go to **GitHub → Settings → Developer settings → Tokens** and **revoke** the token immediately
+
+- 🎯 Use the **minimum necessary permissions** for your use case
+
 ## 🛠️ Customization
 
 ### Adding New Agents
