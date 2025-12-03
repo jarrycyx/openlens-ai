@@ -69,13 +69,14 @@ def build_graph(config: Config, start_subgraph: str = None, file_manager: FileMa
 
         keywords_router = route_by_keywords(["DECISION: ALTER_PLAN", "DECISION: REANALYZE_DATA"])
 
+
         supervisor_subgraph = build_supervisor(config, file_manager)
         coder_subgraph = build_coder(config, file_manager)
         data_analyzer_subgraph = build_data_analyzer(config, file_manager)
         literature_review_subgraph = build_literature_review_subgraph(config, file_manager)
         latex_writer_subgraph = build_latex_writer(config, file_manager)
-        artifact_publisher_graph = build_artifact_publisher(config)
-
+        artifact_publisher_graph = build_artifact_publisher(config, file_manager)
+        
         graph_builder.add_node("supervisor", supervisor_subgraph)
         graph_builder.add_node("coder", coder_subgraph)
         graph_builder.add_node("data_analyzer", data_analyzer_subgraph)
