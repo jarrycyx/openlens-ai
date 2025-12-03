@@ -22,13 +22,14 @@ from .agents.coder import build_coder
 from .agents.data_analyzer import build_data_analyzer
 from .agents.literature_reviewer import build_literature_review_subgraph
 from .agents.latex_writer import build_latex_writer
+from .agents.artifact_publisher import build_artifact_publisher
 from .state import State, load_state, track_node_call  # Import load_state function from state module
 from .utils.frontend_messages import frontend_add_message, frontend_add_tool_call, frontend_update_node
 from .utils.config import Config
 
 graph = None
 stop_sending_emails = threading.Event()
-all_subgraphs = ["literature_reviewer", "data_analyzer", "supervisor", "coder", "latex_writer"]
+all_subgraphs = ["literature_reviewer", "data_analyzer", "supervisor", "coder", "latex_writer", "artifact_publisher"]
 
 
 def send_periodic_emails(config: Config):
@@ -70,12 +71,14 @@ def build_graph(config: Config, start_subgraph: str = None):
         data_analyzer_subgraph = build_data_analyzer(config)
         literature_review_subgraph = build_literature_review_subgraph(config)
         latex_writer_subgraph = build_latex_writer(config)
+        artifact_publisher_graph = build_artifact_publisher(config)
         
         graph_builder.add_node("supervisor", supervisor_subgraph)
         graph_builder.add_node("coder", coder_subgraph)
         graph_builder.add_node("data_analyzer", data_analyzer_subgraph)
         graph_builder.add_node("literature_reviewer", literature_review_subgraph)
         graph_builder.add_node("latex_writer", latex_writer_subgraph)
+        graph_builder.add_node("artifact_publisher", artifact_publisher_graph)
         graph_builder.add_node("end", end_node)
 
 
@@ -93,7 +96,8 @@ def build_graph(config: Config, start_subgraph: str = None):
             keywords_router,
             {"DECISION: ALTER_PLAN": "supervisor", "DECISION: REANALYZE_DATA": "data_analyzer", "NONE": "latex_writer"},
         )
-        graph_builder.add_edge("latex_writer", "end")
+        graph_builder.add_edge("latex_writer", "artifact_publisher")
+        graph_builder.add_edge("artifact_publisher", "end")
         graph_builder.add_edge("end", END)
 
         graph = graph_builder.compile()
