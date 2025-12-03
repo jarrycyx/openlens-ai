@@ -20,7 +20,7 @@ try:
 except ImportError:
     PyPDF2 = None
 
-from openlens_ai.utils.file_utils import prepare_files_folders, collect_files, collect_token_usage
+from openlens_ai.utils.file_utils import collect_files, collect_token_usage
 from openlens_ai.utils.frontend_messages import _get_messages_file_path, _message_remove_duplicates
 from openlens_ai.utils.config import Config
 

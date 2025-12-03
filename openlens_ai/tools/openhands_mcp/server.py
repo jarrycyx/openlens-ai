@@ -42,6 +42,8 @@ def set_config(config: Config):
         },
         realloc_log=False, # Already configured loguru
         backup_path=os.path.join(config.save_path, "backup", "deleted"),
+        file_relationships_save_path=os.path.join(config.save_path, ".f1a_cache", "file_relationships.json"),
+        summary_cache_path=os.path.join(config.save_path, ".f1a_cache", "file_summary_cache.json"),
     )
     file_summary = file_manager.file_summary
 
@@ -229,7 +231,7 @@ def get_summary(file_path: Annotated[str, Field(description="ABSOLUTE Path to th
     
     ext = os.path.splitext(file_path)[1].lower()
     summary = file_summary.get_file_summary(file_path)
-    return str(summary["summary"])
+    return str(summary)
     
 
 def run_server(config: Union[Config, str], port: int = 9077):
