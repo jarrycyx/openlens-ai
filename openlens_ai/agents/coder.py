@@ -51,14 +51,14 @@ def build_coder(config: Config, file_manager: FileManager) -> StateGraph:
         base_url=config.llm.chat.base_url,
         model_provider="openai",
         openai_api_key=config.llm.chat.api_key,
-        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
+        extra_body={"chat_template_kwargs": {"enable_thinking": False}},
     )
     router_llm = init_chat_model(
         config.llm.chat.model,
         base_url=config.llm.chat.base_url,
         model_provider="openai",
         openai_api_key=config.llm.chat.api_key,
-        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
+        extra_body={"chat_template_kwargs": {"enable_thinking": False}},
     )
     
     plan_reader_tool = PlanReaderTool(config)

@@ -57,7 +57,7 @@ class PlanWriterTool(BaseTool):
         for i, task in enumerate(sub_tasks):
             plan_markdown += f"\n\n# SUBTASK{i+1:02d}\n {task}\n"
         plan_markdown += f"\nExpected Result: {expected_result}"
-        with open(os.path.join(self.config.save_path, "workspace", "plan.md"), "w") as f:
+        with open(os.path.join(self.config.save_path, "plan.md"), "w") as f:
             f.write(plan_markdown)
             
         return f"Plan written successfully with objective: {objective}"

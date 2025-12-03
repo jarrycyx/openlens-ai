@@ -43,7 +43,7 @@ def build_supervisor(config: Config, file_manager: FileManager) -> StateGraph:
     plan_reader_tool = PlanReaderTool(config)
     tools = [plan_writer_tool]
     
-    route_supervisor = route_by_file_existence(os.path.join(config.save_path, "workspace", "plan.md"))
+    route_supervisor = route_by_file_existence(os.path.join(config.save_path, "plan.md"))
     
     def plan_reader_node(state: State):
         plan = plan_reader_tool.invoke({})
