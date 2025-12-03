@@ -31,7 +31,7 @@ def main(config: Config, interrupt_after_subgraph="none") -> None:
 
 
 def main_resume(
-    save_dir: str, refine_suggestion: str = "", start_from_subgraph: str = "none", start_from_subtask_index: int = 1, interrupt_after_subgraph="none"
+    save_dir: str, refine_suggestion: str = "", start_from_subgraph: str = "none", start_from_subtask_index: int = None, interrupt_after_subgraph="none"
 ) -> None:
     config, state, last_subgraph, file_manager = load_state(save_dir, 
                                                             start_from_subgraph=start_from_subgraph, 
@@ -90,7 +90,7 @@ def parse_args():
     parser.add_argument("--interrupt-after-subgraph", type=str, default="none", help="Interrupt after the specified subgraph, use to limit user trial.")
     parser.add_argument("--start-from-subgraph", type=str, default="none", help="Start from the specified subgraph, use to resume from a specific subgraph.")
     parser.add_argument(
-        "--start-from-subtask-index", type=int, default=1, help="Start from the specified subtask index, use to resume from a specific subtask."
+        "--start-from-subtask-index", type=int, default=None, help="Start from the specified subtask index, use to resume from a specific subtask."
     )
     parser.add_argument("--resume-dir", type=str, help="Resume from a specific saved directory")
 
