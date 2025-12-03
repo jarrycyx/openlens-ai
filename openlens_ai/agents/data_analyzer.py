@@ -66,7 +66,7 @@ def build_data_analyzer(config: Config, file_manager: FileManager) -> StateGraph
             backup_path=file_manager.backup_path,
             realloc_log=False,
             file_relationships_save_path=file_manager.file_relationships_save_path,
-            summary_cache_path=file_manager.summary_cache_path,
+            summary_cache_path=file_manager.file_summary.summary_cache_path,
         )
 
         # Get file tree with summaries
