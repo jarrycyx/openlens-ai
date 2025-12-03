@@ -35,6 +35,13 @@ class State(TypedDict):
     file_summary: dict = {}
     available_figs: list = []
 
+    artifact_manifest_path: str | None
+    artifact_code_stats: dict | None
+    artifact_ok_to_publish: bool | None
+    artifact_logs: list[str] | None
+    artifact_published: bool | None
+    artifact_repo_url: str | None
+
 
 def track_node_call(subgraph_name: str=""):
     def track_node_call_inner(func):
