@@ -186,7 +186,8 @@ def convert_pdf_to_merged_image(pdf_file: str):
         pdf_document.close()
         return save_tmp_path, img_base64
     except Exception as e:
-        logger.error(f"Error converting PDF {pdf_file} to merged PNG: {e}")
+        logger.warning(f"Error converting PDF {pdf_file} to merged PNG: {e}")
+        logger.warning(traceback.format_exc())
         return None, None
 
 
@@ -234,8 +235,9 @@ def convert_pdf_to_separate_images(pdf_file: str):
         return name_list, base64_list
         
     except Exception as e:
-        logger.error(f"Error converting PDF {pdf_file} to separate PNGs: {e}")
-        return name_list, base64_list
+        logger.warning(f"Error converting PDF {pdf_file} to separate PNGs: {e}")
+        logger.warning(traceback.format_exc())
+        return None, None
 
 
 
