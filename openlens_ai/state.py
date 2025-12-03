@@ -159,8 +159,9 @@ def load_state(
             logger.info(f"State save_path: {state['save_path']} -> {save_dir}")
             state["save_path"] = save_dir
 
-    state["current_subtask_index"] = start_from_subtask_index
-    logger.info(f"Start from subtask index: {start_from_subtask_index}")
+    if start_from_subtask_index is not None:
+        state["current_subtask_index"] = start_from_subtask_index
+        logger.info(f"Start from subtask index: {start_from_subtask_index}")
 
     # Load node_call_stack and get last subgraph
     last_subgraph = None

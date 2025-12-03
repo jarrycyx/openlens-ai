@@ -57,7 +57,7 @@ def get_config() -> Config:
 
 
 # Initialize MCP server
-mcp = FastMCP("vlm_server")
+mcp = FastMCP("openhands_mcp_server")
 
 def analyze_image(image_base64: str, prompt: Optional[str] = None) -> str:
     """Analyze an image using VLM.
