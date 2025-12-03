@@ -71,6 +71,13 @@ class FrontendConfig(BaseModel):
     # Currently empty, but can be extended as needed
     frontend_admin_email: str = Field(default="none", description="Admin email for frontend access")
 
+class GitConfig(BaseModel):
+    """Git / GitHub 相关配置。"""
+    repo_url: str | None = None      # 显式指定的远端仓库；为空则自动创建
+    branch: str = "main"             # 默认分支
+    token: str | None = None         # 默认 token；为空则回退到环境变量 GITHUB_TOKEN
+    repo_prefix: str = "openlens-"   # 自动创建仓库时用的前缀
+    private: bool = True             # 自动创建的仓库是否设为 private
 
 class Config(BaseModel):
     """
@@ -96,6 +103,7 @@ class Config(BaseModel):
     workflow: WorkflowConfig = Field(default_factory=WorkflowConfig, description="Workflow configuration")
     docker: DockerConfig = Field(default_factory=DockerConfig, description="Docker configuration")
     frontend: FrontendConfig = Field(default_factory=FrontendConfig, description="Frontend configuration")
+    git: GitConfig = Field(default_factory=GitConfig, description="Git/GitHub configuration")
     
     @classmethod
     def from_toml(cls, toml_path: str) -> 'Config':

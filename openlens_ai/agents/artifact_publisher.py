@@ -7,7 +7,7 @@ from typing import Any, Dict, List
 from loguru import logger
 from langgraph.graph import StateGraph, START, END
 
-from ..state import State, track_node_call
+from ..state import State, track_node_call, load_state
 from ..utils.config import Config
 
 import re
@@ -203,23 +203,32 @@ def _auto_create_github_repo_if_needed(state: State, config: Config) -> str:
     """
     自动决定要用哪个 GitHub 仓库 URL：
 
-    1. 如果环境变量里已经设置了 GITHUB_REPO_URL，直接用它（兼容你现在的模式）；
+    优先级：
+    1. 如果 Config.git.repo_url 有值：直接用它（推到固定仓库，不再自动创建）；
     2. 否则：
-       - 如果没有 GITHUB_TOKEN 或没有 requests，就返回空字符串（上层逻辑会选择 skip push）；
-       - 如果有 GITHUB_TOKEN，就调用 GitHub API 自动创建一个新仓库，返回它的 ssh_url/clone_url。
+       - 使用 Config.git.token 或 GITHUB_TOKEN 调 GitHub API 自动创建新仓库；
+       - 新仓库名由 Config.git.repo_prefix + thread_id 决定；
+       - private 由 Config.git.private 决定。
     """
 
-    # 1) 用户手动指定了 repo，就尊重它
-    repo_url_env = os.getenv("GITHUB_REPO_URL", "").strip()
-    if repo_url_env:
-        logger.info(f"Using existing GITHUB_REPO_URL={repo_url_env}")
-        return repo_url_env
+    git_cfg = getattr(config, "git", None)
+    frontend_config = getattr(config, "frontend", None)
+    logger.info(f"frontend_config: {frontend_config}")
+    logger.info(f"git_cfg: {git_cfg}")
 
-    # 2) 没指定 repo，就尝试自动创建
-    token = os.getenv("GITHUB_TOKEN", "").strip()
+    repo_url_cfg = (git_cfg.repo_url if git_cfg else None) or ""
+    repo_url = repo_url_cfg.strip()
+    if repo_url:
+        logger.info(f"Using existing GitHub repo URL={repo_url}")
+        return repo_url
+
+    # 2) 没指定 repo_url，就尝试自动创建
+    token_cfg = (git_cfg.token if git_cfg else None) or ""
+    token = token_cfg.strip()
     if not token:
         logger.warning(
-            "GITHUB_REPO_URL not set and GITHUB_TOKEN not provided; "
+            "No GitHub repo URL and no token provided "
+            "(Config.git.token / GITHUB_TOKEN both empty); "
             "cannot auto-create GitHub repo. Will skip git push."
         )
         return ""
@@ -227,21 +236,20 @@ def _auto_create_github_repo_if_needed(state: State, config: Config) -> str:
     if requests is None:
         logger.warning(
             "python-requests not installed; cannot call GitHub API to create repo. "
-            "Please `pip install requests` or set GITHUB_REPO_URL explicitly."
+            "Please `pip install requests` or set Config.git.repo_url explicitly."
         )
         return ""
 
     # 3) 决定一个 repo 名字
-    prefix = os.getenv("GITHUB_REPO_PREFIX", "openlens-").strip()
-    # 优先用 thread_id，否则用 save_path 的最后一段
+    prefix = git_cfg.repo_prefix if git_cfg else None.strip()
+
     thread_id = str(state.get("thread_id") or Path(config.save_path).name)
     safe_thread_id = re.sub(r"[^A-Za-z0-9_.-]+", "-", thread_id)[:80].strip("-")
     repo_name = f"{prefix}{safe_thread_id}" if prefix else safe_thread_id
 
     logger.info(f"Auto-creating GitHub repo with name={repo_name!r}")
 
-    # 4) 调 GitHub API 创建仓库（默认 private，可通过 env 调整）
-    is_private = os.getenv("GITHUB_REPO_PRIVATE", "true").lower() != "false"
+    is_private = git_cfg.private
 
     api_url = "https://api.github.com/user/repos"
     headers = {
@@ -352,7 +360,10 @@ def build_artifact_publisher(config: Config) -> StateGraph:
             return state
 
         # 先确定目标分支
-        branch = os.getenv("GITHUB_BRANCH", "main").strip() or "main"
+        # 先确定目标分支（Config.git.branch 优先，其次环境变量）
+        git_cfg = getattr(config, "git", None)
+        branch_cfg = (git_cfg.branch if git_cfg else None) or ""
+        branch = (branch_cfg or "main").strip()
 
         # 自动决定 / 创建远端仓库
         repo_url = _auto_create_github_repo_if_needed(state, config)
@@ -438,3 +449,32 @@ def build_artifact_publisher(config: Config) -> StateGraph:
     graph_builder.add_edge("artifact_publish", END)
 
     return graph_builder.compile()
+
+if __name__ == "__main__":
+    run_dir = Path("outputs/pred_aki_dy_mimic_icu_csv_20251118173506").resolve()
+    if not run_dir.exists():
+        raise RuntimeError(f"run_dir 不存在: {run_dir}")
+    if not (run_dir / "workspace").exists():
+        raise RuntimeError(f"workspace 不存在: {run_dir / 'workspace'}")
+
+    config, state, last_subgraph = load_state(str(run_dir))
+    config = Config.from_toml("config.temp.toml")
+
+    # 为保险起见，确保 config.save_path 和 state["save_path"] 一致
+    config.save_path = str(run_dir)
+    state["save_path"] = str(run_dir)
+
+    # 3. 构建 artifact_publisher 子图并执行
+    graph = build_artifact_publisher(config)
+    final_state: State = graph.invoke(state)
+
+    print("=== artifact_publisher 结束 ===")
+    print("artifact_manifest_path:", final_state.get("artifact_manifest_path"))
+    print("artifact_code_stats:", final_state.get("artifact_code_stats"))
+    print("artifact_ok_to_publish:", final_state.get("artifact_ok_to_publish"))
+    print("artifact_published:", final_state.get("artifact_published"))
+    print("artifact_repo_url:", final_state.get("artifact_repo_url"))
+    print("artifact_logs:")
+    for line in final_state.get("artifact_logs", []):
+        print("  ", line)
+

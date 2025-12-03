@@ -56,3 +56,10 @@ docker_name = "openlens-ai:runtime-latest"  # Name of the Docker container used 
 
 [frontend]
 frontend_admin_email = "<YOUR EMAIL>"  # Admin email address that can access all users' sessions in the frontend
+
+[git]
+repo_url = ""                # Optional: If provided, the artifact will always be pushed to this repository.
+branch = "main"              # The branch name used for committing and pushing artifacts.
+token = "<YOUR GITHUB TOKEN>"  # GitHub Personal Access Token (PAT). Required if you want auto-create repo.
+repo_prefix = "openlens-"    # Prefix used for automatically created repositories (e.g., "openlens-12345").
+private = true               # Whether automatically created GitHub repositories should be private.
