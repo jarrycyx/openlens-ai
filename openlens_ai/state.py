@@ -285,6 +285,9 @@ def prepare_state(config: Config) -> Config:
                 "vision": dict(config.llm.vision),
             },
             "rerank": dict(config.rerank),
+            "inclusion": {
+                "mode": "whitelist"
+            }
         },
         realloc_log=False,  # Already configured loguru
         backup_path=os.path.join(config.save_path, "backup", "deleted"),

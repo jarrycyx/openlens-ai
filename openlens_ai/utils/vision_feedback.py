@@ -9,6 +9,8 @@ import glob
 import base64
 import fitz
 from datetime import datetime
+from PIL import Image
+import io
 
 from langchain.load.dump import dumps
 from langchain.chat_models import init_chat_model
@@ -16,6 +18,48 @@ from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
 from ..utils.config import Config, get_lang_prompt
 from ..state import load_state
+
+
+def compress_image(img_data, max_size=4000):
+    """
+    Compress image to ensure width and height do not exceed max_size
+    
+    Args:
+        img_data: Image binary data
+        max_size: Maximum width and height size, default is 4000
+        
+    Returns:
+        Compressed image binary data
+    """
+    try:
+        # Convert binary data to PIL Image object
+        img = Image.open(io.BytesIO(img_data))
+        
+        # Check if compression is needed
+        if img.width <= max_size and img.height <= max_size:
+            return img_data
+            
+        # Calculate scaling ratio
+        width_ratio = max_size / img.width
+        height_ratio = max_size / img.height
+        ratio = min(width_ratio, height_ratio)
+        
+        # Calculate new dimensions
+        new_width = int(img.width * ratio)
+        new_height = int(img.height * ratio)
+        
+        # Compress image
+        img_resized = img.resize((new_width, new_height), Image.LANCZOS)
+        
+        # Convert compressed image to binary data
+        img_byte_arr = io.BytesIO()
+        img_resized.save(img_byte_arr, format='PNG')
+        img_byte_arr = img_byte_arr.getvalue()
+        
+        return img_byte_arr
+    except Exception as e:
+        logger.warning(f"Error compressing image: {e}")
+        return img_data
 
 
 def get_vlm(config: Config):
@@ -166,7 +210,9 @@ def convert_pdf_to_merged_image(pdf_file: str):
         
         # Convert merged image to base64
         img_data = merged_pix.tobytes("png")
-        img_base64 = base64.b64encode(img_data).decode("utf-8")
+        # 压缩图片，确保长宽不超过4000像素
+        compressed_img_data = compress_image(img_data, max_size=4000)
+        img_base64 = base64.b64encode(compressed_img_data).decode("utf-8")
         
         try:
             if "workspace" in pdf_file:
@@ -176,7 +222,7 @@ def convert_pdf_to_merged_image(pdf_file: str):
                 save_tmp_path = os.path.join(os.path.dirname(pdf_file), f".tmp_{os.path.basename(pdf_file)}_merged.png")
             os.makedirs(os.path.dirname(save_tmp_path), exist_ok=True)
             with open(save_tmp_path, "wb") as f:
-                f.write(base64.b64decode(img_base64))
+                f.write(compressed_img_data)
         except Exception as e:
             error_msg = f"Error saving merged PDF image: {e}"
             logger.warning(error_msg)
@@ -215,6 +261,11 @@ def convert_pdf_to_separate_images(pdf_file: str):
             # Append page number to filename for identification
             
             try:
+                # 压缩图片，确保长宽不超过4000像素
+                img_data = base64.b64decode(img_base64)
+                compressed_img_data = compress_image(img_data, max_size=4000)
+                compressed_img_base64 = base64.b64encode(compressed_img_data).decode("utf-8")
+                
                 if "workspace" in pdf_file:
                     save_path = pdf_file.split("workspace")[0]
                     save_tmp_path = os.path.join(save_path, "backup", "tmp", f"{os.path.basename(pdf_file)}_page_{page_num+1}.png")
@@ -222,7 +273,7 @@ def convert_pdf_to_separate_images(pdf_file: str):
                     save_tmp_path = os.path.join(os.path.dirname(pdf_file), f".tmp_{os.path.basename(pdf_file)}_page_{page_num+1}.png")
                 os.makedirs(os.path.dirname(save_tmp_path), exist_ok=True)
                 with open(save_tmp_path, "wb") as f:
-                    f.write(base64.b64decode(img_base64))
+                    f.write(compressed_img_data)
             except Exception as e:
                 error_msg = f"Error saving separate PDF page image: {e}"
                 logger.warning(error_msg)
@@ -230,7 +281,7 @@ def convert_pdf_to_separate_images(pdf_file: str):
             
             pdf_document.close()
             name_list.append(save_tmp_path)
-            base64_list.append(img_base64)
+            base64_list.append(compressed_img_base64)
         
         return name_list, base64_list
         
@@ -259,7 +310,9 @@ def get_fig_base64(fig_file_list, merge_pdf=False):
         else:
             with open(fig, "rb") as f:
                 img_data = f.read()
-                img_base64 = base64.b64encode(img_data).decode("utf-8")
+                # 压缩图片，确保长宽不超过4000像素
+                compressed_img_data = compress_image(img_data, max_size=4000)
+                img_base64 = base64.b64encode(compressed_img_data).decode("utf-8")
                 fig_base64_list.append((fig, img_base64))
     return fig_base64_list
 
@@ -380,7 +433,7 @@ if __name__ == "__main__":
 
     config, state, last_subgraph, file_manager = load_state("outputs/power_grid_fault_id")
 
-    test_image = "outputs/power_grid_fault_id/workspace/subtask_01/processed_data/figures/domain_distribution_improved.png"
+    test_image = "outputs/mlebench-0-denoising-dirty-documents/workspace/subtask_01/figures/sample_image_pairs.png"
     image_base64 = get_fig_base64([test_image])[0][1]
     vlm_response = get_vision_feedback(image_base64, config)
     logger.info(vlm_response)

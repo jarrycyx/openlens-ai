@@ -81,8 +81,9 @@ def build_graph(config: Config, start_subgraph: str = None, file_manager: FileMa
         graph_builder.add_node("latex_writer", latex_writer_subgraph)
         graph_builder.add_node("end", end_node)
         
-        if (not config.workflow.enable_literature_review) and (start_subgraph == "literature_reviewer"):
+        if (not config.workflow.enable_literature_review) and ((start_subgraph == "literature_reviewer") or (not start_subgraph)):
             start_subgraph = "data_analyzer"
+            logger.info(f"Start subgraph: {start_subgraph}")
         
 
         if start_subgraph and (start_subgraph in all_subgraphs):
@@ -211,7 +212,7 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
                         latest_md=latest_md,
                     )
                     # Do not send success email
-                    return
+                    sys.exit(0)
 
                 with open(os.path.join(config.save_path, "states", f"step_{step_i:04d}_{state_name}.json"), "w") as f:
                     json_str = dumps(event, ensure_ascii=False, indent=4)
@@ -256,15 +257,15 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
         stop_sending_emails.set()
         email_thread.join(timeout=5)
         sys.exit(0)
-    finally:
-        # Stop sending periodic emails
-        send_localized_email(
-            config=config,
-            template_key="job_complete",
-            recipients=config.notify_email,
-            attachments=zipfile,
-            latest_md=latest_md,
-        )
-        stop_sending_emails.set()
-        email_thread.join(timeout=5)
-        sys.exit(0)
+        
+    # Stop sending periodic emails
+    send_localized_email(
+        config=config,
+        template_key="job_complete",
+        recipients=config.notify_email,
+        attachments=zipfile,
+        latest_md=latest_md,
+    )
+    stop_sending_emails.set()
+    email_thread.join(timeout=5)
+    sys.exit(0)

@@ -9,9 +9,9 @@ from mlebench.registry import registry
 
 app = Flask(__name__)
 
-# 默认值，可以通过命令行参数或环境变量覆盖
+# 默认值，可以通过命令行参数覆盖
 PRIVATE_DATA_DIR = os.getenv("PRIVATE_DATA_DIR", "/private/data")
-COMPETITION_ID = os.getenv("COMPETITION_ID")  # This is populated for us at container runtime
+COMPETITION_ID = None  # 将通过命令行参数设置
 
 
 def run_validation(submission: Path, data_dir: str) -> str:
@@ -49,14 +49,18 @@ def main():
                        help="Host to bind the server to")
     parser.add_argument("--port", type=int, default=5000, 
                        help="Port to bind the server to")
+    parser.add_argument("--competition-id", type=str, required=True,
+                       help="Competition ID for grading")
     
     args = parser.parse_args()
     
     # 设置全局变量
-    global PRIVATE_DATA_DIR
+    global PRIVATE_DATA_DIR, COMPETITION_ID
     PRIVATE_DATA_DIR = args.data_dir
+    COMPETITION_ID = args.competition_id
     
     print(f"Starting grading server with data directory: {PRIVATE_DATA_DIR}")
+    print(f"Competition ID: {COMPETITION_ID}")
     print(f"Server will be available at http://{args.host}:{args.port}")
     
     app.run(host=args.host, port=args.port)
