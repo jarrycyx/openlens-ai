@@ -56,7 +56,7 @@ def build_supervisor(config: Config, file_manager: FileManager) -> StateGraph:
         base_url=config.llm.chat.base_url,
         model_provider="openai",
         openai_api_key=config.llm.chat.api_key,
-        extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
     llm_with_tools = llm.bind_tools(tools)
     chatbot = chatbot_with_context_manager(config, llm_with_tools, prompt, calling_subgraph="supervisor")

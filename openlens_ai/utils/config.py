@@ -60,8 +60,8 @@ class WorkflowConfig(BaseModel):
     max_latex_polish_round: int = Field(default=5, description="Maximum LaTeX polish rounds")
     literature_search_min_tool_call: int = Field(default=10, description="Minimum tool calls for literature search")
     min_sub_tasks: int = Field(default=3, description="Minimum number of subtasks for the experiment plan")
-    enable_literature_review: bool = Field(default=False, description="Enable or disable the literature review feature")
-    enable_latex_writer: bool = Field(default=False, description="Enable or disable the LaTeX writer feature")
+    enable_literature_review: bool = Field(default=True, description="Enable or disable the literature review feature")
+    enable_latex_writer: bool = Field(default=True, description="Enable or disable the LaTeX writer feature")
 
 
 class DockerConfig(BaseModel):
