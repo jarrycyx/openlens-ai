@@ -55,6 +55,7 @@ benchmark/*txt
 *.egg-info
 build
 openlens_ai/tools/openhands_configs/texlive
+cache
 
 # 测试相关
 curie/tests/test_claude.py

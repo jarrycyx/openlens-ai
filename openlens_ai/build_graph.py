@@ -84,11 +84,9 @@ def build_graph(config: Config, start_subgraph: str = None, file_manager: FileMa
         graph_builder.add_node("artifact_publisher", artifact_publisher_graph)
         graph_builder.add_node("end", end_node)
         
-        if not config.enable_literature_review:
-            all_subgraphs.remove("literature_reviewer")
+        if (not config.workflow.enable_literature_review) and (start_subgraph == "literature_reviewer"):
+            start_subgraph = "data_analyzer"
         
-        if not config.enable_latex_writer:
-            all_subgraphs.remove("latex_writer")
 
         if start_subgraph and (start_subgraph in all_subgraphs):
             graph_builder.add_edge(START, start_subgraph)
@@ -98,13 +96,19 @@ def build_graph(config: Config, start_subgraph: str = None, file_manager: FileMa
         # graph_builder.add_edge(START, "data_analyzer")
         graph_builder.add_edge("data_analyzer", "supervisor")
         graph_builder.add_edge("supervisor", "coder")
-        graph_builder.add_conditional_edges(
-            "coder",
-            keywords_router,
-            {"DECISION: ALTER_PLAN": "supervisor", "DECISION: REANALYZE_DATA": "data_analyzer", "NONE": "latex_writer"},
-        )
-        graph_builder.add_edge("latex_writer", "artifact_publisher")
+        
+        # graph_builder.add_conditional_edges(
+        #     "coder",
+        #     keywords_router,
+        #     {"DECISION: ALTER_PLAN": "supervisor", "DECISION: REANALYZE_DATA": "data_analyzer", "NONE": "latex_writer"},
+        # )
+        if config.workflow.enable_latex_writer:
+            graph_builder.add_edge("coder", "latex_writer")
+            graph_builder.add_edge("latex_writer", "artifact_publisher")
+        else:
+            graph_builder.add_edge("coder", "artifact_publisher")
         graph_builder.add_edge("artifact_publisher", "end")
+            
         graph_builder.add_edge("end", END)
 
         graph = graph_builder.compile()
