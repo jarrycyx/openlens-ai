@@ -17,7 +17,6 @@ def start_grading_server(data_dir, port=5000):
     # 设置环境变量
     env = os.environ.copy()
     env['PRIVATE_DATA_DIR'] = data_dir
-    env['COMPETITION_ID'] = 'aerial-cactus-identification'  # 使用一个已知的竞赛ID
     
     # 启动服务器进程
     cmd = [
@@ -25,7 +24,8 @@ def start_grading_server(data_dir, port=5000):
         '/data/cyx/openlens-ai/exp/mle_bench/grading_server/custom_grading_server.py',
         '--data-dir', data_dir,
         '--host', '127.0.0.1',
-        '--port', str(port)
+        '--port', str(port),
+        '--competition-id', 'aerial-cactus-identification'  # 使用一个已知的竞赛ID
     ]
     
     process = subprocess.Popen(
