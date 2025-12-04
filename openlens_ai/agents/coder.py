@@ -61,8 +61,8 @@ def build_coder(config: Config, file_manager: FileManager) -> StateGraph:
         extra_body={"chat_template_kwargs": {"enable_thinking": False}},
     )
     
-    plan_reader_tool = PlanReaderTool(config)
-    report_writer_tool = ReportWriterTool(config)
+    plan_reader_tool = PlanReaderTool(config.save_path)
+    report_writer_tool = ReportWriterTool(config.save_path)
     concluder_tools = [report_writer_tool]
     concluder_llm_with_tools = concluder_llm.bind_tools(concluder_tools)
 

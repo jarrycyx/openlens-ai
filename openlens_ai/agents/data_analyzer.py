@@ -60,8 +60,11 @@ def build_data_analyzer(config: Config, file_manager: FileManager) -> StateGraph
     @track_node_call("data_analyzer")
     def data_sample_node(state: State):
         # Initialize FileSummary to get file descriptions
+        workspace_manager_config = file_manager.config
+        workspace_manager_config.inclusion.ext_whitelist = [".py", ".sh", ".c", ".cpp", ".r", ".json", ".txt", ".csv"]
+        
         dataset_manager = FileManager(
-            config=file_manager.config,
+            config=workspace_manager_config,
             analyze_dir=config.dataset_path,
             backup_path=file_manager.backup_path,
             realloc_log=False,
