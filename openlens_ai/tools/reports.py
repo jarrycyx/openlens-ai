@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
 
 from langchain_core.tools import BaseTool
-from ..utils.config import Config
 
 class ReportWriterToolInput(BaseModel):
     data_report: str = Field(
@@ -23,19 +22,20 @@ class ReportWriterTool(BaseTool):
     name: str = "report_writer_tool"
     description: str = "A tool that writes reports to a fixed locations."
     args_schema: Type[BaseModel] = ReportWriterToolInput
-    config: Optional[dict] = None
     file_name: Optional[str] = ""
+    save_path: str = ""
 
-    def __init__(self, config: Config, file_name: str=""):
+    def __init__(self, save_path: str, file_name: str=""):
         super().__init__()
-        self.config = config
+        self.save_path = save_path
         self.file_name = file_name
+        
     def _run(self, data_report: str, file_name: str) -> str:
         """执行OpenHands操作的主要方法"""
         if self.file_name:
             file_name = self.file_name
         
-        workspace_dir = os.path.join(self.config.save_path, "workspace")
+        workspace_dir = os.path.join(self.save_path, "workspace")
         with open(os.path.join(workspace_dir, file_name), "w") as f:
             f.write(data_report)
         return data_report
@@ -51,12 +51,12 @@ class ReportReaderTool(BaseTool):
     name: str = "data_report_reader_tool"
     description: str = "A tool that reads reports from a fixed location."
     args_schema: Type[BaseModel] = ReportReaderToolInput
-    config: Optional[dict] = None
     file_name: str = ""
+    save_path: str = ""
 
-    def __init__(self, config: Config, file_name: str=""):
+    def __init__(self, save_path: str, file_name: str=""):
         super().__init__()
-        self.config = config
+        self.save_path = save_path
         self.file_name = file_name
         
     def _run(self, file_name: str) -> str:
@@ -64,7 +64,7 @@ class ReportReaderTool(BaseTool):
         if self.file_name:
             file_name = self.file_name
         try:
-            workspace_dir = os.path.join(self.config.save_path, "workspace")
+            workspace_dir = os.path.join(self.save_path, "workspace")
             with open(os.path.join(workspace_dir, file_name), "r") as f:
                 data_report = f.read()
             return data_report

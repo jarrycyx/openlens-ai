@@ -89,7 +89,7 @@ def build_latex_writer(config: Config, file_manager: FileManager) -> StateGraph:
         extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
 
-    report_writer_tool = ReportWriterTool(config, file_name="manuscript/latex_quality_report.md")
+    report_writer_tool = ReportWriterTool(config.save_path, file_name="manuscript/latex_quality_report.md")
 
     tools = [report_writer_tool]
     concluder_llm_with_tools = concluder_llm.bind_tools(tools)

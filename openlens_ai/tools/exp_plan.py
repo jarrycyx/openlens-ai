@@ -8,7 +8,7 @@ from langgraph.graph import StateGraph, START, END
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
-from ..utils.config import Config
+from loguru import logger
 
 class PlanWriterToolInput(BaseModel):
     objective: str = Field(
@@ -29,11 +29,14 @@ class PlanWriterTool(BaseTool):
     name: str = "plan_writer_tool"
     description: str = "A tool that writes structured experimental plans to a fixed location."
     args_schema: Type[BaseModel] = PlanWriterToolInput
-    config: Optional[dict] = None
+    save_path: str = ""
+    min_sub_tasks: int = 3
 
-    def __init__(self, config: Config):
+    def __init__(self, save_path: str, min_sub_tasks: int = 3):
         super().__init__()
-        self.config = config
+        self.save_path = save_path
+        self.min_sub_tasks = max(min_sub_tasks, min_sub_tasks)
+        logger.info(f"Minimum number of subtasks for the experiment plan: {self.min_sub_tasks}")
     
     def _run(self, objective: str, sub_tasks: List[str], expected_result: str) -> str:
         """执行写入结构化实验计划的主要方法"""
@@ -43,21 +46,21 @@ class PlanWriterTool(BaseTool):
             "sub_tasks": sub_tasks,
             "expected_result": expected_result
         }
-        if len(sub_tasks) < 3:
-            raise ValueError("Must have at least 3 subtasks. If the question is complex, may increase to 4 or 5 subtasks.")
+        if len(sub_tasks) < self.min_sub_tasks:
+            raise ValueError(f"Must have at least 3 subtasks. If the question is complex, may increase to 4 or 5 subtasks. Due to the complexity of the question, must have at least {self.min_sub_tasks} subtasks.")
         for sub_task in sub_tasks:
             if len(sub_task) < 500:
                 raise ValueError("Please provide a more detailed sub-task description. Remeber: Argument sub_tasks must be a LIST OF STRINGS, make sure each string is detailed enough (at least 500 characters), and there should be at least 3 sub tasks")
         
         # 写入JSON格式的计划文件
-        with open(os.path.join(self.config.save_path, "plan.json"), "w") as f:
+        with open(os.path.join(self.save_path, "plan.json"), "w") as f:
             json.dump(plan_data, f, indent=2, ensure_ascii=False)
             
         plan_markdown = f"# Experiment Plan\n\nObjective: {objective}\n\nSub Tasks:\n"
         for i, task in enumerate(sub_tasks):
             plan_markdown += f"\n\n# SUBTASK{i+1:02d}\n {task}\n"
         plan_markdown += f"\nExpected Result: {expected_result}"
-        with open(os.path.join(self.config.save_path, "plan.md"), "w") as f:
+        with open(os.path.join(self.save_path, "plan.md"), "w") as f:
             f.write(plan_markdown)
             
         return f"Plan written successfully with objective: {objective}"
@@ -71,15 +74,16 @@ class PlanReaderTool(BaseTool):
     name: str = "plan_reader_tool"
     description: str = "A tool that reads structured experimental plans from a fixed location."
     args_schema: Type[BaseModel] = PlanReaderToolInput
-    config: Optional[dict] = None
+    save_path: str = ""
 
-    def __init__(self, config: Config):
+    def __init__(self, save_path: str):
         super().__init__()
-        self.config = config
+        self.save_path = save_path
+        
     def _run(self) -> str:
         """读取结构化实验计划的主要方法"""
         try:
-            with open(os.path.join(self.config.save_path, "plan.json"), "r") as f:
+            with open(os.path.join(self.save_path, "plan.json"), "r") as f:
                 plan_data = json.load(f)
             return plan_data
         except FileNotFoundError:

@@ -50,6 +50,9 @@ openhands_max_iter = 100  # Maximum number of iterations allowed for OpenHands a
 max_subtask_redo = 2  # Maximum number of retries for subtasks
 max_latex_polish_round = 2  # Maximum number of rounds for LaTeX document polishing
 literature_search_min_tool_call = 10  # Minimum number of tool calls for literature search
+min_sub_tasks = 3  # Minimum number of subtasks for the experiment plan
+enable_literature_review = true  # Enable or disable the literature review feature
+enable_latex_writer = true  # Enable or disable the LaTeX writer feature
 
 [docker]
 docker_name = "openlens-ai:runtime-latest"  # Name of the Docker container used for the agent environment

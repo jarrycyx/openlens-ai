@@ -91,7 +91,7 @@ def build_literature_review_subgraph(config: Config, file_manager: FileManager):
 
     llm_react = create_react_agent(search_llm, search_tools, pre_model_hook=react_pre_model_wrapper(config.question, config))
 
-    report_tools = [ReportWriterTool(config, file_name="literature_review.md")]
+    report_tools = [ReportWriterTool(config.save_path, file_name="literature_review.md")]
     llm_report_writer = write_llm.bind_tools(report_tools)
 
     # 使用项目中的chatbot接口

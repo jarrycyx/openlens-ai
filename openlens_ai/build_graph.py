@@ -80,6 +80,12 @@ def build_graph(config: Config, start_subgraph: str = None, file_manager: FileMa
         graph_builder.add_node("literature_reviewer", literature_review_subgraph)
         graph_builder.add_node("latex_writer", latex_writer_subgraph)
         graph_builder.add_node("end", end_node)
+        
+        if not config.enable_literature_review:
+            all_subgraphs.remove("literature_reviewer")
+        
+        if not config.enable_latex_writer:
+            all_subgraphs.remove("latex_writer")
 
         if start_subgraph and (start_subgraph in all_subgraphs):
             graph_builder.add_edge(START, start_subgraph)
