@@ -51,7 +51,7 @@ def build_data_analyzer(config: Config, file_manager: FileManager) -> StateGraph
         base_url=config.llm.chat.base_url,
         model_provider="openai",
         openai_api_key=config.llm.chat.api_key,
-        extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
     report_writer_tool = ReportWriterTool(config.save_path, file_name="data_report.md")
     tools = [report_writer_tool]

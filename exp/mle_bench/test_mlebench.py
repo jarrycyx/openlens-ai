@@ -207,10 +207,6 @@ def run_single_test(dataset_info, thread_id, config_path, email, datasets_dir):
             print(f"Stopped grading server for {dataset_info['name']} on port {server_port}")
 
 
-# 旧的start_grading_server和stop_grading_server函数已被移除
-# 现在使用start_task_grading_server和stop_task_grading_server函数为每个任务启动独立的grading server
-
-
 def main():
     parser = argparse.ArgumentParser(description="Test MLE-bench datasets")
     parser.add_argument("--processes", type=int, default=4, help="Number of processes to run in parallel")
