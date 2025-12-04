@@ -41,6 +41,8 @@ curie/setup/env.sh
 .streamlit/app.openlens.icu.key
 .streamlit/app.openlens.icu.pem
 webui/utils/translation_llm.json
+exp/mle_bench/kaggle.sh
+exp/mle_bench/kaggle.json
 
 # 缓存和临时文件
 code_logging
