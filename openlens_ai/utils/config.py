@@ -62,6 +62,7 @@ class WorkflowConfig(BaseModel):
     min_sub_tasks: int = Field(default=3, description="Minimum number of subtasks for the experiment plan")
     enable_literature_review: bool = Field(default=True, description="Enable or disable the literature review feature")
     enable_latex_writer: bool = Field(default=True, description="Enable or disable the LaTeX writer feature")
+    enable_artifact_publisher: bool = Field(default=False, description="Enable or disable the artifact publisher feature")
 
 
 class DockerConfig(BaseModel):

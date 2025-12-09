@@ -18,7 +18,7 @@ except ImportError:
     requests = None
 
 
-# 认为是“代码/配置相关”的文件后缀
+# File suffixes considered as "code/configuration related"
 CODE_SUFFIXES = {
     ".py",
     ".ipynb",
@@ -32,12 +32,12 @@ CODE_SUFFIXES = {
 }
 
 EXCLUDED_DIRS = {
-    "manuscript",   # 整个 manuscript 不要
-    "__pycache__",  # 避免乱七八糟缓存
+    "manuscript",   # Exclude the entire manuscript directory
+    "__pycache__",  # Avoid messy cache files
 }
 
 def _get_workspace_dir(config: Config) -> Path:
-    """根据当前 Config 推出 workspace 目录。"""
+    """Derive workspace directory from current Config."""
     return Path(config.save_path).expanduser().resolve() / "workspace"
 
 
@@ -47,11 +47,11 @@ def _collect_code_files(workspace: Path) -> List[Path]:
         if not p.is_file():
             continue
 
-        # --- 新增：排除指定目录 ---
+        # --- New: Exclude specified directories ---
         if any(ex in p.parts for ex in EXCLUDED_DIRS):
             continue
 
-        # --- 只保留特定后缀 ---
+        # --- Only keep files with specific suffixes ---
         if p.suffix.lower() in CODE_SUFFIXES:
             files.append(p)
 
@@ -60,7 +60,7 @@ def _collect_code_files(workspace: Path) -> List[Path]:
 
 
 def _compute_code_stats(workspace: Path, files: List[Path]) -> Dict[str, Any]:
-    """计算一些简单的“代码是否正常”的统计量。"""
+    """Calculate simple statistics to check if code looks normal."""
 
     total_bytes = 0
     py_files = 0
@@ -90,12 +90,12 @@ def _compute_code_stats(workspace: Path, files: List[Path]) -> Dict[str, Any]:
 
 def _decide_ok_to_publish(stats: Dict[str, Any]) -> bool:
     """
-    根据简单的阈值判断是否“看起来像是正常生成的代码”。
+    Determine if it "looks like normally generated code" based on simple thresholds.
 
-    默认阈值可以通过环境变量覆盖：
-      - ARTIFACT_MIN_CODE_FILES (默认 5)
-      - ARTIFACT_MIN_CODE_BYTES (默认 1024)
-      - ARTIFACT_MIN_PY_FILES   (默认 1)
+    Default thresholds can be overridden via environment variables:
+      - ARTIFACT_MIN_CODE_FILES (default 5)
+      - ARTIFACT_MIN_CODE_BYTES (default 1024)
+      - ARTIFACT_MIN_PY_FILES   (default 1)
     """
 
     min_files = int(os.getenv("ARTIFACT_MIN_CODE_FILES", "5"))
@@ -133,7 +133,7 @@ def _decide_ok_to_publish(stats: Dict[str, Any]) -> bool:
 
 
 def _write_manifest(workspace: Path, stats: Dict[str, Any]) -> Path:
-    """在 workspace 里写一个 artifact_manifest.json，方便后续检查。"""
+    """Write an artifact_manifest.json in workspace for later inspection."""
     manifest_path = workspace / "artifact_manifest.json"
     manifest_path.write_text(
         json.dumps(stats, indent=2, ensure_ascii=False),
@@ -144,7 +144,7 @@ def _write_manifest(workspace: Path, stats: Dict[str, Any]) -> Path:
 
 
 def _run_git_command(args: List[str], cwd: Path) -> None:
-    """在指定目录下运行 git 命令，失败时抛异常并打印日志。"""
+    """Run git command in specified directory, throw exception and log on failure."""
     logger.debug(f"Running git command in {cwd}: {' '.join(['git'] + args)}")
     try:
         result = subprocess.run(
@@ -168,8 +168,8 @@ def _run_git_command(args: List[str], cwd: Path) -> None:
 
 def _ensure_git_repo(workspace: Path, repo_url: str, branch: str) -> None:
     """
-    确保 workspace 是一个 git 仓库，并且设置了 remote 和 branch。
-    不会帮你配置 token，只假设你本机已经能正常 git push。
+    Ensure workspace is a git repository with remote and branch configured.
+    Won't configure token for you, only assumes your local machine can git push normally.
     """
     git_dir = workspace / ".git"
     if not git_dir.exists():
@@ -178,13 +178,13 @@ def _ensure_git_repo(workspace: Path, repo_url: str, branch: str) -> None:
     else:
         logger.info(f".git directory already exists under {workspace}")
 
-    # 尝试设置当前 branch 名称
+    # Try to set current branch name
     try:
         _run_git_command(["branch", "-M", branch], workspace)
     except RuntimeError:
         logger.warning("Failed to rename branch, continuing anyway.")
 
-    # 设置 remote origin
+    # Set remote origin
     remotes_result = subprocess.run(
         ["git", "remote"],
         cwd=str(workspace),
@@ -201,29 +201,28 @@ def _ensure_git_repo(workspace: Path, repo_url: str, branch: str) -> None:
 
 def _auto_create_github_repo_if_needed(state: State, config: Config) -> str:
     """
-    自动决定要用哪个 GitHub 仓库 URL：
+    Automatically decide which GitHub repository URL to use:
 
-    优先级：
-    1. 如果 Config.git.repo_url 有值：直接用它（推到固定仓库，不再自动创建）；
-    2. 否则：
-       - 使用 Config.git.token 或 GITHUB_TOKEN 调 GitHub API 自动创建新仓库；
-       - 新仓库名由 Config.git.repo_prefix + thread_id 决定；
-       - private 由 Config.git.private 决定。
+    Priority:
+    1. If Config.git.repo_url has a value: Use it directly (push to fixed repo, no auto-creation);
+    2. Otherwise:
+       - Use Config.git.token or GITHUB_TOKEN to call GitHub API to auto-create new repo;
+       - New repo name is determined by Config.git.repo_prefix + thread_id;
+       - private is determined by Config.git.private.
     """
 
-    git_cfg = getattr(config, "git", None)
     frontend_config = getattr(config, "frontend", None)
     logger.info(f"frontend_config: {frontend_config}")
-    logger.info(f"git_cfg: {git_cfg}")
+    logger.info(f"config.git: {config.git}")
 
-    repo_url_cfg = (git_cfg.repo_url if git_cfg else None) or ""
+    repo_url_cfg = config.git.repo_url
     repo_url = repo_url_cfg.strip()
     if repo_url:
         logger.info(f"Using existing GitHub repo URL={repo_url}")
         return repo_url
 
-    # 2) 没指定 repo_url，就尝试自动创建
-    token_cfg = (git_cfg.token if git_cfg else None) or ""
+    # 2) If repo_url is not specified, try to auto-create
+    token_cfg = config.git.token
     token = token_cfg.strip()
     if not token:
         logger.warning(
@@ -233,15 +232,8 @@ def _auto_create_github_repo_if_needed(state: State, config: Config) -> str:
         )
         return ""
 
-    if requests is None:
-        logger.warning(
-            "python-requests not installed; cannot call GitHub API to create repo. "
-            "Please `pip install requests` or set Config.git.repo_url explicitly."
-        )
-        return ""
-
-    # 3) 决定一个 repo 名字
-    prefix = git_cfg.repo_prefix if git_cfg else None.strip()
+    # 3) Decide a repo name
+    prefix = config.git.repo_prefix.strip()
 
     thread_id = str(state.get("thread_id") or Path(config.save_path).name)
     safe_thread_id = re.sub(r"[^A-Za-z0-9_.-]+", "-", thread_id)[:80].strip("-")
@@ -249,13 +241,46 @@ def _auto_create_github_repo_if_needed(state: State, config: Config) -> str:
 
     logger.info(f"Auto-creating GitHub repo with name={repo_name!r}")
 
-    is_private = git_cfg.private
+    is_private = config.git.private
 
-    api_url = "https://api.github.com/user/repos"
+    # First get the authenticated user's username
     headers = {
         "Authorization": f"token {token}",
         "Accept": "application/vnd.github+json",
     }
+    
+    try:
+        user_resp = requests.get("https://api.github.com/user", headers=headers, timeout=15)
+        if user_resp.status_code != 200:
+            logger.error(f"Failed to get GitHub user info: {user_resp.status_code}")
+            return ""
+        
+        user_data = user_resp.json()
+        username = user_data.get("login")
+        if not username:
+            logger.error("Could not determine GitHub username")
+            return ""
+    except Exception as e:
+        logger.error(f"Failed to get GitHub username: {e}")
+        return ""
+
+    # Check if repository already exists
+    check_url = f"https://api.github.com/repos/{username}/{repo_name}"
+    try:
+        resp = requests.get(check_url, headers=headers, timeout=15)
+        if resp.status_code == 200:
+            # Repository already exists
+            data = resp.json()
+            ssh_url = data.get("ssh_url")
+            https_url = data.get("clone_url")
+            repo_url = ssh_url or https_url or ""
+            logger.info(f"Using existing GitHub repo {data.get('full_name')} at {repo_url}")
+            return repo_url
+    except Exception as e:
+        logger.debug(f"Failed to check if repo exists: {e}")
+
+    # Repository doesn't exist, create it
+    api_url = "https://api.github.com/user/repos"
     payload = {
         "name": repo_name,
         "private": is_private,
@@ -291,12 +316,12 @@ def _auto_create_github_repo_if_needed(state: State, config: Config) -> str:
 
 def build_artifact_publisher(config: Config) -> StateGraph:
     """
-    构建 LangGraph 子图：
+    Build LangGraph subgraph:
         START -> artifact_package_node -> artifact_publish_node -> END
 
-    这里通过“闭包”的方式把 config 传进节点函数，
-    节点函数本身的签名保持为 (state: State)，
-    和 track_node_call 的包装器完全兼容。
+    Here we pass config to node functions through "closure",
+    keeping the node function signature as (state: State),
+    fully compatible with track_node_call wrapper.
     """
 
     logger.info("Building artifact_publisher subgraph (pure Python, no OpenHands).")
@@ -304,10 +329,10 @@ def build_artifact_publisher(config: Config) -> StateGraph:
     @track_node_call("artifact_publisher")
     def artifact_package_node(state: State) -> State:
         """
-        节点 1：
-        - 扫描 workspace 下的代码相关文件
-        - 做一个简单的 sanity check
-        - 写 artifact_manifest.json
+        Node 1:
+        - Scan code-related files under workspace
+        - Perform a simple sanity check
+        - Write artifact_manifest.json
         """
         logger.info("Running artifact_package_node (code scan + sanity check).")
 
@@ -338,9 +363,9 @@ def build_artifact_publisher(config: Config) -> StateGraph:
     @track_node_call("artifact_publisher")
     def artifact_publish_node(state: State) -> State:
         """
-        节点 2：
-        - 如果 sanity check 不通过，直接跳过 push
-        - 否则把 workspace 当成 git 仓库，自动 add/commit/push 到 GitHub
+        Node 2:
+        - If sanity check fails, skip push directly
+        - Otherwise treat workspace as git repo, automatically add/commit/push to GitHub
         """
         logger.info("Running artifact_publish_node (git push).")
         workspace = _get_workspace_dir(config)
@@ -359,13 +384,13 @@ def build_artifact_publisher(config: Config) -> StateGraph:
             state["artifact_published"] = False
             return state
 
-        # 先确定目标分支
-        # 先确定目标分支（Config.git.branch 优先，其次环境变量）
-        git_cfg = getattr(config, "git", None)
-        branch_cfg = (git_cfg.branch if git_cfg else None) or ""
+        # First determine target branch
+        # First determine target branch (Config.git.branch takes priority, then environment variable)
+        config.git = getattr(config, "git", None)
+        branch_cfg = (config.git.branch if config.git else None) or ""
         branch = (branch_cfg or "main").strip()
 
-        # 自动决定 / 创建远端仓库
+        # Automatically decide/create remote repository
         repo_url = _auto_create_github_repo_if_needed(state, config)
 
         if not repo_url:
@@ -387,7 +412,7 @@ def build_artifact_publisher(config: Config) -> StateGraph:
 
             # add & commit
             try:
-                # 先根据 manifest 精确决定要 add 哪些文件
+                # First precisely decide which files to add based on manifest
                 manifest_path_str = state.get("artifact_manifest_path")
                 manifest_files: List[str] = []
 
@@ -395,7 +420,7 @@ def build_artifact_publisher(config: Config) -> StateGraph:
                     manifest_path = Path(manifest_path_str)
                     try:
                         manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
-                        # 这里的 "files" 是在 _compute_code_stats 里写进去的相对路径
+                        # The "files" here are relative paths written in _compute_code_stats
                         manifest_files = manifest_data.get("files", [])
                     except Exception as e:
                         logger.warning(f"Failed to load artifact_manifest.json: {e}")
@@ -407,21 +432,21 @@ def build_artifact_publisher(config: Config) -> StateGraph:
                     )
                     _run_git_command(["add", "."], workspace)
                 else:
-                    # 精确 add：只 add manifest 里列出的那些 code 文件
+                    # Precise add: only add code files listed in manifest
                     for rel_path in manifest_files:
                         _run_git_command(["add", rel_path], workspace)
 
-                    # 顺便把 manifest 自己也 add 上去（方便复现）
+                    # Also add manifest itself (for reproducibility)
                     _run_git_command(["add", Path(manifest_path_str).name], workspace)
 
                 # commit
                 _run_git_command(
-                    ["commit", "-m", "Add artifact from OpenLens AI artifact_publisher"],
+                    ["commit", "-m", "'Add artifact from OpenLens AI artifact_publisher'"],
                     workspace,
                 )
 
             except RuntimeError as e:
-                # 如果没有任何变化，commit 会失败，这不是致命错误
+                # If there are no changes, commit will fail, this is not a fatal error
                 logger.warning(f"git commit failed (possibly no changes): {e}")
 
             # push
@@ -453,22 +478,22 @@ def build_artifact_publisher(config: Config) -> StateGraph:
 if __name__ == "__main__":
     run_dir = Path("outputs/pred_aki_dy_mimic_icu_csv_20251118173506").resolve()
     if not run_dir.exists():
-        raise RuntimeError(f"run_dir 不存在: {run_dir}")
+        raise RuntimeError(f"run_dir does not exist: {run_dir}")
     if not (run_dir / "workspace").exists():
-        raise RuntimeError(f"workspace 不存在: {run_dir / 'workspace'}")
+        raise RuntimeError(f"workspace does not exist: {run_dir / 'workspace'}")
 
     config, state, last_subgraph = load_state(str(run_dir))
     config = Config.from_toml("config.temp.toml")
 
-    # 为保险起见，确保 config.save_path 和 state["save_path"] 一致
+    # For safety, ensure config.save_path and state["save_path"] are consistent
     config.save_path = str(run_dir)
     state["save_path"] = str(run_dir)
 
-    # 3. 构建 artifact_publisher 子图并执行
+    # 3. Build and execute artifact_publisher subgraph
     graph = build_artifact_publisher(config)
     final_state: State = graph.invoke(state)
 
-    print("=== artifact_publisher 结束 ===")
+    print("=== artifact_publisher finished ===")
     print("artifact_manifest_path:", final_state.get("artifact_manifest_path"))
     print("artifact_code_stats:", final_state.get("artifact_code_stats"))
     print("artifact_ok_to_publish:", final_state.get("artifact_ok_to_publish"))
