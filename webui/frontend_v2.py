@@ -74,7 +74,6 @@ def load_saved_experiments():
 
     return preset_experiments
 
-
 def load_user_projects(email: str) -> List[Dict[str, Any]]:
     """Load user-specific project list"""
     if not email:
@@ -457,7 +456,7 @@ def main():
             
             st.button(f"🔄 {t('refresh')}", type="secondary", key="refresh_button")
 
-        latest_files = get_latest_files(config)
+        latest_files = get_latest_files(config, max_files=20)
         logger.debug(f"Latest files: {[f[0] for f in latest_files]}")
         if latest_files:
             latest_file_path, _, _ = latest_files[0]
