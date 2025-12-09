@@ -116,7 +116,7 @@ def check_file(file_path: str):
         return False
 
 
-def get_latest_files(config: Config):
+def get_latest_files(config: Config, max_files: int = 10):
     workspace_path = os.path.join(config.save_path, "workspace")
     pdf_path = get_paper_path(config)
 
@@ -154,7 +154,7 @@ def get_latest_files(config: Config):
     if pdf_path:
         all_files.insert(0, (pdf_path, os.path.relpath(pdf_path, workspace_path), os.path.getmtime(pdf_path)))
 
-    latest_files = all_files[:10]  # Display the latest 10 files
+    latest_files = all_files[:max_files]  # Display the latest 10 files
 
     return latest_files
 
