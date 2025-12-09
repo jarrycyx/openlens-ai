@@ -38,6 +38,12 @@ class State(TypedDict):
     file_summary: dict = {}
     available_figs: list = []
 
+    artifact_manifest_path: str | None
+    artifact_code_stats: dict | None
+    artifact_ok_to_publish: bool | None
+    artifact_logs: list[str] | None
+    artifact_published: bool | None
+    artifact_repo_url: str | None
 
 def track_node_call(subgraph_name: str = ""):
     def track_node_call_inner(func):
@@ -169,17 +175,28 @@ def load_state(
         node_call_stack = state["node_call_stack"]
 
         resume_node_call_stack = []
-        all_subgraphs = [node.split(".")[0].replace("subgraph_", "") for node in node_call_stack]
-        # Deduplicate but preserve order
-        all_subgraphs = list(dict.fromkeys(all_subgraphs))
-        for node in node_call_stack:
-            # Only add nodes that are not end_node and not in start_from_subgraph,
-            # task will skip nodes in resume_node_call_stack
-            if ("end_node" not in node) and (start_from_subgraph not in node):
-                resume_node_call_stack.append(node)
-                last_subgraph = all_subgraphs[-2] if len(all_subgraphs) > 1 else None
-            else:
-                break
+        if start_from_subgraph:
+            logger.debug(f"start_from_subgraph is set to {start_from_subgraph}, will resume from {start_from_subgraph}")
+            # If start_from_subgraph is in node, add it to the last node in resume_node_call_stack so that it will be executed
+            for node in node_call_stack:
+                if start_from_subgraph in node:
+                    logger.debug(f"Found start_from_subgraph in node_call_stack: {node}")
+                    resume_node_call_stack.append(node)
+                    break
+        else:
+            for node in node_call_stack:
+                # Only add nodes that are not end_node
+                # task will skip nodes in resume_node_call_stack until the last
+                if "end_node" in node:
+                    break
+                else:
+                    resume_node_call_stack.append(node)
+        
+        if resume_node_call_stack:
+            start_from_subgraph = resume_node_call_stack[-1].split(".")[0].replace("subgraph_", "")
+        else:
+            start_from_subgraph = start_from_subgraph
+                
 
         logger.info(f"Will skip nodes in resume_node_call_stack until the last: {resume_node_call_stack}")
 
@@ -197,7 +214,7 @@ def load_state(
     if os.path.exists("openlens_ai"):
         shutil.copytree("openlens_ai", os.path.join(backup_path, "openlens_ai"), dirs_exist_ok=True)
 
-    return config, state, last_subgraph, file_manager
+    return config, state, start_from_subgraph, file_manager
 
 
 def prepare_state(config: Config) -> Config:

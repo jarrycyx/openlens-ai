@@ -53,9 +53,24 @@ literature_search_min_tool_call = 10  # Minimum number of tool calls for literat
 min_sub_tasks = 3  # Minimum number of subtasks for the experiment plan
 enable_literature_review = true  # Enable or disable the literature review feature
 enable_latex_writer = true  # Enable or disable the LaTeX writer feature
+enable_artifact_publisher = true  # Enable or disable the artifact publisher feature
 
 [docker]
 docker_name = "openlens-ai:runtime-latest"  # Name of the Docker container used for the agent environment
 
 [frontend]
 frontend_admin_email = "<YOUR EMAIL>"  # Admin email address that can access all users' sessions in the frontend
+
+[git]
+# IMPORTANT: To use git publisher, you need to first set [workflow]enable_artifact_publisher to true then do the following:
+# 1. If you want auto-create repo, create a GitHub personal access token (PAT) with repo scope and set it here.
+token = "<YOUR GITHUB TOKEN>" 
+# OR set the repo_url and branch instead
+repo_url = ""
+branch = "main"
+# 2. Create an SSH key pair and set the public key here. Recommend generate a key pair and set the private key by:
+# ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+# 3. Set the public key to https://github.com/settings/ssh/new
+# 4. Finally, configure the following config
+repo_prefix = "openlens-"    # Prefix used for automatically created repositories (e.g., "openlens-12345").
+private = true               # Whether automatically created GitHub repositories should be private.

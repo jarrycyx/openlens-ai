@@ -23,13 +23,14 @@ from .agents.coder import build_coder
 from .agents.data_analyzer import build_data_analyzer
 from .agents.literature_reviewer import build_literature_review_subgraph
 from .agents.latex_writer import build_latex_writer
+from .agents.artifact_publisher import build_artifact_publisher
 from .state import State, load_state, track_node_call  # Import load_state function from state module
 from .utils.frontend_messages import frontend_add_message, frontend_add_tool_call, frontend_update_node
 from .utils.config import Config
 
 graph = None
 stop_sending_emails = threading.Event()
-all_subgraphs = ["literature_reviewer", "data_analyzer", "supervisor", "coder", "latex_writer"]
+all_subgraphs = ["literature_reviewer", "data_analyzer", "supervisor", "coder", "latex_writer", "artifact_publisher"]
 
 
 def send_periodic_emails(config: Config):
@@ -73,39 +74,44 @@ def build_graph(config: Config, start_subgraph: str = None, file_manager: FileMa
         data_analyzer_subgraph = build_data_analyzer(config, file_manager)
         literature_review_subgraph = build_literature_review_subgraph(config, file_manager)
         latex_writer_subgraph = build_latex_writer(config, file_manager)
-
+        artifact_publisher_graph = build_artifact_publisher(config)
+        
         graph_builder.add_node("supervisor", supervisor_subgraph)
         graph_builder.add_node("coder", coder_subgraph)
         graph_builder.add_node("data_analyzer", data_analyzer_subgraph)
         graph_builder.add_node("literature_reviewer", literature_review_subgraph)
         graph_builder.add_node("latex_writer", latex_writer_subgraph)
+        graph_builder.add_node("artifact_publisher", artifact_publisher_graph)
         graph_builder.add_node("end", end_node)
         
-        if (not config.workflow.enable_literature_review) and ((start_subgraph == "literature_reviewer") or (not start_subgraph)):
-            start_subgraph = "data_analyzer"
-            logger.info(f"Start subgraph: {start_subgraph}")
+        this_all_subgraphs = all_subgraphs.copy()
+        # start from specified subgraph
+        if start_subgraph:
+            if start_subgraph in this_all_subgraphs:
+                this_all_subgraphs = this_all_subgraphs[this_all_subgraphs.index(start_subgraph):]
+            else:
+                logger.error(f"Invalid start subgraph: {start_subgraph} not in {str(all_subgraphs)}")
         
-
-        if start_subgraph and (start_subgraph in all_subgraphs):
-            graph_builder.add_edge(START, start_subgraph)
-        else:
-            graph_builder.add_edge(START, "literature_reviewer")
-        graph_builder.add_edge("literature_reviewer", "data_analyzer")
-        # graph_builder.add_edge(START, "data_analyzer")
-        graph_builder.add_edge("data_analyzer", "supervisor")
-        graph_builder.add_edge("supervisor", "coder")
+        if not config.workflow.enable_literature_review:
+            this_all_subgraphs.remove("literature_reviewer")
+        if not config.workflow.enable_latex_writer:
+            this_all_subgraphs.remove("latex_writer")
+        if not config.workflow.enable_artifact_publisher:
+            this_all_subgraphs.remove("artifact_publisher")
+        
+        this_all_subgraphs = [START] + this_all_subgraphs + ["end", END]
+        for subgraph_index in range(len(this_all_subgraphs) - 1):
+            from_subgraph = this_all_subgraphs[subgraph_index]
+            to_subgraph = this_all_subgraphs[subgraph_index + 1]
+            graph_builder.add_edge(from_subgraph, to_subgraph)
+        
+        logger.info(f"All valid subgraphs: {str(this_all_subgraphs)}")
+        
         # graph_builder.add_conditional_edges(
         #     "coder",
         #     keywords_router,
         #     {"DECISION: ALTER_PLAN": "supervisor", "DECISION: REANALYZE_DATA": "data_analyzer", "NONE": "latex_writer"},
         # )
-        if config.workflow.enable_latex_writer:
-            graph_builder.add_edge("coder", "latex_writer")
-            graph_builder.add_edge("latex_writer", "end")
-        else:
-            graph_builder.add_edge("coder", "end")
-            
-        graph_builder.add_edge("end", END)
 
         graph = graph_builder.compile()
 
@@ -167,7 +173,7 @@ def get_last_node(graph: CompiledStateGraph, this_node_name: str):
             return b
 
 
-def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, interrupt_after_subgraph="none"):
+def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, interrupt_after_subgraph=""):
     logger.info(f"Main process is running with PID {os.getpid()}")
 
     # Start thread for sending periodic emails

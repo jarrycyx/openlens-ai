@@ -228,6 +228,97 @@ openlens_ai/
 └── state.py             # 状态管理
 ```
 
+## 🧩 可选功能：GitHub 集成（自动推送实验产物）
+
+OpenLens AI 提供一个 **可选功能**：将生成的代码产物自动发布到 GitHub。\
+如果你不配置这一部分，默认不会向 GitHub 推送任何内容。
+
+### 1. 在 `config.toml` 中配置 GitHub
+
+添加或修改 `[git]` 配置块：
+
+``` toml
+[git]
+# 可选：固定推送到某一个指定仓库
+# repo_url = "git@github.com:<你的用户名>/<你的仓库名>.git"
+repo_url    = ""
+
+branch      = "main"                 # 提交和推送所使用的分支
+token       = "<YOUR GITHUB TOKEN>"  # GitHub 个人访问令牌（PAT）
+repo_prefix = "openlens-"            # 自动创建仓库时使用的前缀
+private     = true                   # 自动创建的仓库是否设为私有
+```
+
+-   当 `repo_url` **已设置** 时 → 实验产物将被推送到该指定仓库；\
+-   当 `repo_url` **为空但 token 已设置** 时 → OpenLens AI 可能会在你的
+    GitHub 账号下 **自动创建一个新仓库** 并推送至该仓库。
+
+> 💡 建议：\
+> 将真实的 token 仅存放在本地的 `config.local.toml`（该文件应被 Git
+> 忽略），\
+> 仓库中公开的 `config.full-example.toml` 仅使用 `<YOUR GITHUB TOKEN>`
+> 作为占位符。
+
+------------------------------------------------------------------------
+
+### 2. 如何生成 GitHub Token（简要版）
+
+1.  打开：\
+    **GitHub → Settings → Developer settings → Personal access tokens**
+
+2.  新建一个 Token：
+
+    -   推荐选择 **Fine-grained PAT**（细粒度令牌）
+
+3.  仓库访问权限选择：
+
+    -   ✅ All repositories（适用于自动创建仓库模式）
+    -   ✅ Only select repositories（更安全，适用于固定仓库模式）
+
+4.  设置最小必要权限：
+
+    -   **Contents → Read and write**：用于推送代码
+    -   **Administration → Read and
+        write**：仅在需要自动创建仓库时才需要
+
+5.  复制生成的 Token，并填入：
+
+``` toml
+[git]
+token = "github_pat_XXXXXXXXXXXXXXXX"
+```
+
+或者设置为环境变量：
+
+``` bash
+export GITHUB_TOKEN=github_pat_XXXXXXXXXXXXXXXX
+```
+
+------------------------------------------------------------------------
+
+### 3. 安全注意事项
+
+-   🔒 请将 GitHub Token 视为"半个账号密码"：
+    -   **不要**将真实 token 提交到 Git 仓库中（尤其是公开仓库）
+    -   仅存放在本地配置文件中（如
+        `config.local.toml`、`.env`），并确保这些文件已加入 `.gitignore`
+-   🧹 如果你怀疑 Token 泄露：
+    -   请立即前往\
+        **GitHub → Settings → Developer settings → Tokens**\
+        **撤销（revoke）该 Token**
+-   🎯 始终遵循 **最小权限原则**：
+    -   如果使用自动建仓功能 → 需要 `Administration` 权限
+    -   如果只推送到固定仓库 → 只需要 `Contents` 写权限即可
+
+------------------------------------------------------------------------
+
+✅ 建议实践：
+
+-   研发 / 本地阶段：
+    -   可使用自动创建仓库模式（权限较大，但省事）
+-   对外发布 / 多用户使用时：
+    -   强烈建议使用 **固定仓库 + 单仓库 Fine-grained Token** 的安全模式
+
 ## 🛠🛠🛠️ 自定义
 
 ### 添加新智能体
