@@ -84,6 +84,7 @@ def parse_args():
         "--start-from-subtask-index", type=int, default=None, help="Start from the specified subtask index, use to resume from a specific subtask."
     )
     parser.add_argument("--resume-dir", type=str, help="Resume from a specific saved directory")
+    parser.add_argument("--e2e-test", action="store_true", help="Enable end-to-end test that use DummyAgent in OpenHands")
 
     return parser.parse_args()
 
@@ -144,6 +145,7 @@ def cli_main():
         config.notify_email = args.notify_email
         config.llm.language = args.language
         config.domain = args.domain
+        config.workflow.e2e_test = args.e2e_test
 
         main(config, interrupt_after_subgraph=args.interrupt_after_subgraph)
 

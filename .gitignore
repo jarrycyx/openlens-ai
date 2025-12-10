@@ -70,6 +70,8 @@ downloads
 exp/docker
 data/
 model/saves
+exp/eval_fig/figs
+exp/eval_fig/figs.zip
 
 # 其他
 debug

@@ -6,7 +6,8 @@ python -m openlens_ai.main \
     --interrupt-after-subgraph "none" \
     --language "eng" \
     --domain "medical" \
-    --config "exp/config.toml"
+    --config "exp/config.toml" \
+    --e2e-test
 
 python -m openlens_ai.main \
     --question "What is the prediction precision of AKI in ICU patients when dynamically predicting each day based on the past two days of historical data?" \

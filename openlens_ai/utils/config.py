@@ -63,6 +63,7 @@ class WorkflowConfig(BaseModel):
     enable_literature_review: bool = Field(default=True, description="Enable or disable the literature review feature")
     enable_latex_writer: bool = Field(default=True, description="Enable or disable the LaTeX writer feature")
     enable_artifact_publisher: bool = Field(default=False, description="Enable or disable the artifact publisher feature")
+    e2e_test: bool = Field(default=False, description="(ONLY FOR DEBUGGING) Enable end-to-end test that use DummyAgent in OpenHands")
 
 
 class DockerConfig(BaseModel):

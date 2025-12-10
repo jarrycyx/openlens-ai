@@ -30,22 +30,21 @@ from ..tools.paper_search_tool import (
     SearchMedRxivTool,
     SearchSemanticTool,
     ReadSemanticPaperTool,
+    DummySearchTool
 )
 from ..state import prepare_state
 from ..utils.config import Config
-
-
-
 
 
 # Initialize prompt variables
 report_prompt_template = None
 search_prompt_template = None
 
+
 # Function to load prompt files based on domain configuration
 def load_prompt_file(config, filename):
     """Load prompt file from the appropriate domain directory."""
-    domain = getattr(config, 'domain', 'general')
+    domain = getattr(config, "domain", "general")
     prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain, filename)
     logger.debug(f"Loading prompt file: {prompt_path}")
     with open(prompt_path, "r") as f:
@@ -56,10 +55,10 @@ def build_literature_review_subgraph(config: Config, file_manager: FileManager):
     """
     Build a subgraph for literature review using paperscraper to search for papers and RAG to generate a literature review report.
     """
-    
+
     # Load prompts based on domain configuration
     global report_prompt_template, search_prompt_template
-    
+
     report_prompt_template = load_prompt_file(config, "literature_review_report.md")
     search_prompt_template = load_prompt_file(config, "literature_search.md")
 
@@ -86,8 +85,14 @@ def build_literature_review_subgraph(config: Config, file_manager: FileManager):
         ReadMedRxivPaperTool(),
         # SearchSemanticTool(),
         # ReadSemanticPaperTool(),
-        TavilySearch(max_results=10)
+        TavilySearch(max_results=10),
     ]
+    # Do not use search in e2e test to avoid cost
+    if config.workflow.e2e_test:
+        logger.warning("Skipping search in e2e test to avoid cost.")
+        search_tools = [
+            DummySearchTool()
+        ]
 
     llm_react = create_react_agent(search_llm, search_tools, pre_model_hook=react_pre_model_wrapper(config.question, config))
 
@@ -99,9 +104,14 @@ def build_literature_review_subgraph(config: Config, file_manager: FileManager):
         config, llm_react, search_prompt_template, context_manage="vector_search", calling_subgraph="literature_reviewer"
     )
     write_report_chatbot = chatbot_with_context_manager(
-        config, llm_report_writer, report_prompt_template, context_manage="token_cnt_large", calling_subgraph="literature_reviewer", force_stringify_context=True
+        config,
+        llm_report_writer,
+        report_prompt_template,
+        context_manage="token_cnt_large",
+        calling_subgraph="literature_reviewer",
+        force_stringify_context=True,
     )
-    
+
     @track_node_call("literature_reviewer")
     def clear_literature_state(state: State):
         state["messages"] = []
@@ -139,9 +149,9 @@ def build_literature_review_subgraph(config: Config, file_manager: FileManager):
 
 if __name__ == "__main__":
     init_state, config, save_path = prepare_state(
-        "literature_search_test_20250813", 
-        "What are the latest advancements in medical AI agents that can analyze multi-format datasets, answer research questions, and produce experimental reports?", 
-        ""
+        "literature_search_test_20250813",
+        "What are the latest advancements in medical AI agents that can analyze multi-format datasets, answer research questions, and produce experimental reports?",
+        "",
     )
 
     graph = build_literature_review_subgraph(config)

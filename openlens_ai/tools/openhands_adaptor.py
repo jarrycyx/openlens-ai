@@ -297,7 +297,13 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True,
         oh_config = oh_config.replace("{openhands_traj_path}", openhands_traj_path)
         oh_config = oh_config.replace("{log_completions_folder}", openhands_llm_log_path)
         oh_config = oh_config.replace("{runtime_container_image}", docker_name)
-
+        
+        if config.workflow.e2e_test:
+            oh_config = oh_config.replace("{default_agent}", "DummyAgent")
+            logger.warning("E2E test mode enabled, using DummyAgent")
+        else:
+            oh_config = oh_config.replace("{default_agent}", "CodeActAgent")
+        
         if config.dataset_path:
             dataset_path = os.path.join(pwd, config.dataset_path)
             assert os.path.exists(dataset_path), f"Dataset path {dataset_path} does not exist."
