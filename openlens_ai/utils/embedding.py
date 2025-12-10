@@ -67,7 +67,7 @@ def perform_rerank(
         # url = "https://cloud.infini-ai.com/maas/v1/rerank"
 
         messages_with_score = []
-        for try_i in range(10):
+        for try_i in range(5):
             response = requests.post(url, json=payload, headers=headers)
             try:
                 messages_with_score = []

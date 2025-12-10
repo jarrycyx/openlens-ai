@@ -73,6 +73,7 @@ def parse_args():
     parser.add_argument("--notify-email", type=str, help="Email address for notifications", default="")
     parser.add_argument("--language", type=str, help="Language for the run, chs or eng", default="chs", choices=["chs", "eng"])
     parser.add_argument("--domain", type=str, default="medical", choices=["general", "medical"], help="Domain to use for prompts (general or medical)")
+    parser.add_argument("--save-root", type=str, default="outputs", help="Root path to save project, default to be ./outputs")
 
     # Config file
     parser.add_argument("--config", type=str, default="config.toml", help="Path to the config file")
@@ -145,6 +146,7 @@ def cli_main():
         config.notify_email = args.notify_email
         config.llm.language = args.language
         config.domain = args.domain
+        config.save_root = args.save_root
         config.workflow.e2e_test = args.e2e_test
 
         main(config, interrupt_after_subgraph=args.interrupt_after_subgraph)

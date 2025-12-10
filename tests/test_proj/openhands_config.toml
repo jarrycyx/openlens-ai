@@ -1,0 +1,47 @@
+[core]
+runtime = "docker"
+disable_color = true
+search_api_key = ""
+save_trajectory_path = "{openhands_traj_path}"
+run_as_openhands = false
+debug = true
+default_agent = "{default_agent}"
+
+[llm]
+model = "openai/glm-4.5-air"  # openai means openai-compatible endpoint, not OpenAI models
+api_key = "0"
+base_url = "http://127.0.0.1:8077/v1"
+input_cost_per_token = 1.0
+output_cost_per_token = 1.0
+max_message_chars = 30000
+native_tool_calling = true
+retry_max_wait = 60
+log_completions_folder = "{log_completions_folder}"
+log_completions = true
+
+[llm.condenser]
+model = "openai/glm-4.5-air"  # openai means openai-compatible endpoint, not OpenAI models
+api_key = "0"
+base_url = "http://127.0.0.1:8077/v1"
+
+[condenser]
+type = "llm"
+llm_config = "condenser"
+keep_first = 1
+max_size = 50
+
+[sandbox]
+volumes = "{sandbox_volumes}"
+user_id = 3407
+timeout = 3600
+runtime_container_image = "{runtime_container_image}"
+enable_gpu = true
+docker_runtime_kwargs = { mem_limit = "16g" }
+# https://docker-py.readthedocs.io/en/stable/containers.html?highlight=run#docker.models.containers.ContainerCollection.run
+
+[mcp]
+shttp_servers = []
+sse_servers = []
+
+[security]
+security_analyzer = "none"

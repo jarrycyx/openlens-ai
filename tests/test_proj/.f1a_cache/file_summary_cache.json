@@ -1,0 +1,126 @@
+{
+  "/data/cyx/openlens-ai/datasets/eicu-demo/admissionDx.csv": {
+    "mtime": 1760863079.3453543,
+    "summary": "This file stores detailed admission diagnoses for ICU patients, including hierarchical categorization paths, specific diagnosis names/descriptions, and timing offsets relative to admission, linked by unique patient stay identifiers. (498 characters)"
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/admissiondrug.csv": {
+    "mtime": 1760863077.5153718,
+    "summary": "The file `admissiondrug.csv` documents medications administered to ICU patients, including drug names, dosages, administration times, provider details, and clinical context (e.g., note types, specialties) to support clinical care and research. (496 characters)"
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/allergy.csv": {
+    "mtime": 1760863079.0913568,
+    "summary": "This CSV file logs patient allergies during ICU stays, recording drug/non-drug allergy names, types, timestamps, and entry details for each patient."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/apacheApsVar.csv": {
+    "mtime": 1760863079.0203576,
+    "summary": "The file 'apacheApsVar.csv' contains patient physiological and clinical measurements (vital signs, lab values, Glasgow Coma Scale components) used to calculate the Apache APS score for assessing illness severity in ICU patients."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/apachePatientResult.csv": {
+    "mtime": 1760863079.5753522,
+    "summary": "This file stores patient-specific Apache scoring results, including predicted vs. actual ICU/hospital mortality and length of stay, acute physiology scores, and physician intervention data."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/apachePredVar.csv": {
+    "mtime": 1760863079.4083538,
+    "summary": "This CSV file contains clinical variables and outcomes for ICU patients, designed for predicting mortality and other outcomes using Apache II and SAPS3 scores, demographics, physiology, comorbidities, and treatment data. (499 chars)"
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/carePlanCareProvider.csv": {
+    "mtime": 1760863079.0143576,
+    "summary": "This file logs care providers assigned to patients, tracking their specialties, roles (managing/consulting), intervention categories, timing within the care plan, and active status upon discharge, linked by unique provider and patient stay identifiers."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/carePlanEOL.csv": {
+    "mtime": 1760863077.4833722,
+    "summary": "The file records end-of-life care plans for ICU patients, documenting timestamps for plan saving/discussion relative to ICU admission and their active status at discharge."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/carePlanGeneral.csv": {
+    "mtime": 1760863079.3733542,
+    "summary": "The 'carePlanGeneral.csv' file documents patient-specific care plan items including clinical aspects (ventilation, medication, activity) with their status at discharge, organized by patient identifiers and categorized care groups."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/carePlanGoal.csv": {
+    "mtime": 1760863079.3523543,
+    "summary": "The `carePlanGoal.csv` file records care plan goals for ICU patients, including categories (e.g., Infection/Labs, Cardiovascular), values (e.g., \"Normal electrolytes\"), statuses, and active status at discharge, indexed by patient and time offset. (249 characters)"
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/carePlanInfectiousDisease.csv": {
+    "mtime": 1760863079.3763542,
+    "summary": "This file tracks patient-specific infectious disease care plans, documenting infection sites, assessment certainty, treatment approaches, and care plan status at discharge."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/customLab.csv": {
+    "mtime": 1760863080.343345,
+    "summary": "customLab.csv tracks patient-specific laboratory test results over time, storing diverse lab names, numeric/text values, and timing offsets relative to ICU admission. (498 characters)"
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/diagnosis.csv": {
+    "mtime": 1760863077.4813724,
+    "summary": "This file tracks ICU patient diagnoses, recording each diagnosis's description, medical code (ICD-9), timing relative to ICU admission, priority level, and whether it was active at discharge, linked to specific patient stays."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/hospital.csv": {
+    "mtime": 1760863079.0593572,
+    "summary": "This CSV file contains hospital data with identifiers, bed size categories, teaching status, and geographic regions, providing information about various healthcare facilities across different regions."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/infusiondrug.csv": {
+    "mtime": 1760863079.084357,
+    "summary": "This file tracks continuous intravenous drug infusions for ICU patients, recording the drug name (e.g., Magnesium), administration rate, timing relative to admission, and patient-specific details like weight."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/intakeOutput.csv": {
+    "mtime": 1760863077.6713705,
+    "summary": "This file tracks fluid intake, output, dialysis, and body weight measurements for ICU patients over time, enabling fluid balance monitoring and clinical assessment."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/lab.csv": {
+    "mtime": 1760863079.3203547,
+    "summary": "This CSV file stores laboratory test results for ICU patients, including test names, numeric values, units, timing relative to ICU admission, and revision timestamps for various blood counts and chemistry tests."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/medication.csv": {
+    "mtime": 1760863079.0053577,
+    "summary": "The 'medication.csv' file tracks medication orders and administrations for ICU patients, including drug names, dosages, administration routes, frequencies, timing offsets, and order statuses like cancellation."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/microLab.csv": {
+    "mtime": 1760863077.6743703,
+    "summary": "This file contains microbiological laboratory test results documenting culture collection sites, identified organisms, and antibiotic sensitivity testing for ICU patients."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/note.csv": {
+    "mtime": 1760863078.8463593,
+    "summary": "The 'note.csv' file stores metadata and content of comprehensive progress notes for patients, including note identifiers, patient stay IDs, timestamps, note types, system paths, and specific note values related to medical documentation settings and options."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/nurseAssessment.csv": {
+    "mtime": 1760863077.8153691,
+    "summary": "This CSV file records nursing assessment data for ICU patients, capturing hierarchical assessment categories (e.g., Cardiovascular|Edema), specific attributes, values (e.g., generalized, minimal), and timing offsets."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/nurseCare.csv": {
+    "mtime": 1760863079.5643523,
+    "summary": "The nurseCare.csv file records nursing care interventions for patients, including care types (e.g., Hygiene/ADLs, Equipment), timing offsets, and specific care details (e.g., oral care, air mattress). (244 characters)"
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/nurseCharting.csv": {
+    "mtime": 1760863078.8093596,
+    "summary": "The nurseCharting.csv file documents nursing assessments, vital signs, observations, and interventions for patients during their hospital stay, with timestamps indicating when these were recorded."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/pastHistory.csv": {
+    "mtime": 1760863079.4013538,
+    "summary": "The file documents patients' past medical histories by recording time offsets, note types, hierarchical categories (paths), and specific health conditions or events (values) during their ICU stay."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/patient.csv": {
+    "mtime": 1760863080.4693437,
+    "summary": "The 'patient.csv' file stores comprehensive patient data including demographics, hospital/ICU stay details, admission/discharge events, clinical diagnoses, and physical measurements."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/physicalExam.csv": {
+    "mtime": 1760863080.4583437,
+    "summary": "This CSV file stores structured physical examination measurements and observations (like GCS scores, weight, vital signs) for ICU patients, timestamped by offset from admission, organized via hierarchical exam paths."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/respiratoryCare.csv": {
+    "mtime": 1760863079.3303545,
+    "summary": "This file records respiratory care events and ventilator settings for patients, tracking airway management details, ventilation start/end times, and various ventilator parameters and limits."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/respiratoryCharting.csv": {
+    "mtime": 1760863079.5073528,
+    "summary": "The respiratoryCharting.csv file records time-stamped respiratory parameters for ICU patients, including ventilator settings, oxygen delivery values, tidal volumes, PEEP, and other respiratory measurements categorized by type."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/treatment.csv": {
+    "mtime": 1760863079.0563571,
+    "summary": "The `treatment.csv` file records medical treatments administered to ICU patients, including unique treatment IDs, patient stay IDs, timing (offset), hierarchical treatment descriptions, and active status at discharge. (498 characters)"
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/vitalAperiodic.csv": {
+    "mtime": 1760863078.9453583,
+    "summary": "The file 'vitalAperiodic.csv' records aperiodic vital sign measurements for ICU patients, primarily non-invasive blood pressure (systolic, diastolic, mean) at specific time offsets, along with other hemodynamic parameters (PAOP, cardiac output, etc.) that are often missing."
+  },
+  "/data/cyx/openlens-ai/datasets/eicu-demo/vitalPeriodic.csv": {
+    "mtime": 1760863080.340345,
+    "summary": "This CSV file stores time-stamped periodic vital sign measurements (e.g., temperature, heart rate, blood pressure, oxygen saturation, ICP) for ICU patients, linked by unique identifiers and observation offsets."
+  }
+}

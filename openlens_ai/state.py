@@ -219,11 +219,16 @@ def load_state(
 
 def prepare_state(config: Config) -> Config:
 
-    save_path = os.path.join("./outputs", config.thread_id)
-    if os.path.exists(save_path):
-        config.thread_id = config.thread_id + "_" + datetime.now().strftime("%Y%m%d%H%M%S")
-        save_path = os.path.join("./outputs", config.thread_id)
-    config.save_path = save_path
+    if config.save_path:
+        save_path = config.save_path
+    else:
+        save_path = os.path.join(config.save_root, config.thread_id)
+        if os.path.exists(save_path):
+            config.thread_id = config.thread_id + "_" + datetime.now().strftime("%Y%m%d%H%M%S")
+            save_path = os.path.join(config.save_root, config.thread_id)
+        config.save_path = save_path
+    
+    logger.info(f"Save path: {save_path}")
     os.makedirs(save_path, exist_ok=True)
 
     # os.makedirs(os.path.join("outputs", "log"), exist_ok=True)

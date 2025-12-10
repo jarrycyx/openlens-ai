@@ -47,6 +47,12 @@ model_list:
   #     api_key: sk-uewsuzpc332yhydw
   #     model: openai/glm-4.5-air
   #   model_name: local-llm
+  - litellm_params:
+      model: cohere/bge-reranker-v2-m3
+      api_key: sk-m4lzji6forjsglbj
+      api_base: https://cloud.infini-ai.com/maas/v1/rerank
+    model_name: bge-reranker-v2-m3
+  
 router_settings:
   fallbacks:
     - local-llm:
