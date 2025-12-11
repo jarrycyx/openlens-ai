@@ -206,13 +206,21 @@ def load_state(
         state["resume_node_call_stack"] = []
         state["node_call_stack"] = []
 
-    # Create backup folder
-    backup_path = os.path.join(save_dir, "backup")
-    os.makedirs(backup_path, exist_ok=True)
+    if config.workflow.e2e_test:
+        logger.info("E2E test mode, will not copy openlens_ai folder")
+    else:
+        # Create backup folder
+        backup_path = os.path.join(save_dir, "backup")
+        os.makedirs(backup_path, exist_ok=True)
 
-    # Copy openlens_ai folder
-    if os.path.exists("openlens_ai"):
-        shutil.copytree("openlens_ai", os.path.join(backup_path, "openlens_ai"), dirs_exist_ok=True)
+        # Copy openlens_ai folder
+        if os.path.exists("openlens_ai"):
+            shutil.copytree(
+                "openlens_ai",
+                os.path.join(backup_path, "openlens_ai"),
+                dirs_exist_ok=True,
+                ignore=shutil.ignore_patterns(".*", "*.iso", "windows-fonts", "*.tar.gz"),
+            )
 
     return config, state, start_from_subgraph, file_manager
 

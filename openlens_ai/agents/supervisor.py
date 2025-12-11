@@ -38,7 +38,6 @@ def build_supervisor(config: Config, file_manager: FileManager) -> StateGraph:
     prompt = load_prompt_file(config, "supervisor_plan.md")
     alter_prompt = load_prompt_file(config, "supervisor_alter_plan.md")
     
-    search_tool = TavilySearch(max_results=5, search_depth="advanced")
     plan_writer_tool = PlanWriterTool(config.save_path, config.workflow.min_sub_tasks)
     plan_reader_tool = PlanReaderTool(config.save_path)
     tools = [plan_writer_tool]

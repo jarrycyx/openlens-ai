@@ -11,14 +11,8 @@ import streamlit as st
 import glob
 import json
 import traceback
-import PyPDF2
+from pypdf import PdfReader
 from PIL import Image
-
-    
-try:
-    import PyPDF2
-except ImportError:
-    PyPDF2 = None
 
 from openlens_ai.utils.file_utils import collect_files, collect_token_usage
 from openlens_ai.utils.frontend_messages import _get_messages_file_path, _message_remove_duplicates
@@ -97,7 +91,7 @@ def check_file(file_path: str):
         elif file_path.endswith(tuple(pdf_file_ext)):
             # Try to parse the PDF
             with open(file_path, 'rb') as f:
-                reader = PyPDF2.PdfReader(f)
+                reader = PdfReader(f)
                 # Check if the PDF has pages
                 assert len(reader.pages) > 0, f"PDF {file_path} has no pages"
                 return True

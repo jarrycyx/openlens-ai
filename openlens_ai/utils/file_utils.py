@@ -110,54 +110,59 @@ def collect_files(config: Config, max_size: int = 10 * 1024 * 1024, compressed_d
         "*.jpeg",
         "*",
     ]
-    # file_patterns = ['*.py', '*.json', '*.md', '*.txt', '*.tex', '*.bib', '*.sty', '*.log', '*.pdf', '*']
+    
+    
+    if config.workflow.e2e_test:
+        logger.info("E2E test mode, will not backup files.")
+    else:
+        # file_patterns = ['*.py', '*.json', '*.md', '*.txt', '*.tex', '*.bib', '*.sty', '*.log', '*.pdf', '*']
 
-    # Collect all matching files
-    exclude_path = ["backup/openlens_ai"]
-    files = []
-    for pattern in file_patterns:
-        this_pattern_files = glob.glob(os.path.join(save_path, "**", pattern), recursive=True)
-        for f in this_pattern_files:
-            if any(exclude in f for exclude in exclude_path):
-                continue
-            if f not in files and os.path.isfile(f):
-                files.append(f)
-
-    # Create the compressed folder path
-    compressed_dir = os.path.join(save_path, compressed_dir_name)
-    os.makedirs(compressed_dir, exist_ok=True)
-
-    # Create the zip file with timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    zip_filename = f"files_{timestamp}.zip"
-    zip_filepath = os.path.join(compressed_dir, zip_filename)
-
-    # Compress the files into the zip archive
-    with zipfile.ZipFile(zip_filepath, "w", zipfile.ZIP_DEFLATED) as zipf:
-        total_size = 0
-        for file in tqdm.tqdm(files, desc="Compressing files"):
-            if "compressed" in file:
-                continue
-            try:
-                # Check if file has read permission
-                with open(file, "rb"):
-                    pass
-                # Check if adding this file will exceed the max_size
-                file_size = os.path.getsize(file)
-                if total_size + file_size > max_size:
-                    # logger.info(f"警告: 添加文件 {file} 后zip文件大小将超过10MB限制，已跳过.")
+        # Collect all matching files
+        exclude_path = ["backup/openlens_ai"]
+        files = []
+        for pattern in file_patterns:
+            this_pattern_files = glob.glob(os.path.join(save_path, "**", pattern), recursive=True)
+            for f in this_pattern_files:
+                if any(exclude in f for exclude in exclude_path):
                     continue
+                if f not in files and os.path.isfile(f):
+                    files.append(f)
 
-                # Add the file to the zip archive, maintaining the relative path structure
-                arcname = os.path.relpath(file, save_path)
-                zipf.write(file, arcname)
-                total_size += file_size
-            except Exception as e:
-                logger.warning(f"Warning: Cannot add file {file} to zip archive. Error: {e}")
+        # Create the compressed folder path
+        compressed_dir = os.path.join(save_path, compressed_dir_name)
+        os.makedirs(compressed_dir, exist_ok=True)
 
-    full_zip_filename = f"all_files.zip"
-    full_zip_filepath = os.path.join(compressed_dir, full_zip_filename)
-    shutil.copy(zip_filepath, full_zip_filepath)
+        # Create the zip file with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        zip_filename = f"files_{timestamp}.zip"
+        zip_filepath = os.path.join(compressed_dir, zip_filename)
+
+        # Compress the files into the zip archive
+        with zipfile.ZipFile(zip_filepath, "w", zipfile.ZIP_DEFLATED) as zipf:
+            total_size = 0
+            for file in tqdm.tqdm(files, desc="Compressing files"):
+                if "compressed" in file:
+                    continue
+                try:
+                    # Check if file has read permission
+                    with open(file, "rb"):
+                        pass
+                    # Check if adding this file will exceed the max_size
+                    file_size = os.path.getsize(file)
+                    if total_size + file_size > max_size:
+                        # logger.info(f"警告: 添加文件 {file} 后zip文件大小将超过10MB限制，已跳过.")
+                        continue
+
+                    # Add the file to the zip archive, maintaining the relative path structure
+                    arcname = os.path.relpath(file, save_path)
+                    zipf.write(file, arcname)
+                    total_size += file_size
+                except Exception as e:
+                    logger.warning(f"Warning: Cannot add file {file} to zip archive. Error: {e}")
+
+        full_zip_filename = f"all_files.zip"
+        full_zip_filepath = os.path.join(compressed_dir, full_zip_filename)
+        shutil.copy(zip_filepath, full_zip_filepath)
 
     # # 将文件打包成zip
     # with zipfile.ZipFile(full_zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
