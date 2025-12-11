@@ -1,6 +1,7 @@
 import unittest
 import os
 from unittest.mock import patch, MagicMock
+import shutil
 
 from openlens_ai.agents.supervisor import build_supervisor
 from openlens_ai.state import load_state
@@ -20,21 +21,13 @@ class TestSupervisor(unittest.TestCase):
         # cleanup_test_environment(self.test_path)
         pass
 
-    @patch('openlens_ai.agents.supervisor.init_chat_model')
-    @patch('openlens_ai.agents.supervisor.chatbot_with_context_manager')
-    def test_supervisor_main_function(self, mock_chatbot, mock_init_chat):
-        """Test main function logic (simulate if __name__ == "__main__" part)"""
-        # Mock LLM
-        mock_llm = MagicMock()
-        mock_init_chat.return_value = mock_llm
-        
-        # Mock chatbot
-        mock_chatbot_instance = MagicMock()
-        mock_chatbot_instance.return_value = {}
-        mock_chatbot.return_value = mock_chatbot_instance
+    def test_supervisor_main_function(self):
         
         # Use load_state like in the original main function
         config, state, last_subgraph, file_manager = load_state(self.test_path)
+        state["plan"] = {}
+        os.remove(os.path.join(self.test_path, "plan.json"))
+        os.remove(os.path.join(self.test_path, "plan.md"))
         
         # Build graph
         graph = build_supervisor(config, file_manager)

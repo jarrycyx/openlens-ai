@@ -20,25 +20,13 @@ class TestLatexWriter(unittest.TestCase):
         # cleanup_test_environment(self.test_path)
         pass
 
-    @patch('openlens_ai.agents.latex_writer.init_chat_model')
-    @patch('openlens_ai.agents.latex_writer.run_openhands_prompt')
-    @patch('openlens_ai.agents.latex_writer.chatbot_with_context_manager')
-    def test_latex_writer_main_function(self, mock_chatbot, mock_openhands, mock_init_chat):
-        """Test main function logic (simulate if __name__ == "__main__" part)"""
-        # Mock LLM
-        mock_llm = MagicMock()
-        mock_init_chat.return_value = mock_llm
-        
-        # Mock OpenHands response
-        mock_openhands.return_value = "Successfully created LaTeX document"
-        
-        # Mock chatbot
-        mock_chatbot_instance = MagicMock()
-        mock_chatbot_instance.return_value = {}
-        mock_chatbot.return_value = mock_chatbot_instance
+    def test_latex_writer_main_function(self):
         
         # Use load_state like in the original main function
         config, state, last_subgraph, file_manager = load_state(self.test_path)
+        
+        config.workflow.max_subtask_redo = 1
+        config.workflow.max_latex_polish_round = 1
         
         # Build graph
         graph = build_latex_writer(config, file_manager)

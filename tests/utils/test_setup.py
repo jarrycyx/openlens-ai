@@ -22,8 +22,6 @@ def setup_test_environment(test_name: str) -> Tuple[str, str]:
     
     # Source and target paths
     source_proj_path = Path("tests/test_proj")
-    if os.path.exists(Path("outputs/tests")):
-        shutil.rmtree(Path("outputs/tests"))
         
     target_proj_path = Path("outputs/tests") / unique_id
     

@@ -20,21 +20,11 @@ class TestDataAnalyzer(unittest.TestCase):
         # cleanup_test_environment(self.test_path)
         pass
 
-    @patch('openlens_ai.agents.data_analyzer.init_chat_model')
-    @patch('openlens_ai.agents.data_analyzer.chatbot_with_context_manager')
-    def test_data_analyzer_main_function(self, mock_chatbot, mock_init_chat):
-        """Test main function logic (simulate if __name__ == "__main__" part)"""
-        # Mock LLM
-        mock_llm = MagicMock()
-        mock_init_chat.return_value = mock_llm
-        
-        # Mock chatbot
-        mock_chatbot_instance = MagicMock()
-        mock_chatbot_instance.return_value = {}
-        mock_chatbot.return_value = mock_chatbot_instance
+    def test_data_analyzer_main_function(self):
         
         # Use load_state like in the original main function
         config, state, last_subgraph, file_manager = load_state(self.test_path)
+        state["messages"] = []
         
         # Build graph
         graph = build_data_analyzer(config, file_manager)

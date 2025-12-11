@@ -8,6 +8,8 @@ import sys
 import os
 import datetime
 from io import StringIO
+from pathlib import Path
+import shutil
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -22,6 +24,9 @@ def run_all_tests():
     
     # Create output directory for logs
     output_dir = os.path.join(os.path.dirname(__file__), '..', 'outputs', 'tests')
+    
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
     
     # Create a timestamp for this test run

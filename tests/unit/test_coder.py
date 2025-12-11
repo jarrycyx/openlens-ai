@@ -20,37 +20,32 @@ class TestCoder(unittest.TestCase):
         # cleanup_test_environment(self.test_path)
         pass
 
-    @patch('openlens_ai.agents.coder.init_chat_model')
-    @patch('openlens_ai.agents.coder.run_openhands_prompt')
-    @patch('openlens_ai.agents.coder.chatbot_with_context_manager')
-    def test_coder_main_function(self, mock_chatbot, mock_openhands, mock_init_chat):
-        """Test main function logic (simulate if __name__ == "__main__" part)"""
-        # Mock LLM
-        mock_llm = MagicMock()
-        mock_init_chat.return_value = mock_llm
-        
-        # Mock OpenHands response
-        mock_openhands.return_value = "Successfully created Python script"
-        
-        # Mock chatbot
-        mock_chatbot_instance = MagicMock()
-        mock_chatbot_instance.return_value = {}
-        mock_chatbot.return_value = mock_chatbot_instance
-        
+    def test_coder_main_function(self):
+
         # Use load_state like in the original main function
         config, state, last_subgraph, file_manager = load_state(self.test_path)
-        
+        state["messages"] = []
+        state["plan"] = {
+            "objective": "What are the temporal patterns of the data?",
+            "sub_tasks": [
+                "Task 1: Create a subtask for task 1"
+            ],
+            "expected_result": "Expected result",
+        }
+        config.workflow.max_subtask_redo = 1
+        config.workflow.max_latex_polish_round = 1
+
         # Build graph
         graph = build_coder(config, file_manager)
-        
+
         # Execute graph
         final_state = graph.invoke(state)
-        
+
         # Verify state updates
         self.assertIn("messages", final_state)
-        
+
         # Verify subtask directory was created
-        subtask_path = os.path.join(self.test_path, "workspace", "subtask_01")
+        subtask_path = os.path.join(self.test_path, "workspace", "hello.sh")
         self.assertTrue(os.path.exists(subtask_path))
 
 
