@@ -112,9 +112,10 @@ def collect_files(config: Config, max_size: int = 10 * 1024 * 1024, compressed_d
     ]
     
     
-    if config.workflow.e2e_test:
-        logger.info("E2E test mode, will not backup files.")
-    else:
+    # if config.workflow.e2e_test:
+    #     logger.info("E2E test mode, will not backup files.")
+    # else:
+    if True:
         # file_patterns = ['*.py', '*.json', '*.md', '*.txt', '*.tex', '*.bib', '*.sty', '*.log', '*.pdf', '*']
 
         # Collect all matching files

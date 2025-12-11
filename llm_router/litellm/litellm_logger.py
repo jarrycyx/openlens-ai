@@ -9,7 +9,7 @@ import uuid
 # Once defined, these can be passed in proxy_config.yaml
 
 # Create output directory for logged calls
-LOGGED_CALLS_DIR = "outputs/logged_calls_1110"
+LOGGED_CALLS_DIR = "outputs/logged_calls_1211"
 os.makedirs(LOGGED_CALLS_DIR, exist_ok=True)
 
 def convert_to_dict(obj, max_depth=10, current_depth=0):

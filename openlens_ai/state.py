@@ -206,9 +206,10 @@ def load_state(
         state["resume_node_call_stack"] = []
         state["node_call_stack"] = []
 
-    if config.workflow.e2e_test:
-        logger.info("E2E test mode, will not copy openlens_ai folder")
-    else:
+    # if config.workflow.e2e_test:
+    #     logger.info("E2E test mode, will not copy openlens_ai folder")
+    # else:
+    if True:
         # Create backup folder
         backup_path = os.path.join(save_dir, "backup")
         os.makedirs(backup_path, exist_ok=True)

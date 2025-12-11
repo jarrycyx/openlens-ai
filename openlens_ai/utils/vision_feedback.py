@@ -326,6 +326,29 @@ def save_llm_call(messages: list, config: Config):
         f.write(dumps(messages, indent=4, ensure_ascii=False))
 
 
+
+
+base64_prefix_png = "data:image/png;base64,"
+MSG_FORMATTERS = [
+    # Formatter A: Standard OpenAI format
+    lambda p, img: [
+        {
+            "role": "user",
+            "content": [{"type": "text", "text": p}, {"type": "image_url", "image_url": {"url": img if img.startswith("data:") else base64_prefix_png + img}}],
+        }
+    ],
+    # # Formatter B: Alternative format for some models
+    # lambda p, img: [
+    #     {
+    #         "role": "user",
+    #         "content": [
+    #             {"type": "text", "text": p},
+    #             {"type": "image", "source_type": "base64", "data": img, "mime_type": "image/jpeg"},
+    #         ],
+    #     }
+    # ],
+]
+
 def call_vlm_with_prompt(image_base64: str, config: Config, prompt: str) -> str:
     """
     Generic VLM calling function for handling image-related requests
@@ -339,33 +362,10 @@ def call_vlm_with_prompt(image_base64: str, config: Config, prompt: str) -> str:
         VLM response content
     """
 
-    def formatter_a(prompt, image_base64):
-        logger.info(f"Using formatter A")
-        # https://docs.bigmodel.cn/api-reference/%E6%A8%A1%E5%9E%8B-api/%E5%AF%B9%E8%AF%9D%E8%A1%A5%E5%85%A8#%E5%9B%BE%E7%89%87
-        # https://docs.siliconflow.cn/cn/api-reference/chat-completions/chat-completions#vlm
-        image_feedback_message = HumanMessage(
-            content=[
-                {"type": "text", "text": prompt},
-                {"type": "image_url", "image_url": {"url": image_base64,}},
-            ]
-        )
-        return image_feedback_message
-
-    def formatter_b(prompt, image_base64):
-        logger.info(f"Using formatter B")
-        image_feedback_message = HumanMessage(
-            content=[
-                {"type": "text", "text": prompt},
-                {"type": "image", "source_type": "base64", "data": image_base64, "mime_type": "image/jpeg"},
-            ]
-        )
-        return image_feedback_message
-
     vlm = get_vlm(config)
 
     # Select formatter to use
-    formatters = [formatter_a, formatter_b]
-
+    formatters = MSG_FORMATTERS
     error_msg = ""
     for try_i in range(3):
         for this_formatter in formatters:
@@ -373,8 +373,8 @@ def call_vlm_with_prompt(image_base64: str, config: Config, prompt: str) -> str:
                 # Call VLM to evaluate the image
                 image_message = this_formatter(prompt, image_base64)
 
-                vlm_response = vlm.invoke([image_message])
-                save_llm_call([image_message, vlm_response], config)
+                vlm_response = vlm.invoke(image_message)
+                save_llm_call(image_message + [vlm_response], config)
                 logger.info(f"Vision response: {vlm_response.content}")
                 return vlm_response.content
             except Exception as e:

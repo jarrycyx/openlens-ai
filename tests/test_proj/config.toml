@@ -1,0 +1,70 @@
+save_path = "./outputs/pred_aki_trend_eicu_demo_20251210121028"
+thread_id = "pred_aki_trend_eicu_demo_20251210121028"
+question = "What are the temporal patterns of vital sign deterioration preceding cardiac arrest events in critical care settings?"
+refine_suggestion = ""
+dataset_path = "datasets/eicu-demo"
+notify_email = "dzdzzd@126.com"
+domain = "medical"
+
+[llm]
+language = "eng"
+
+[rerank]
+rerank_api_key = "0" # infiniai
+rerank_base_url = "http://127.0.0.1:8077/"
+rerank_model = "bge-reranker-v2-m3"
+file_duplicate_threshold = 0.8
+
+[tools]
+tavily_api_key = "0"
+langsmith_tracing = "false"
+langsmith_endpoint = "https://api.smith.langchain.com"
+langsmith_project = "openlens"
+langsmith_api_key = ""
+
+[context]
+max_context_token_cnt = 32000
+max_context_token_cnt_large = 64000
+max_tool_token_cnt = 2000
+
+[email_server]
+smtp_server = "smtpdm.aliyun.com"
+smtp_port = 25
+email_user = "openlens@sub.openlens.icu"
+email_password = ""
+
+[workflow]
+openhands_max_iter = 300
+max_subtask_redo = 2
+max_latex_polish_round = 2
+literature_search_min_tool_call = 10
+min_sub_tasks = 3
+enable_literature_review = true
+enable_latex_writer = true
+enable_artifact_publisher = false
+e2e_test = true
+
+[docker]
+docker_name = "openlens-ai:runtime-latest"
+
+[frontend]
+frontend_admin_email = "dzdzzd@126.com"
+
+[git]
+branch = "main"
+repo_prefix = "openlens-"
+private = true
+
+[llm.chat]
+model = "free"
+base_url = "http://127.0.0.1:8077/v1"
+api_key = "0"
+
+[llm.condenser]
+model = ""
+
+[llm.vision]
+model = "free-vision"
+# model = "glm-4.5v"
+base_url = "http://127.0.0.1:8077/v1"
+api_key = "0"
