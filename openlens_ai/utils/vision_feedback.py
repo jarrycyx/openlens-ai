@@ -279,9 +279,10 @@ def convert_pdf_to_separate_images(pdf_file: str):
                 logger.warning(error_msg)
                 logger.error(traceback.format_exc())
             
-            pdf_document.close()
             name_list.append(save_tmp_path)
             base64_list.append(compressed_img_base64)
+        
+        pdf_document.close()
         
         return name_list, base64_list
         
@@ -295,6 +296,8 @@ def convert_pdf_to_separate_images(pdf_file: str):
 def get_fig_base64(fig_file_list, merge_pdf=False):
     fig_base64_list = []
     for fig in fig_file_list:
+        if not os.path.exists(fig):
+            continue
         # If it's a PDF file, convert it to PNG first
         if fig.lower().endswith(".pdf"):
             if merge_pdf:

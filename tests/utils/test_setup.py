@@ -17,8 +17,8 @@ def setup_test_environment(test_name: str) -> Tuple[str, str]:
         Tuple[str, str]: (new test project path, new config file path)
     """
     # Generate timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    unique_id = f"{test_name}_unit_test_{timestamp}"
+    # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    unique_id = f"{test_name}_unit_test"
     
     # Source and target paths
     source_proj_path = Path("tests/test_proj")

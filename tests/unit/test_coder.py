@@ -39,7 +39,7 @@ class TestCoder(unittest.TestCase):
         graph = build_coder(config, file_manager)
 
         # Execute graph
-        final_state = graph.invoke(state)
+        final_state = graph.invoke(state, {"recursion_limit": 100})
 
         # Verify state updates
         self.assertIn("messages", final_state)

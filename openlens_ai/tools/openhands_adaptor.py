@@ -336,6 +336,13 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True,
                 f"cd ../../;"
                 # f"chmod -R 777 {os.path.abspath(config.save_path)};"
             )
+            
+            frontend_add_message(
+                HumanMessage(
+                    content=f"Coding with the following prompt:\n{full_prompt}"
+                ),
+                config,
+            )
             results = run_openhands(cmd, config)
             fix_permissions_in_docker_container(oh_config)
             
@@ -347,7 +354,10 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True,
                 logger.info(f"Docker container executed successfully.")
                 break
             else:
-                logger.warning(f"Docker container executed unsuccessfully. Trying again ({try_i}/5)...")
+                if config.workflow.e2e_test:
+                    logger.warning("E2E test mode enabled, will not retry.")
+                    break
+                logger.warning(f"Docker container executed unsuccessfully. Trying again ({try_i}/2)...")
                 continue
 
         # Add the result of the current prompt to the total result
