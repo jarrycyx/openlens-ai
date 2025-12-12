@@ -3,7 +3,7 @@ curl --request POST \
   --header "Authorization: Bearer 0" \
   --header "Content-Type: application/json" \
   --data '{
-      "model": "glm-4.5v",
+      "model": "glm-4.6v",
       "messages": [
         {
           "role": "user",

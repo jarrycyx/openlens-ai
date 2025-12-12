@@ -45,7 +45,8 @@ dependencies = [
   "pillow",
   "Authlib", 
   "fastmcp",
-  "graphviz"
+  "graphviz",
+  "html2image"
 ]
 
 [project.scripts]

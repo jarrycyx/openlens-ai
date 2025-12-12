@@ -1,5 +1,5 @@
-save_path = "./outputs/pred_aki_trend_eicu_demo_20251210121028"
-thread_id = "pred_aki_trend_eicu_demo_20251210121028"
+save_path = "./tests/test_proj"
+thread_id = "test_proj"
 question = "What are the temporal patterns of vital sign deterioration preceding cardiac arrest events in critical care settings?"
 refine_suggestion = ""
 dataset_path = "datasets/eicu-demo"
@@ -64,7 +64,7 @@ api_key = "0"
 model = ""
 
 [llm.vision]
-model = "glm-4.5v"
-# model = "glm-4.5v"
+model = "glm-4.6v"
+# model = "glm-4.6v"
 base_url = "http://127.0.0.1:8077/v1"
 api_key = "0"

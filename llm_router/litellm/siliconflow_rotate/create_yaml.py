@@ -20,7 +20,7 @@ load_dotenv()
 forward_names = {
     "zai-org/GLM-4.5": "glm-4.5",
     "zai-org/GLM-4.5-Air": "glm-4.5-air",
-    "zai-org/GLM-4.5V": "glm-4.5v",
+    "zai-org/GLM-4.5V": "glm-4.6v",
     "Qwen/Qwen3-235B-A22B-Instruct-2507": "qwen3-235b-a22b-instruct-2507",
     "Qwen/Qwen3-Coder-30B-A3B-Instruct": "qwen3-coder-30b-a3b-instruct",
     "Qwen/Qwen3-Coder-480B-A35B-Instruct": "qwen3-coder-480b-a35b-instruct",

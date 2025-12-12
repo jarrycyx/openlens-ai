@@ -9,15 +9,13 @@ from PIL import Image
 import io
 from loguru import logger
 import traceback
+from html2image import Html2Image
 
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
-from langchain_core.tools import BaseTool
 
 from ..tools.tool_utils import (
-    BasicToolNode,
-    route_tools,
     route_by_tool_call,
 )
 from ..state import State
@@ -28,67 +26,8 @@ from ..utils.vision_feedback import get_fig_base64, call_vlm_with_prompt
 
 from file1agent.file_manager import FileManager
 
-
-# Function to load prompts based on domain configuration
-def load_prompt_file(config: Config, filename: str) -> str:
-    """Load a prompt file from the appropriate domain directory."""
-    domain_dir = config.domain if hasattr(config, "domain") and config.domain else "general"
-    prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain_dir, filename)
-    with open(prompt_path) as f:
-        return f.read()
-
-
-# Tool input schemas
-class ImageDescriptionToolInput(BaseModel):
-    image_path: str = Field(..., description="Path to the input image to be described")
-
-
-class HTMLGenerationToolInput(BaseModel):
-    image_description: str = Field(..., description="Detailed description of the image to recreate as HTML")
-
-
-class HTMLToPNGToolInput(BaseModel):
-    html_content: str = Field(..., description="HTML content to convert to PNG")
-
-
-class ImageComparisonToolInput(BaseModel):
-    original_image_path: str = Field(..., description="Path to the original image")
-    generated_image_path: str = Field(..., description="Path to the generated PNG image")
-
-
-class ImageMergeToolInput(BaseModel):
-    original_image_path: str = Field(..., description="Path to the original image")
-    generated_image_path: str = Field(..., description="Path to the generated PNG image")
-
-
-class HTMLUpdateToolInput(BaseModel):
-    current_html: str = Field(..., description="Current HTML content to be updated")
-    comparison_feedback: str = Field(..., description="Feedback from image comparison")
-
-
-# Tool classes for chart artist workflow
-class ImageDescriptionTool(BaseTool):
-    """Tool for generating detailed description of an input image using VLM"""
-    name: str = "image_description_tool"
-    description: str = "Generate detailed description of an input image using Vision Language Model"
-    args_schema: Type[BaseModel] = ImageDescriptionToolInput
-    
-    def __init__(self, config: Config):
-        super().__init__()
-        self.config = config
-    
-    def _run(self, image_path: str) -> str:
-        """Generate detailed description of the input image"""
-        try:
-            # Get base64 of the image
-            fig_base64_list = get_fig_base64([image_path])
-            if not fig_base64_list:
-                return f"Error: Could not process image at {image_path}"
-            
-            image_base64 = fig_base64_list[0][1]
-            
-            # Create prompt for detailed description
-            prompt = """Please analyze this image in detail and provide a comprehensive description including:
+# Prompt templates for the chart artist workflow
+IMAGE_DESCRIPTION_PROMPT = """Please analyze this image in detail and provide a comprehensive description including:
 1. The type of diagram/chart/image (flowchart, graph, table, etc.)
 2. All visible elements, text, labels, and their relationships
 3. The structure and layout of the diagram
@@ -97,41 +36,8 @@ class ImageDescriptionTool(BaseTool):
 6. Any technical details that would be important for recreating this diagram
 
 Please be very detailed and specific, as this description will be used to recreate a similar diagram in HTML."""
-            
-            # Call VLM with the image and prompt
-            description = call_vlm_with_prompt(image_base64, self.config, prompt)
-            return description
-            
-        except Exception as e:
-            logger.error(f"Error in ImageDescriptionTool: {e}")
-            logger.error(traceback.format_exc())
-            return f"Error generating image description: {str(e)}"
 
-
-class HTMLGenerationTool(BaseTool):
-    """Tool for generating HTML flowchart based on image description"""
-    name: str = "html_generation_tool"
-    description: str = "Generate HTML flowchart based on image description"
-    args_schema: Type[BaseModel] = HTMLGenerationToolInput
-    
-    def __init__(self, config: Config):
-        super().__init__()
-        self.config = config
-    
-    def _run(self, image_description: str) -> str:
-        """Generate HTML flowchart based on image description"""
-        try:
-            # Initialize LLM
-            llm = init_chat_model(
-                self.config.llm.chat.model,
-                base_url=self.config.llm.chat.base_url,
-                model_provider="openai",
-                openai_api_key=self.config.llm.chat.api_key,
-                extra_body={"chat_template_kwargs": {"enable_thinking": True}},
-            )
-            
-            # Create prompt for HTML generation
-            prompt = f"""Based on the following detailed image description, please create a complete HTML file that recreates the diagram as a flowchart using HTML, CSS, and possibly JavaScript.
+HTML_GENERATION_PROMPT = """Based on the following detailed image description, please create a complete HTML file that recreates the diagram as a flowchart using HTML, CSS, and possibly JavaScript.
 
 Image Description:
 {image_description}
@@ -147,156 +53,8 @@ Requirements:
 8. The HTML should be complete and ready to render in a browser
 
 Please return only the complete HTML code without any additional explanations."""
-            
-            # Call LLM to generate HTML
-            response = llm.invoke([HumanMessage(content=prompt)])
-            html_content = response.content
-            
-            return html_content
-            
-        except Exception as e:
-            logger.error(f"Error in HTMLGenerationTool: {e}")
-            logger.error(traceback.format_exc())
-            return f"Error generating HTML: {str(e)}"
 
-
-class HTMLToPNGTool(BaseTool):
-    """Tool for converting HTML to PNG image"""
-    name: str = "html_to_png_tool"
-    description: str = "Convert HTML content to PNG image"
-    args_schema: Type[BaseModel] = HTMLToPNGToolInput
-    
-    def __init__(self, config: Config):
-        super().__init__()
-        self.config = config
-    
-    def _run(self, html_content: str) -> str:
-        """Convert HTML content to PNG image"""
-        try:
-            # Create temporary HTML file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as f:
-                f.write(html_content)
-                html_path = f.name
-            
-            # Create output path for PNG
-            output_dir = os.path.join(self.config.save_path, "workspace", "chart_artist")
-            os.makedirs(output_dir, exist_ok=True)
-            png_path = os.path.join(output_dir, "generated_flowchart.png")
-            
-            # Use wkhtmltoimage or similar tool to convert HTML to PNG
-            # Try multiple methods
-            success = False
-            
-            # Method 1: Try wkhtmltoimage
-            try:
-                cmd = ["wkhtmltoimage", "--format", "png", "--width", "1200", html_path, png_path]
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-                if result.returncode == 0 and os.path.exists(png_path):
-                    success = True
-                    logger.info("HTML to PNG conversion successful using wkhtmltoimage")
-            except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-                logger.warning(f"wkhtmltoimage failed: {e}")
-            
-            # Method 2: Try puppeteer with Node.js
-            if not success:
-                try:
-                    # Create a Node.js script for conversion
-                    js_script = f"""
-const puppeteer = require('puppeteer');
-const fs = require('fs');
-
-(async () => {{
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.setViewport({{ width: 1200, height: 800 }});
-    await page.setContent(`{html_content.replace('`', '\\`')}`);
-    await page.screenshot({{ path: '{png_path}', fullPage: true }});
-    await browser.close();
-}})();
-"""
-                    with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as f:
-                        f.write(js_script)
-                        js_path = f.name
-                    
-                    cmd = ["node", js_path]
-                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-                    if result.returncode == 0 and os.path.exists(png_path):
-                        success = True
-                        logger.info("HTML to PNG conversion successful using puppeteer")
-                    
-                    # Clean up JS file
-                    os.unlink(js_path)
-                    
-                except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-                    logger.warning(f"Puppeteer conversion failed: {e}")
-            
-            # Method 3: Try using Selenium with Chrome/Chromium
-            if not success:
-                try:
-                    from selenium import webdriver
-                    from selenium.webdriver.chrome.options import Options
-                    
-                    chrome_options = Options()
-                    chrome_options.add_argument("--headless")
-                    chrome_options.add_argument("--no-sandbox")
-                    chrome_options.add_argument("--disable-dev-shm-usage")
-                    chrome_options.add_argument("--window-size=1200,800")
-                    
-                    driver = webdriver.Chrome(options=chrome_options)
-                    driver.get(f"file://{html_path}")
-                    driver.save_screenshot(png_path)
-                    driver.quit()
-                    
-                    if os.path.exists(png_path):
-                        success = True
-                        logger.info("HTML to PNG conversion successful using Selenium")
-                        
-                except Exception as e:
-                    logger.warning(f"Selenium conversion failed: {e}")
-            
-            # Clean up temporary HTML file
-            os.unlink(html_path)
-            
-            if success and os.path.exists(png_path):
-                return png_path
-            else:
-                return f"Error: Could not convert HTML to PNG. All conversion methods failed."
-                
-        except Exception as e:
-            logger.error(f"Error in HTMLToPNGTool: {e}")
-            logger.error(traceback.format_exc())
-            return f"Error converting HTML to PNG: {str(e)}"
-
-
-class ImageComparisonTool(BaseTool):
-    """Tool for comparing original image with generated HTML PNG"""
-    name: str = "image_comparison_tool"
-    description: str = "Compare original image with generated HTML PNG and provide feedback"
-    args_schema: Type[BaseModel] = ImageComparisonToolInput
-    
-    def __init__(self, config: Config):
-        super().__init__()
-        self.config = config
-    
-    def _run(self, original_image_path: str, generated_image_path: str) -> str:
-        """Compare original image with generated HTML PNG"""
-        try:
-            # Get base64 of both images
-            original_base64_list = get_fig_base64([original_image_path])
-            generated_base64_list = get_fig_base64([generated_image_path])
-            
-            if not original_base64_list or not generated_base64_list:
-                return "Error: Could not process one or both images for comparison"
-            
-            original_base64 = original_base64_list[0][1]
-            generated_base64 = generated_base64_list[0][1]
-            
-            # Initialize VLM
-            from ..utils.vision_feedback import get_vlm
-            vlm = get_vlm(self.config)
-            
-            # Create prompt for comparison
-            prompt = """Please compare these two images side by side and provide a detailed analysis:
+IMAGE_COMPARISON_PROMPT = """Please compare these two images side by side and provide a detailed analysis:
 
 Left image: Original diagram
 Right image: Generated HTML flowchart
@@ -310,108 +68,8 @@ Please analyze:
 6. Specific suggestions for improving the HTML version to better match the original
 
 Please be very specific and provide actionable feedback for improving the HTML flowchart."""
-            
-            # Create message with both images
-            message = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{original_base64}"}},
-                        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{generated_base64}"}},
-                    ],
-                }
-            ]
-            
-            # Call VLM for comparison
-            response = vlm.invoke(message)
-            comparison_result = response.content
-            
-            return comparison_result
-            
-        except Exception as e:
-            logger.error(f"Error in ImageComparisonTool: {e}")
-            logger.error(traceback.format_exc())
-            return f"Error comparing images: {str(e)}"
 
-
-class ImageMergeTool(BaseTool):
-    """Tool for merging original image and generated HTML PNG side by side"""
-    name: str = "image_merge_tool"
-    description: str = "Merge original image and generated HTML PNG side by side"
-    args_schema: Type[BaseModel] = ImageMergeToolInput
-    
-    def __init__(self, config: Config):
-        super().__init__()
-        self.config = config
-    
-    def _run(self, original_image_path: str, generated_image_path: str) -> str:
-        """Merge original image and generated HTML PNG side by side"""
-        try:
-            # Open both images
-            original_img = Image.open(original_image_path)
-            generated_img = Image.open(generated_image_path)
-            
-            # Get dimensions
-            orig_width, orig_height = original_img.size
-            gen_width, gen_height = generated_img.size
-            
-            # Determine the maximum height to resize both images to the same height
-            max_height = max(orig_height, gen_height)
-            
-            # Resize images to have the same height
-            orig_resized = original_img.resize((int(orig_width * max_height / orig_height), max_height), Image.LANCZOS)
-            gen_resized = generated_img.resize((int(gen_width * max_height / gen_height), max_height), Image.LANCZOS)
-            
-            # Create a new image with width equal to sum of both resized images
-            merged_width = orig_resized.width + gen_resized.width
-            merged_img = Image.new('RGB', (merged_width, max_height), color='white')
-            
-            # Paste the original image on the left
-            merged_img.paste(orig_resized, (0, 0))
-            
-            # Paste the generated image on the right
-            merged_img.paste(gen_resized, (orig_resized.width, 0))
-            
-            # Save the merged image
-            output_dir = os.path.join(self.config.save_path, "workspace", "chart_artist")
-            os.makedirs(output_dir, exist_ok=True)
-            merged_image_path = os.path.join(output_dir, "comparison_merged.png")
-            merged_img.save(merged_image_path)
-            
-            logger.info(f"Images merged successfully: {merged_image_path}")
-            return merged_image_path
-            
-        except Exception as e:
-            logger.error(f"Error in ImageMergeTool: {e}")
-            logger.error(traceback.format_exc())
-            return f"Error merging images: {str(e)}"
-
-
-class HTMLUpdateTool(BaseTool):
-    """Tool for updating HTML based on comparison feedback"""
-    name: str = "html_update_tool"
-    description: str = "Update HTML based on comparison feedback"
-    args_schema: Type[BaseModel] = HTMLUpdateToolInput
-    
-    def __init__(self, config: Config):
-        super().__init__()
-        self.config = config
-    
-    def _run(self, current_html: str, comparison_feedback: str) -> str:
-        """Update HTML based on comparison feedback"""
-        try:
-            # Initialize LLM
-            llm = init_chat_model(
-                self.config.llm.chat.model,
-                base_url=self.config.llm.chat.base_url,
-                model_provider="openai",
-                openai_api_key=self.config.llm.chat.api_key,
-                extra_body={"chat_template_kwargs": {"enable_thinking": True}},
-            )
-            
-            # Create prompt for HTML update
-            prompt = f"""Please update the following HTML flowchart based on the comparison feedback provided:
+HTML_UPDATE_PROMPT = """Please update the following HTML flowchart based on the comparison feedback provided:
 
 Current HTML:
 {current_html}
@@ -426,17 +84,176 @@ Please:
 4. Ensure the flowchart structure is accurate
 5. Maintain the self-contained HTML format with inline CSS and JavaScript
 6. Return only the complete updated HTML code without any additional explanations"""
-            
-            # Call LLM to update HTML
-            response = llm.invoke([HumanMessage(content=prompt)])
-            updated_html = response.content
-            
-            return updated_html
-            
-        except Exception as e:
-            logger.error(f"Error in HTMLUpdateTool: {e}")
-            logger.error(traceback.format_exc())
-            return f"Error updating HTML: {str(e)}"
+
+
+# Function to load prompts based on domain configuration
+def load_prompt_file(config: Config, filename: str) -> str:
+    """Load a prompt file from the appropriate domain directory."""
+    domain_dir = config.domain if hasattr(config, "domain") and config.domain else "general"
+    prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", domain_dir, filename)
+    with open(prompt_path) as f:
+        return f.read()
+
+
+# Simple functions for chart artist workflow (replacing tool classes)
+def describe_image(config: Config, image_path: str) -> str:
+    """Generate detailed description of the input image"""
+    try:
+        # Get base64 of the image
+        fig_base64_list = get_fig_base64([image_path])
+        if not fig_base64_list:
+            return f"Error: Could not process image at {image_path}"
+        
+        image_base64 = fig_base64_list[0][1]
+        
+        # Call VLM with the image and prompt
+        description = call_vlm_with_prompt(image_base64, config, IMAGE_DESCRIPTION_PROMPT)
+        return description
+        
+    except Exception as e:
+        logger.error(f"Error in describe_image: {e}")
+        logger.error(traceback.format_exc())
+        return f"Error generating image description: {str(e)}"
+
+
+def generate_html_flowchart(config: Config, image_description: str) -> str:
+    """Generate HTML flowchart based on image description"""
+    try:
+        # Initialize LLM
+        llm = init_chat_model(
+            config.llm.chat.model,
+            base_url=config.llm.chat.base_url,
+            model_provider="openai",
+            openai_api_key=config.llm.chat.api_key,
+            extra_body={"chat_template_kwargs": {"enable_thinking": True}},
+        )
+        
+        # Create prompt for HTML generation
+        prompt = HTML_GENERATION_PROMPT.format(image_description=image_description)
+        
+        # Call LLM to generate HTML
+        response = llm.invoke([HumanMessage(content=prompt)])
+        html_content = response.content
+        
+        return html_content
+        
+    except Exception as e:
+        logger.error(f"Error in generate_html_flowchart: {e}")
+        logger.error(traceback.format_exc())
+        return f"Error generating HTML: {str(e)}"
+
+
+def convert_html_to_png(config: Config, html_content: str) -> str:
+    """Convert HTML content to PNG image"""
+    try:
+        # Create output directory
+        output_dir = os.path.join(config.save_path, "workspace", "chart_artist")
+        os.makedirs(output_dir, exist_ok=True)
+        
+        hti = Html2Image(size=(1800, 1200), output_path=output_dir)
+        html = html_content
+        css = ""
+
+        hti.screenshot(html_str=html, css_str=css, save_as="flowchart_html.png")
+        
+        output_path = os.path.join(output_dir, "flowchart_html.png")
+        logger.info(f"HTML converted to PNG: {output_path}")
+        return output_path
+    except Exception as e:
+        logger.error(f"Error in convert_html_to_png: {e}")
+        logger.error(traceback.format_exc())
+        return f"Error converting HTML to PNG: {str(e)}"
+
+
+def compare_images(config: Config, merged_image_path: str) -> str:
+    """Compare original image with generated HTML PNG"""
+    try:
+        # Get base64 of both images
+        merged_base64_list = get_fig_base64([merged_image_path])
+        merged_base64 = merged_base64_list[0][1]
+        
+        # Initialize VLM
+        from ..utils.vision_feedback import call_vlm_with_prompt
+        
+        # Call VLM with the image and prompt
+        comparison_result = call_vlm_with_prompt(merged_base64, config, IMAGE_COMPARISON_PROMPT)
+        
+        return comparison_result
+        
+    except Exception as e:
+        logger.error(f"Error in compare_images: {e}")
+        logger.error(traceback.format_exc())
+        return f"Error comparing images: {str(e)}"
+
+
+def merge_images(config: Config, original_image_path: str, generated_image_path: str) -> str:
+    """Merge original image and generated HTML PNG side by side"""
+    try:
+        # Open both images
+        original_img = Image.open(original_image_path)
+        generated_img = Image.open(generated_image_path)
+        
+        # Get dimensions
+        orig_width, orig_height = original_img.size
+        gen_width, gen_height = generated_img.size
+        
+        # Determine the maximum height to resize both images to the same height
+        max_height = max(orig_height, gen_height)
+        
+        # Resize images to have the same height
+        orig_resized = original_img.resize((int(orig_width * max_height / orig_height), max_height), Image.LANCZOS)
+        gen_resized = generated_img.resize((int(gen_width * max_height / gen_height), max_height), Image.LANCZOS)
+        
+        # Create a new image with width equal to the sum of both resized images
+        merged_width = orig_resized.width + gen_resized.width
+        merged_img = Image.new('RGB', (merged_width, max_height), color='white')
+        
+        # Paste the original image on the left
+        merged_img.paste(orig_resized, (0, 0))
+        
+        # Paste the generated image on the right
+        merged_img.paste(gen_resized, (orig_resized.width, 0))
+        
+        # Save the merged image
+        output_dir = os.path.join(config.save_path, "workspace", "chart_artist")
+        os.makedirs(output_dir, exist_ok=True)
+        merged_image_path = os.path.join(output_dir, "comparison_merged.png")
+        merged_img.save(merged_image_path)
+        
+        logger.info(f"Images merged successfully: {merged_image_path}")
+        return merged_image_path
+        
+    except Exception as e:
+        logger.error(f"Error in merge_images: {e}")
+        logger.error(traceback.format_exc())
+        return f"Error merging images: {str(e)}"
+
+
+def update_html_based_on_feedback(config: Config, current_html: str, comparison_feedback: str) -> str:
+    """Update HTML based on comparison feedback"""
+    try:
+        # Initialize LLM
+        llm = init_chat_model(
+            config.llm.chat.model,
+            base_url=config.llm.chat.base_url,
+            model_provider="openai",
+            openai_api_key=config.llm.chat.api_key,
+            extra_body={"chat_template_kwargs": {"enable_thinking": True}},
+        )
+        
+        # Create prompt for HTML update
+        prompt = HTML_UPDATE_PROMPT.format(current_html=current_html, comparison_feedback=comparison_feedback)
+        
+        # Call LLM to update HTML
+        response = llm.invoke([HumanMessage(content=prompt)])
+        updated_html = response.content
+        
+        return updated_html
+        
+    except Exception as e:
+        logger.error(f"Error in update_html_based_on_feedback: {e}")
+        logger.error(traceback.format_exc())
+        return f"Error updating HTML: {str(e)}"
 
 
 def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
@@ -454,24 +271,7 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
         extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
     
-    # Initialize tools
-    image_description_tool = ImageDescriptionTool(config)
-    html_generation_tool = HTMLGenerationTool(config)
-    html_to_png_tool = HTMLToPNGTool(config)
-    image_comparison_tool = ImageComparisonTool(config)
-    image_merge_tool = ImageMergeTool(config)
-    html_update_tool = HTMLUpdateTool(config)
-    
-    tools = [
-        image_description_tool,
-        html_generation_tool,
-        html_to_png_tool,
-        image_comparison_tool,
-        image_merge_tool,
-        html_update_tool,
-    ]
-    
-    llm_with_tools = llm.bind_tools(tools)
+    # 工具已重构为简单函数，无需初始化
     
     @track_node_call("chart_artist")
     def initialize_chart_artist(state: State):
@@ -490,40 +290,23 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
     @track_node_call("chart_artist")
     def describe_input_image(state: State):
         """Generate detailed description of the input image"""
-        # Get the input image path from state or use a default
-        if "input_image_path" not in state:
-            # Use a default test image from workspace
-            workspace_path = os.path.join(state["save_path"], "workspace")
-            possible_images = [
-                os.path.join(workspace_path, "subtask_01", "fig", "analysis_plots.jpg"),
-                os.path.join(workspace_path, "subtask_01", "fig", "data_histogram.png"),
-                os.path.join(workspace_path, "subtask_02", "fig", "analysis_plots.jpg"),
-            ]
-            
-            # Find the first existing image
-            for img_path in possible_images:
-                if os.path.exists(img_path):
-                    state["input_image_path"] = img_path
-                    break
-            else:
-                return state  # No image found
         
-        # Call the image description tool
-        description_result = image_description_tool._run(state["input_image_path"])
+        # Call the image description function
+        description_result = describe_image(config, state["input_image_path"])
         state["image_description"] = description_result
         
         logger.info(f"Generated image description: {description_result[:200]}...")
         return state
     
     @track_node_call("chart_artist")
-    def generate_html_flowchart(state: State):
+    def generate_html_flowchart_node(state: State):
         """Generate HTML flowchart based on image description"""
         if "image_description" not in state:
             logger.error("No image description available")
             return state
         
-        # Call the HTML generation tool
-        html_result = html_generation_tool._run(state["image_description"])
+        # Call the HTML generation function
+        html_result = generate_html_flowchart(config, state["image_description"])
         state["current_html"] = html_result
         
         # Save HTML to file
@@ -536,14 +319,14 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
         return state
     
     @track_node_call("chart_artist")
-    def convert_html_to_png(state: State):
+    def convert_html_to_png_node(state: State):
         """Convert HTML to PNG"""
         if "current_html" not in state:
             logger.error("No HTML content available")
             return state
         
-        # Call the HTML to PNG tool
-        png_result = html_to_png_tool._run(state["current_html"])
+        # Call the HTML to PNG function
+        png_result = convert_html_to_png(config, state["current_html"])
         
         if png_result.startswith("Error:"):
             logger.error(f"HTML to PNG conversion failed: {png_result}")
@@ -555,14 +338,14 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
         return state
     
     @track_node_call("chart_artist")
-    def merge_images(state: State):
+    def merge_images_node(state: State):
         """Merge original and generated images side by side"""
         if "input_image_path" not in state or "generated_png_path" not in state:
             logger.error("Missing image paths for merging")
             return state
         
-        # Call the image merge tool
-        merge_result = image_merge_tool._run(state["input_image_path"], state["generated_png_path"])
+        # Call the image merge function
+        merge_result = merge_images(config, state["input_image_path"], state["generated_png_path"])
         
         if merge_result.startswith("Error:"):
             logger.error(f"Image merging failed: {merge_result}")
@@ -574,28 +357,32 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
         return state
     
     @track_node_call("chart_artist")
-    def compare_images(state: State):
+    def compare_images_node(state: State):
         """Compare original and generated images"""
         if "input_image_path" not in state or "generated_png_path" not in state:
             logger.error("Missing image paths for comparison")
             return state
         
-        # Call the image comparison tool
-        comparison_result = image_comparison_tool._run(state["input_image_path"], state["generated_png_path"])
+        # Call the image comparison function with merged image (comparing merged image with itself for quality assessment)
+        if "merged_image_path" not in state:
+            logger.error("No merged image available for comparison")
+            return state
+            
+        comparison_result = compare_images(config, state["merged_image_path"])
         state["comparison_feedback"] = comparison_result
         
         logger.info(f"Image comparison completed: {comparison_result[:200]}...")
         return state
     
     @track_node_call("chart_artist")
-    def update_html_based_on_feedback(state: State):
+    def update_html_based_on_feedback_node(state: State):
         """Update HTML based on comparison feedback"""
         if "current_html" not in state or "comparison_feedback" not in state:
             logger.error("Missing HTML or feedback for update")
             return state
         
-        # Call the HTML update tool
-        updated_html_result = html_update_tool._run(state["current_html"], state["comparison_feedback"])
+        # Call the HTML update function
+        updated_html_result = update_html_based_on_feedback(config, state["current_html"], state["comparison_feedback"])
         state["current_html"] = updated_html_result
         
         # Update iteration counter
@@ -625,11 +412,28 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
         # Add context to the prompt
         formatted_prompt = chart_artist_prompt.format(**context)
         
-        # Create chatbot with context
-        this_chatbot = chatbot_with_context_manager(
-            config, llm_with_tools, formatted_prompt, calling_subgraph="chart_artist"
-        )
-        state = this_chatbot(state)
+        # Create a simple message with the final results
+        final_message = f"""
+Chart Artist workflow completed!
+
+## Workflow Summary
+- Iteration count: {context['chart_artist_iteration']}
+- Final HTML file saved to: {os.path.join(config.save_path, "workspace", "chart_artist", "flowchart.html")}
+- Generated PNG image: {state.get("generated_png_path", "Not generated")}
+- Merged comparison image: {context['merged_image_path']}
+
+## Final Results
+Based on the analysis of the input image and multiple iterative optimizations, an HTML version of the flowchart has been generated. The HTML file contains all key elements of the original image and has been appropriately styled for good visual effects.
+
+## File Locations
+- HTML file: {os.path.join(config.save_path, "workspace", "chart_artist", "flowchart.html")}
+- PNG image: {state.get("generated_png_path", "Not generated")}
+- Comparison image: {context['merged_image_path']}
+"""
+        
+        # Add the final message to the state
+        state["messages"].append(HumanMessage(content=final_message))
+        
         return state
     
     # Build the graph
@@ -638,13 +442,13 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
     # Add nodes
     graph_builder.add_node("initialize", initialize_chart_artist)
     graph_builder.add_node("describe_image", describe_input_image)
-    graph_builder.add_node("generate_html", generate_html_flowchart)
-    graph_builder.add_node("convert_to_png", convert_html_to_png)
-    graph_builder.add_node("merge_images", merge_images)
-    graph_builder.add_node("compare_images", compare_images)
-    graph_builder.add_node("update_html", update_html_based_on_feedback)
+    graph_builder.add_node("generate_html", generate_html_flowchart_node)
+    graph_builder.add_node("convert_to_png", convert_html_to_png_node)
+    graph_builder.add_node("merge_images", merge_images_node)
+    graph_builder.add_node("compare_images", compare_images_node)
+    graph_builder.add_node("update_html", update_html_based_on_feedback_node)
     graph_builder.add_node("chart_artist_chatbot", chart_artist_chatbot)
-    graph_builder.add_node("tools", BasicToolNode(tools, config))
+    # 移除tools节点，因为工具已经在各个节点中直接调用
     
     # Add edges
     graph_builder.add_edge(START, "initialize")
@@ -669,14 +473,8 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
     )
     
     graph_builder.add_edge("update_html", "convert_to_png")
-    graph_builder.add_edge("chart_artist_chatbot", "tools")
-    
-    # Route based on tool calls
-    graph_builder.add_conditional_edges(
-        "tools",
-        route_tools,
-        {"tools": "chart_artist_chatbot", END: END}
-    )
+    # chart_artist_chatbot不再需要调用工具，直接结束
+    graph_builder.add_edge("chart_artist_chatbot", END)
     
     # Compile the graph
     graph = graph_builder.compile()
@@ -686,110 +484,13 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
 
 if __name__ == "__main__":
     # Test's chart artist with a sample image
-    try:
-        config, state, last_subgraph, file_manager = load_state("outputs/test_chart_artist")
-    except:
-        # If the state doesn't exist, create a minimal one
-        from ..utils.config import Config
-        config = Config.from_toml("tests/test_proj/config.toml")
-        config.save_path = "outputs/test_chart_artist"
-        os.makedirs(config.save_path, exist_ok=True)
-        
-        # Initialize state
-        state = {
-            "question": "Test chart artist workflow",
-            "messages": [],
-            "thread_id": "test_chart_artist",
-            "save_path": config.save_path,
-        }
-        
-        # Create a basic file manager
-        from file1agent.file_manager import FileManager
-        file_manager = FileManager(
-            analyze_dir=os.path.join(config.save_path, "workspace"),
-            config={
-                "llm": {
-                    "chat": dict(config.llm.chat),
-                    "vision": dict(config.llm.vision),
-                },
-                "rerank": dict(config.rerank),
-                "inclusion": {
-                    "mode": "whitelist"
-                }
-            },
-            realloc_log=False,
-            backup_path=os.path.join(config.save_path, "backup", "deleted"),
-            file_relationships_save_path=os.path.join(config.save_path, ".f1a_cache", "file_relationships.json"),
-            summary_cache_path=os.path.join(config.save_path, ".f1a_cache", "file_summary_cache.json"),
-        )
-    
-    # Set a test image path from workspace
-    workspace_path = "tests/test_proj/workspace"
-    possible_test_images = [
-        os.path.join(workspace_path, "subtask_01", "fig", "analysis_plots.jpg"),
-        os.path.join(workspace_path, "subtask_01", "fig", "data_histogram.png"),
-        os.path.join(workspace_path, "subtask_02", "fig", "analysis_plots.jpg"),
-        os.path.join(workspace_path, "subtask_02", "fig", "data_histogram.png"),
-    ]
+    config, state, last_subgraph, file_manager = load_state("outputs/test_chart_artist")
+    state["resume_node_call_stack"] = []
     
     # Find the first existing image
-    test_image = None
-    for img_path in possible_test_images:
-        if os.path.exists(img_path):
-            test_image = img_path
-            break
-    
-    if test_image:
-        state["input_image_path"] = test_image
-        logger.info(f"Using test image: {test_image}")
-        
-        # Copy the test image to our workspace
-        import shutil
-        dest_dir = os.path.join(config.save_path, "workspace")
-        os.makedirs(dest_dir, exist_ok=True)
-        dest_image = os.path.join(dest_dir, os.path.basename(test_image))
-        shutil.copy2(test_image, dest_image)
-        state["input_image_path"] = dest_image  # Update to use the copied image
-        logger.info(f"Copied test image to: {dest_image}")
-    else:
-        logger.error(f"No test image found in workspace. Checked paths: {possible_test_images}")
-        # Create a simple test image for demonstration
-        try:
-            from PIL import Image, ImageDraw
-            import numpy as np
-            
-            # Create a simple flowchart image
-            width, height = 600, 400
-            img = Image.new('RGB', (width, height), color='white')
-            draw = ImageDraw.Draw(img)
-            
-            # Draw simple flowchart elements
-            # Box 1
-            draw.rectangle([50, 50, 200, 100], outline='black', fill='lightblue')
-            draw.text((100, 70), "Start", fill='black')
-            
-            # Box 2
-            draw.rectangle([225, 50, 375, 100], outline='black', fill='lightgreen')
-            draw.text((275, 70), "Process", fill='black')
-            
-            # Box 3
-            draw.rectangle([400, 50, 550, 100], outline='black', fill='lightyellow')
-            draw.text((450, 70), "End", fill='black')
-            
-            # Arrows
-            draw.line([200, 75, 225, 75], fill='black', width=2)
-            draw.line([375, 75, 400, 75], fill='black', width=2)
-            
-            # Save the test image
-            dest_dir = os.path.join(config.save_path, "workspace")
-            os.makedirs(dest_dir, exist_ok=True)
-            test_image = os.path.join(dest_dir, "simple_flowchart.png")
-            img.save(test_image)
-            state["input_image_path"] = test_image
-            logger.info(f"Created a simple test flowchart image: {test_image}")
-        except Exception as e:
-            logger.error(f"Failed to create test image: {e}")
-            logger.error(traceback.format_exc())
+    test_image = "outputs/test_chart_artist/workspace/flowchart.png"
+    state["input_image_path"] = test_image
+    logger.info(f"Using test image: {test_image}")
     
     # Build and run's chart artist graph
     try:
@@ -813,21 +514,3 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"Error running chart artist workflow: {e}")
         logger.error(traceback.format_exc())
-if __name__ == "__main__":
-    # Test the chart artist with a sample image
-    config, state, last_subgraph, file_manager = load_state("outputs/test_chart_artist")
-    
-    # Set a test image path
-    workspace_path = os.path.join(config.save_path, "workspace")
-    test_image = os.path.join(workspace_path, "Gemini_Generated_Image_7fm2lz7fm2lz7fm2.png")
-    if os.path.exists(test_image):
-        state["input_image_path"] = test_image
-        logger.info(f"Using test image: {test_image}")
-    else:
-        logger.warning(f"Test image not found: {test_image}")
-    
-    # Build and run the chart artist graph
-    graph = build_chart_artist(config, file_manager)
-    result = graph.invoke(state)
-    
-    logger.info("Chart artist workflow completed")

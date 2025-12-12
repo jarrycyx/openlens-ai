@@ -37,6 +37,14 @@ class State(TypedDict):
     status: str = "running"
     file_summary: dict = {}
     available_figs: list = []
+    
+    image_description: str = ""
+    input_image_path: str = ""
+    generated_png_path: str = ""
+    html_to_png_error: str = ""
+    comparison_feedback: str = ""
+    current_html: str = ""
+    chart_artist_iteration: int = 0
 
     artifact_manifest_path: str | None
     artifact_code_stats: dict | None
