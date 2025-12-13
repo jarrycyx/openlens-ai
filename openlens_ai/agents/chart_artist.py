@@ -9,7 +9,7 @@ from PIL import Image
 import io
 from loguru import logger
 import traceback
-from html2image import Html2Image
+# from html2image import Html2Image  # 不再需要 HTML 相关导入
 
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
@@ -23,6 +23,7 @@ from ..chatbot import chatbot_with_context_manager
 from ..state import load_state, track_node_call
 from ..utils.config import Config
 from ..utils.vision_feedback import get_fig_base64, call_vlm_with_prompt
+from ..tools.openhands_adaptor import run_openhands_prompt
 
 from file1agent.file_manager import FileManager
 
@@ -35,29 +36,30 @@ IMAGE_DESCRIPTION_PROMPT = """Please analyze this image in detail and provide a 
 5. Colors, shapes, and visual styling
 6. Any technical details that would be important for recreating this diagram
 
-Please be very detailed and specific, as this description will be used to recreate a similar diagram in HTML."""
+Please be very detailed and specific, as this description will be used to recreate a similar diagram in PowerPoint using python-pptx."""
 
-HTML_GENERATION_PROMPT = """Based on the following detailed image description, please create a complete HTML file that recreates the diagram as a flowchart using HTML, CSS, and possibly JavaScript.
+PYTHON_PPT_GENERATION_PROMPT = """Based on the following detailed image description, please create a complete Python script that uses the python-pptx library to recreate the diagram as a PowerPoint slide.
 
 Image Description:
 {image_description}
 
 Requirements:
-1. Create a self-contained HTML file with inline CSS and JavaScript
-2. Use modern HTML5 and CSS3 features
-3. Make the flowchart responsive and visually appealing
-4. Use appropriate colors, shapes, and styling to match the original diagram
-5. Include all text, labels, and connections from the original
+1. Create a complete Python script that uses python-pptx library
+2. The script should create a new PowerPoint presentation with one slide
+3. Use appropriate shapes, text boxes, and styling to match the original diagram
+4. Include all text, labels, and connections from the original
+5. Use appropriate colors to match the original diagram
 6. Ensure the layout is clear and easy to follow
-7. Use libraries like Mermaid.js or similar if appropriate for flowchart creation
-8. The HTML should be complete and ready to render in a browser
+7. The script should save the PowerPoint file as '/workspace/chart_artist_output.pptx'
+8. The script should be complete and ready to run
 
-Please return only the complete HTML code without any additional explanations."""
+Please return only the complete Python code without any additional explanations and without markdown elements like ```python``` or ``````.
+"""
 
 IMAGE_COMPARISON_PROMPT = """Please compare these two images side by side and provide a detailed analysis:
 
 Left image: Original diagram
-Right image: Generated HTML flowchart
+Right image: Generated PowerPoint slide
 
 Please analyze:
 1. Overall structure and layout similarities/differences
@@ -65,25 +67,25 @@ Please analyze:
 3. Text and label accuracy
 4. Visual styling differences (colors, shapes, sizes)
 5. Connection and flow accuracy
-6. Specific suggestions for improving the HTML version to better match the original
+6. Specific suggestions for improving the PowerPoint version to better match the original
 
-Please be very specific and provide actionable feedback for improving the HTML flowchart."""
+Please be very specific and provide actionable feedback for improving the PowerPoint slide."""
 
-HTML_UPDATE_PROMPT = """Please update the following HTML flowchart based on the comparison feedback provided:
+PYTHON_PPT_UPDATE_PROMPT = """Please update the following Python script based on the comparison feedback provided:
 
-Current HTML:
-{current_html}
+Current Python Script:
+{current_python}
 
 Comparison Feedback:
 {comparison_feedback}
 
 Please:
 1. Address all the issues mentioned in the feedback
-2. Improve the HTML to better match the original diagram
+2. Improve the Python script to better match the original diagram
 3. Fix any missing elements, text, or styling issues
-4. Ensure the flowchart structure is accurate
-5. Maintain the self-contained HTML format with inline CSS and JavaScript
-6. Return only the complete updated HTML code without any additional explanations"""
+4. Ensure the PowerPoint structure is accurate
+5. Maintain the complete Python script format
+6. Return only the complete updated Python code without any additional explanations"""
 
 
 # Function to load prompts based on domain configuration
@@ -116,8 +118,8 @@ def describe_image(config: Config, image_path: str) -> str:
         return f"Error generating image description: {str(e)}"
 
 
-def generate_html_flowchart(config: Config, image_description: str) -> str:
-    """Generate HTML flowchart based on image description"""
+def generate_python_ppt_code(config: Config, image_description: str) -> str:
+    """Generate Python code for PPT creation based on image description"""
     try:
         # Initialize LLM
         llm = init_chat_model(
@@ -128,41 +130,64 @@ def generate_html_flowchart(config: Config, image_description: str) -> str:
             extra_body={"chat_template_kwargs": {"enable_thinking": True}},
         )
         
-        # Create prompt for HTML generation
-        prompt = HTML_GENERATION_PROMPT.format(image_description=image_description)
+        # Create prompt for Python PPT generation
+        prompt = PYTHON_PPT_GENERATION_PROMPT.format(image_description=image_description)
         
-        # Call LLM to generate HTML
+        # Call LLM to generate Python code
         response = llm.invoke([HumanMessage(content=prompt)])
-        html_content = response.content
+        python_code = response.content
+        python_code = python_code.strip().replace("```python", "").replace("```", "")
         
-        return html_content
+        return python_code
         
     except Exception as e:
-        logger.error(f"Error in generate_html_flowchart: {e}")
+        logger.error(f"Error in generate_python_ppt_code: {e}")
         logger.error(traceback.format_exc())
-        return f"Error generating HTML: {str(e)}"
+        return f"Error generating Python code: {str(e)}"
 
 
-def convert_html_to_png(config: Config, html_content: str) -> str:
-    """Convert HTML content to PNG image"""
+def execute_python_ppt_code(config: Config, python_code: str, file_manager: FileManager) -> str:
+    """Execute Python code to generate PPT using OpenHands"""
     try:
         # Create output directory
         output_dir = os.path.join(config.save_path, "workspace", "chart_artist")
         os.makedirs(output_dir, exist_ok=True)
         
-        hti = Html2Image(size=(1800, 1200), output_path=output_dir)
-        html = html_content
-        css = ""
+        # Prepare the prompt for OpenHands
+        prompt = f"""
+Please execute the following Python code to create a PowerPoint presentation:
 
-        hti.screenshot(html_str=html, css_str=css, save_as="flowchart_html.png")
+{python_code}
+
+After executing the code, please convert the PowerPoint slide to a PNG image and save it as '/workspace/chart_artist_output.png'.
+You can use any method to convert PPT to PNG, such as using the python-pptx library with additional conversion tools or other appropriate methods.
+
+Please ensure both the PPT file and PNG image are saved in the workspace directory.
+"""
         
-        output_path = os.path.join(output_dir, "flowchart_html.png")
-        logger.info(f"HTML converted to PNG: {output_path}")
-        return output_path
+        # Execute the code using OpenHands
+        result = run_openhands_prompt(prompt, config, file_manager=file_manager)
+        
+        # Check if the PPT was generated
+        ppt_path = os.path.join(config.save_path, "workspace", "chart_artist_output.pptx")
+        png_path = os.path.join(config.save_path, "workspace", "chart_artist_output.png")
+        
+        if os.path.exists(ppt_path):
+            logger.info(f"PPT generated successfully: {ppt_path}")
+            if os.path.exists(png_path):
+                logger.info(f"PNG generated successfully: {png_path}")
+                return png_path
+            else:
+                logger.warning(f"PPT generated but PNG conversion failed: {ppt_path}")
+                return f"PPT generated but PNG conversion failed: {ppt_path}"
+        else:
+            logger.error(f"PPT generation failed. OpenHands result: {result}")
+            return f"PPT generation failed. Check OpenHands logs for details."
+        
     except Exception as e:
-        logger.error(f"Error in convert_html_to_png: {e}")
+        logger.error(f"Error in execute_python_ppt_code: {e}")
         logger.error(traceback.format_exc())
-        return f"Error converting HTML to PNG: {str(e)}"
+        return f"Error executing Python code: {str(e)}"
 
 
 def compare_images(config: Config, merged_image_path: str) -> str:
@@ -229,8 +254,8 @@ def merge_images(config: Config, original_image_path: str, generated_image_path:
         return f"Error merging images: {str(e)}"
 
 
-def update_html_based_on_feedback(config: Config, current_html: str, comparison_feedback: str) -> str:
-    """Update HTML based on comparison feedback"""
+def update_python_ppt_based_on_feedback(config: Config, current_python: str, comparison_feedback: str) -> str:
+    """Update Python PPT code based on comparison feedback"""
     try:
         # Initialize LLM
         llm = init_chat_model(
@@ -241,19 +266,19 @@ def update_html_based_on_feedback(config: Config, current_html: str, comparison_
             extra_body={"chat_template_kwargs": {"enable_thinking": True}},
         )
         
-        # Create prompt for HTML update
-        prompt = HTML_UPDATE_PROMPT.format(current_html=current_html, comparison_feedback=comparison_feedback)
+        # Create prompt for Python PPT update
+        prompt = PYTHON_PPT_UPDATE_PROMPT.format(current_python=current_python, comparison_feedback=comparison_feedback)
         
-        # Call LLM to update HTML
+        # Call LLM to update Python code
         response = llm.invoke([HumanMessage(content=prompt)])
-        updated_html = response.content
+        updated_python = response.content
         
-        return updated_html
+        return updated_python
         
     except Exception as e:
-        logger.error(f"Error in update_html_based_on_feedback: {e}")
+        logger.error(f"Error in update_python_ppt_based_on_feedback: {e}")
         logger.error(traceback.format_exc())
-        return f"Error updating HTML: {str(e)}"
+        return f"Error updating Python code: {str(e)}"
 
 
 def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
@@ -299,41 +324,43 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
         return state
     
     @track_node_call("chart_artist")
-    def generate_html_flowchart_node(state: State):
-        """Generate HTML flowchart based on image description"""
+    def generate_python_ppt_node(state: State):
+        """Generate Python PPT code based on image description"""
         if "image_description" not in state:
             logger.error("No image description available")
             return state
         
-        # Call the HTML generation function
-        html_result = generate_html_flowchart(config, state["image_description"])
-        state["current_html"] = html_result
+        # Call the Python PPT generation function
+        python_result = generate_python_ppt_code(config, state["image_description"])
         
-        # Save HTML to file
+        # Save Python code to file
         output_dir = os.path.join(state["save_path"], "workspace", "chart_artist")
-        html_path = os.path.join(output_dir, "flowchart.html")
-        with open(html_path, "w") as f:
-            f.write(html_result)
+        python_path = os.path.join(output_dir, "chart_generator.py")
+        state["current_python"] = python_path
+        with open(python_path, "w") as f:
+            f.write(python_result)
         
-        logger.info(f"Generated HTML flowchart: {html_path}")
+        logger.info(f"Generated Python PPT code: {python_path}")
         return state
     
     @track_node_call("chart_artist")
-    def convert_html_to_png_node(state: State):
-        """Convert HTML to PNG"""
-        if "current_html" not in state:
-            logger.error("No HTML content available")
+    def execute_python_ppt_node(state: State):
+        """Execute Python PPT code using OpenHands"""
+        if "current_python" not in state:
+            logger.error("No Python code available")
             return state
         
-        # Call the HTML to PNG function
-        png_result = convert_html_to_png(config, state["current_html"])
+        # Call the Python PPT execution function
+        python_path_in_docker = state["current_python"].split("workspace")[1]
+        python_path_in_docker = os.path.join("/workspace", python_path_in_docker)
+        png_result = execute_python_ppt_code(config, python_path_in_docker, file_manager)
         
-        if png_result.startswith("Error:"):
-            logger.error(f"HTML to PNG conversion failed: {png_result}")
-            state["html_to_png_error"] = png_result
+        if png_result.startswith("Error:") or "failed" in png_result.lower():
+            logger.error(f"Python PPT execution failed: {png_result}")
+            state["python_ppt_error"] = png_result
         else:
             state["generated_png_path"] = png_result
-            logger.info(f"HTML converted to PNG: {png_result}")
+            logger.info(f"Python PPT executed successfully: {png_result}")
         
         return state
     
@@ -375,26 +402,26 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
         return state
     
     @track_node_call("chart_artist")
-    def update_html_based_on_feedback_node(state: State):
-        """Update HTML based on comparison feedback"""
-        if "current_html" not in state or "comparison_feedback" not in state:
-            logger.error("Missing HTML or feedback for update")
+    def update_python_ppt_based_on_feedback_node(state: State):
+        """Update Python PPT code based on comparison feedback"""
+        if "current_python" not in state or "comparison_feedback" not in state:
+            logger.error("Missing Python code or feedback for update")
             return state
         
-        # Call the HTML update function
-        updated_html_result = update_html_based_on_feedback(config, state["current_html"], state["comparison_feedback"])
-        state["current_html"] = updated_html_result
+        # Call the Python PPT update function
+        updated_python_result = update_python_ppt_based_on_feedback(config, state["current_python"], state["comparison_feedback"])
+        state["current_python"] = updated_python_result
         
         # Update iteration counter
         state["chart_artist_iteration"] += 1
         
-        # Save updated HTML to file
+        # Save updated Python code to file
         output_dir = os.path.join(state["save_path"], "workspace", "chart_artist")
-        html_path = os.path.join(output_dir, f"flowchart_v{state['chart_artist_iteration']}.html")
-        with open(html_path, "w") as f:
-            f.write(updated_html_result)
+        python_path = os.path.join(output_dir, f"chart_generator_v{state['chart_artist_iteration']}.py")
+        with open(python_path, "w") as f:
+            f.write(updated_python_result)
         
-        logger.info(f"Updated HTML flowchart (iteration {state['chart_artist_iteration']}): {html_path}")
+        logger.info(f"Updated Python PPT code (iteration {state['chart_artist_iteration']}): {python_path}")
         return state
     
     @track_node_call("chart_artist")
@@ -405,7 +432,7 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
             "image_description": state.get("image_description", ""),
             "comparison_feedback": state.get("comparison_feedback", ""),
             "merged_image_path": state.get("merged_image_path", ""),
-            "current_html": state.get("current_html", ""),
+            "current_python": state.get("current_python", ""),
             "chart_artist_iteration": state.get("chart_artist_iteration", 0),
         }
         
@@ -418,15 +445,17 @@ Chart Artist workflow completed!
 
 ## Workflow Summary
 - Iteration count: {context['chart_artist_iteration']}
-- Final HTML file saved to: {os.path.join(config.save_path, "workspace", "chart_artist", "flowchart.html")}
+- Final Python code saved to: {os.path.join(config.save_path, "workspace", "chart_artist", "chart_generator.py")}
+- Generated PPT file: {os.path.join(config.save_path, "workspace", "chart_artist_output.pptx")}
 - Generated PNG image: {state.get("generated_png_path", "Not generated")}
 - Merged comparison image: {context['merged_image_path']}
 
 ## Final Results
-Based on the analysis of the input image and multiple iterative optimizations, an HTML version of the flowchart has been generated. The HTML file contains all key elements of the original image and has been appropriately styled for good visual effects.
+Based on the analysis of the input image and multiple iterative optimizations, a PowerPoint version of the flowchart has been generated. The Python script uses python-pptx library to create a professional-looking presentation that matches the original image.
 
 ## File Locations
-- HTML file: {os.path.join(config.save_path, "workspace", "chart_artist", "flowchart.html")}
+- Python code: {os.path.join(config.save_path, "workspace", "chart_artist", "chart_generator.py")}
+- PPT file: {os.path.join(config.save_path, "workspace", "chart_artist_output.pptx")}
 - PNG image: {state.get("generated_png_path", "Not generated")}
 - Comparison image: {context['merged_image_path']}
 """
@@ -442,37 +471,36 @@ Based on the analysis of the input image and multiple iterative optimizations, a
     # Add nodes
     graph_builder.add_node("initialize", initialize_chart_artist)
     graph_builder.add_node("describe_image", describe_input_image)
-    graph_builder.add_node("generate_html", generate_html_flowchart_node)
-    graph_builder.add_node("convert_to_png", convert_html_to_png_node)
+    graph_builder.add_node("generate_python", generate_python_ppt_node)
+    graph_builder.add_node("execute_python", execute_python_ppt_node)
     graph_builder.add_node("merge_images", merge_images_node)
     graph_builder.add_node("compare_images", compare_images_node)
-    graph_builder.add_node("update_html", update_html_based_on_feedback_node)
+    graph_builder.add_node("update_python", update_python_ppt_based_on_feedback_node)
     graph_builder.add_node("chart_artist_chatbot", chart_artist_chatbot)
-    # 移除tools节点，因为工具已经在各个节点中直接调用
     
     # Add edges
     graph_builder.add_edge(START, "initialize")
     graph_builder.add_edge("initialize", "describe_image")
-    graph_builder.add_edge("describe_image", "generate_html")
-    graph_builder.add_edge("generate_html", "convert_to_png")
-    graph_builder.add_edge("convert_to_png", "merge_images")
+    graph_builder.add_edge("describe_image", "generate_python")
+    graph_builder.add_edge("generate_python", "execute_python")
+    graph_builder.add_edge("execute_python", "merge_images")
     graph_builder.add_edge("merge_images", "compare_images")
     
-    # Conditional edge: either update HTML (if more iterations needed) or go to chatbot
+    # Conditional edge: either update Python (if more iterations needed) or go to chatbot
     def should_continue_iteration(state: State):
         """Determine if we should continue iterating or finish"""
         if state.get("chart_artist_iteration", 0) >= state.get("max_iterations", 3):
             return "chatbot"
         else:
-            return "update_html"
+            return "update_python"
     
     graph_builder.add_conditional_edges(
         "compare_images",
         should_continue_iteration,
-        {"update_html": "update_html", "chatbot": "chart_artist_chatbot"}
+        {"update_python": "update_python", "chatbot": "chart_artist_chatbot"}
     )
     
-    graph_builder.add_edge("update_html", "convert_to_png")
+    graph_builder.add_edge("update_python", "execute_python")
     # chart_artist_chatbot不再需要调用工具，直接结束
     graph_builder.add_edge("chart_artist_chatbot", END)
     
@@ -485,6 +513,7 @@ Based on the analysis of the input image and multiple iterative optimizations, a
 if __name__ == "__main__":
     # Test's chart artist with a sample image
     config, state, last_subgraph, file_manager = load_state("outputs/test_chart_artist")
+    config.workflow.e2e_test = False
     state["resume_node_call_stack"] = []
     
     # Find the first existing image
@@ -502,8 +531,8 @@ if __name__ == "__main__":
         print("\n=== Chart Artist Workflow Results ===")
         if "image_description" in result:
             print(f"Image Description: {result['image_description'][:200]}...")
-        if "current_html" in result:
-            print(f"Generated HTML saved to: {os.path.join(config.save_path, 'workspace', 'chart_artist', 'flowchart.html')}")
+        if "current_python" in result:
+            print(f"Generated Python code saved to: {os.path.join(config.save_path, 'workspace', 'chart_artist', 'chart_generator.py')}")
         if "generated_png_path" in result:
             print(f"Generated PNG: {result['generated_png_path']}")
         if "merged_image_path" in result:
