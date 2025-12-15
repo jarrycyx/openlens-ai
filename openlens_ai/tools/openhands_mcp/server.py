@@ -71,7 +71,7 @@ def analyze_image(image_base64: str, prompt: Optional[str] = None) -> str:
     """
     try:
         config = get_config()
-        return call_vlm_with_prompt(image_base64, config, prompt)
+        return call_vlm_with_prompt(config, image_base64, prompt)
     except Exception as e:
         return f"Error analyzing image: {str(e)}\n{traceback.format_exc()}"
 
@@ -194,7 +194,7 @@ def analyze_image_vlm(file_path: Annotated[str, Field(description="ABSOLUTE Path
     
     ext = os.path.splitext(file_path)[1].lower()
     
-    if ext in ['.png', '.jpg', '.jpeg']:
+    if ext in ['.png', '.jpg', '.jpeg', '.svg']:
         # Handle PDF file
         page_images = get_fig_base64([file_path])
         if len(page_images) >= 1:

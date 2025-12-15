@@ -216,17 +216,18 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True,
     if isinstance(prompts, str):
         prompts = [prompts]
     
-    deleted_files = file_manager.clean_repository()
-#     if len(deleted_files) > 0:
-#         deletion_report = f"""
-# Some files are deleted because they may be duplicates of implement different versions of the same functionality (e.g. one is the improved/optimized version of the other), or they contain simulated, fake, or mock data.
-# These are STRICTLY PROHIBITED in coding, please KEEP IN MIND that:
-# * NEVER create multiple versions of the same file with different suffixes (e.g., file_test.py, file_fix.py, file_simple.py).
-# * DO NOT mock or simulate results. Always generate real results using an actual workflow setup (e.g., scripts that can directly run with experimental/control group inputs to produce dependent variables).
-# Deleted files: {str(deleted_files)}
-# Keeping the above in mind, check if the remaining files are valid and follow the coding standards.
-# """
-#         prompts.insert(0, deletion_report)
+    if file_manager:
+        deleted_files = file_manager.clean_repository()
+    #     if len(deleted_files) > 0:
+    #         deletion_report = f"""
+    # Some files are deleted because they may be duplicates of implement different versions of the same functionality (e.g. one is the improved/optimized version of the other), or they contain simulated, fake, or mock data.
+    # These are STRICTLY PROHIBITED in coding, please KEEP IN MIND that:
+    # * NEVER create multiple versions of the same file with different suffixes (e.g., file_test.py, file_fix.py, file_simple.py).
+    # * DO NOT mock or simulate results. Always generate real results using an actual workflow setup (e.g., scripts that can directly run with experimental/control group inputs to produce dependent variables).
+    # Deleted files: {str(deleted_files)}
+    # Keeping the above in mind, check if the remaining files are valid and follow the coding standards.
+    # """
+    #         prompts.insert(0, deletion_report)
 
     # Get available port
     port = get_available_port(9077)

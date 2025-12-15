@@ -11,6 +11,7 @@ import fitz
 from datetime import datetime
 from PIL import Image
 import io
+import cairosvg
 
 from langchain.load.dump import dumps
 from langchain.chat_models import init_chat_model
@@ -68,7 +69,8 @@ def get_vlm(config: Config):
         base_url=config.llm.vision.base_url,
         model_provider="openai",
         openai_api_key=config.llm.vision.api_key,
-        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
+        max_tokens=config.context.max_context_token_cnt,
+        extra_body={"chat_template_kwargs": {"enable_thinking": True}, "max_tokens": config.context.max_context_token_cnt},
     )
 
 
@@ -292,6 +294,14 @@ def convert_pdf_to_separate_images(pdf_file: str):
         return None, None
 
 
+def convert_svg_to_png(svg_file: str) -> str:
+    if "workspace" in svg_file:
+        save_path = svg_file.split("workspace")[0]
+        save_tmp_path = os.path.join(save_path, "backup", "tmp", f"{os.path.basename(svg_file)}.png")
+    else:
+        save_tmp_path = os.path.join(os.path.dirname(svg_file), f".tmp_{os.path.basename(svg_file)}.png")
+    cairosvg.svg2png(url=svg_file, write_to=save_tmp_path, output_width=2000, output_height=1000)
+    return save_tmp_path
 
 def get_fig_base64(fig_file_list, merge_pdf=False):
     fig_base64_list = []
@@ -310,6 +320,12 @@ def get_fig_base64(fig_file_list, merge_pdf=False):
                 if name_list is None:
                     continue
                 fig_base64_list.extend(zip(name_list, img_base64_list))
+        if fig.lower().endswith(".svg"):
+            png_path = convert_svg_to_png(fig)
+            with open(png_path, "rb") as f:
+                img_data = f.read()
+                img_base64 = base64.b64encode(img_data).decode("utf-8")
+                fig_base64_list.append((fig, img_base64))
         else:
             with open(fig, "rb") as f:
                 img_data = f.read()
@@ -352,7 +368,7 @@ MSG_FORMATTERS = [
     # ],
 ]
 
-def call_vlm_with_prompt(image_base64: str, config: Config, prompt: str) -> str:
+def call_vlm_with_prompt(config: Config, image_base64: str, prompt: str) -> str:
     """
     Generic VLM calling function for handling image-related requests
 
@@ -378,7 +394,7 @@ def call_vlm_with_prompt(image_base64: str, config: Config, prompt: str) -> str:
 
                 vlm_response = vlm.invoke(image_message)
                 save_llm_call(image_message + [vlm_response], config)
-                logger.info(f"Vision response: {vlm_response.content}")
+                logger.debug(f"Vision response: {vlm_response.content}")
                 return vlm_response.content
             except Exception as e:
                 error_msg = f"Error when calling llm: {e}"
@@ -413,7 +429,7 @@ def get_vision_feedback(image_base64: str, config: Config) -> str:
     Get image feedback
     """
     prompt = _load_prompt(config, "vision_feedback.md")
-    return call_vlm_with_prompt(image_base64, config, prompt)
+    return call_vlm_with_prompt(config, image_base64, prompt)
 
 
 def get_latex_vision_feedback(image_base64: str, config: Config) -> str:
@@ -421,7 +437,7 @@ def get_latex_vision_feedback(image_base64: str, config: Config) -> str:
     Get LaTeX image feedback
     """
     prompt = _load_prompt(config, "vision_latex_feedback.md")
-    return call_vlm_with_prompt(image_base64, config, prompt)
+    return call_vlm_with_prompt(config, image_base64, prompt)
 
 
 def get_vision_classification(image_base64: str, config: Config) -> str:
@@ -429,7 +445,7 @@ def get_vision_classification(image_base64: str, config: Config) -> str:
     Get image classification
     """
     prompt = _load_prompt(config, "vision_classify.md")
-    return call_vlm_with_prompt(image_base64, config, prompt)
+    return call_vlm_with_prompt(config, image_base64, prompt)
 
 
 if __name__ == "__main__":

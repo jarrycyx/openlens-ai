@@ -41,10 +41,11 @@ class State(TypedDict):
     image_description: str = ""
     input_image_path: str = ""
     generated_png_path: str = ""
-    python_ppt_error: str = ""
     comparison_feedback: str = ""
-    current_python: str = ""
+    current_svg: str = ""
+    svg_conversion_error: str = ""
     chart_artist_iteration: int = 0
+    merged_image_path: str = ""
 
     artifact_manifest_path: str | None
     artifact_code_stats: dict | None
