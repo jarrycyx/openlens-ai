@@ -47,12 +47,13 @@ Please return only the complete SVG code without any additional explanations and
 
 
 FIX_SVG_PROMPT = """
-Please analyze this SVG code under /workspace/chart_artist/chart_artist_output.svg and fix the issues.
+Please analyze this SVG code and fix the issues.
 Previous Feedback:
 {feedback}
 
 Please address these issues in your new SVG generation by adjusting locations, colors, shapes, sizes, and connections.
-After each adjustment, to see the image visually, please call the tool analyze_image_vlm to analyze if the adjustment is correct.
+Please return only the complete SVG code without any additional explanations and without markdown elements like ```svg``` or ``````.
+Never return SVG examples, just fix and return the complete SVG code.
 """
 
 IMAGE_COMPARISON_PROMPT = """Please compare these two images side by side and provide a detailed analysis:
@@ -60,7 +61,7 @@ IMAGE_COMPARISON_PROMPT = """Please compare these two images side by side and pr
 Left image: Original diagram
 Right image: Generated SVG diagram
 
-Please analyze:
+Please analyze the following to provide a detailed steps to improve the SVG diagram to better match the original diagram.
 1. Overall structure and layout similarities/differences
 2. Missing or extra elements in the generated version
 3. Text and label accuracy
@@ -68,7 +69,12 @@ Please analyze:
 5. Connection and flow accuracy
 6. Specific suggestions for improving the SVG version to better match the original
 
-Please be very specific and provide actionable feedback for improving the SVG diagram."""
+Response example:
+1. Change the size of the box surronding the text "Data Science" from 100x100 to 150x150.
+2. Delete the right angle arrow pointing to the "Data Science" text and convert to a corner arrow.
+
+Please be very specific and provide actionable feedback for improving the SVG diagram.
+"""
 
 SVG_UPDATE_PROMPT = """Please analyze the original image and the comparison feedback provided, then create an updated SVG code that addresses all the issues mentioned in the feedback.
 
@@ -94,50 +100,81 @@ def load_prompt_file(config: Config, filename: str) -> str:
         return f.read()
 
 
-
 def get_svg_path(config: Config) -> str:
     """Get the path to the SVG file."""
     return os.path.join(config.save_path, "workspace", "chart_artist", "chart_artist_output.svg")
 
+
+def get_llm_feedback(config: Config, prompt: str) -> str:
+    
+    # Initialize LLM
+    llm = init_chat_model(
+        config.llm.chat.model,
+        base_url=config.llm.chat.base_url,
+        model_provider="openai",
+        openai_api_key=config.llm.chat.api_key,
+        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
+    )
+    aimessage = llm.invoke([HumanMessage(content=prompt)])
+    return aimessage.content
+
 # Simple functions for chart artist workflow (replacing tool classes)
 def generate_svg_from_image(config: Config, image_path: str, feedback: str = "", current_svg: str = "") -> str:
     """Generate SVG code directly from input image"""
+    # Get base64 of the image
+    fig_base64_list = get_fig_base64([image_path])
+    if not fig_base64_list:
+        return f"Error: Could not process image at {image_path}"
+    image_base64 = fig_base64_list[0][1]
+
+
+    def update_with_llm(all_feedback: str):
+        prompt = FIX_SVG_PROMPT.format(feedback=all_feedback)
+        logger.info(f"Calling LLM with prompt: {prompt}")
+        svg_code = get_llm_feedback(config, prompt)
+        svg_code = svg_code.strip().replace("```svg", "").replace("```", "")
+        return svg_code
+
+    def update_with_vlm(all_feedback: str):
+        prompt = FIX_SVG_PROMPT.format(feedback=all_feedback)                
+        # with open(get_svg_path(config), "w", encoding="utf-8") as f:
+        #     f.write(svg_code)
+        # run_openhands_prompt(prompt, config, add_file_summary=False)
+        with open(get_svg_path(config), "r", encoding="utf-8") as f:
+            svg_code = f.read()
+        svg_code = call_vlm_with_prompt(config, image_base64, prompt)
+        return svg_code
+        
+    
     try:
-
         # If svg does not exists, re-generate
-        if (not current_svg):
-            # Get base64 of the image
-            fig_base64_list = get_fig_base64([image_path])
-            if not fig_base64_list:
-                return f"Error: Could not process image at {image_path}"
-
-            image_base64 = fig_base64_list[0][1]
+        if not current_svg:
             prompt = DIRECT_SVG_GENERATION_PROMPT
             # Call VLM with the image and direct SVG generation prompt
             svg_code = call_vlm_with_prompt(config, image_base64, prompt)
             svg_code = svg_code.strip().replace("```svg", "").replace("```", "")
         else:
             svg_code = current_svg
-        
+
         if svg_code:
-            
-            with open(get_svg_path(config), "w", encoding="utf-8") as f:
-                f.write(svg_code)
-            
-            all_feedback = feedback
-            try:
-                png_path = convert_svg_to_png(get_svg_path(config))
-                state["generated_png_path"] = png_path
-            except Exception as e:
-                logger.warning(f"Error converting SVG to PNG: {e}")
-                all_feedback += str(e)
-                
-            if all_feedback:
-                prompt = FIX_SVG_PROMPT.format(feedback=all_feedback)
-                run_openhands_prompt(prompt, config, add_file_summary=False)
-        
-        with open(get_svg_path(config), "r", encoding="utf-8") as f:
-            svg_code = f.read()
+
+            for try_idx in range(5):
+                logger.info(f"Trying to generate PNG from SVG (try {try_idx+1})")
+
+                try:
+                    png_path = convert_svg_to_png(get_svg_path(config))
+                    state["generated_png_path"] = png_path
+                    if feedback:
+                        # no error and feedback exists, use feedback from last node
+                        svg_code = update_with_vlm(feedback)
+                        feedback = ""
+                    else:
+                        # no error and no feedback, return svg directly
+                        return svg_code
+                except Exception as e:
+                    logger.warning(f"Error converting SVG to PNG: {e}")
+                    svg_code = update_with_llm(str(e))
+
 
         return svg_code
 
@@ -147,61 +184,60 @@ def generate_svg_from_image(config: Config, image_path: str, feedback: str = "",
         return f"Error generating SVG directly from image: {str(e)}"
 
 
+# # Simple functions for chart artist workflow (replacing tool classes)
+# def generate_svg_from_plan(config: Config, plan: str, feedback: str = "", current_svg: str = "") -> str:
+#     """Generate SVG code directly from input image"""
+#     try:
 
-# Simple functions for chart artist workflow (replacing tool classes)
-def generate_svg_from_plan(config: Config, plan: str, feedback: str = "", current_svg: str = "") -> str:
-    """Generate SVG code directly from input image"""
-    try:
-        
-        # Initialize LLM
-        llm = init_chat_model(
-            config.llm.chat.model,
-            base_url=config.llm.chat.base_url,
-            model_provider="openai",
-            openai_api_key=config.llm.chat.api_key,
-            extra_body={"chat_template_kwargs": {"enable_thinking": True}},
-        )
-        # If svg does not exists, re-generate
-        if (not current_svg):
-            # Get base64 of the image
-            desc_prompt = f"""
-I need to generate a diagram for the following plan:
-{plan}
-Please generate a detailed description for the diagram, including all included elements, their relationships, their locations, and any special considerations.
-"""
-            image_desc = llm.invoke([HumanMessage(content=desc_prompt)])
-            generate_prompt = image_desc.content + DIRECT_SVG_GENERATION_PROMPT
-            svg_code = llm.invoke([HumanMessage(content=generate_prompt)])
-            svg_code = svg_code.content.strip().replace("```svg", "").replace("```", "")
-        else:
-            svg_code = current_svg
-        
-        if svg_code:
-            
-            with open(get_svg_path(config), "w", encoding="utf-8") as f:
-                f.write(svg_code)
-            
-            all_feedback = feedback
-            try:
-                png_path = convert_svg_to_png(get_svg_path(config))
-                state["generated_png_path"] = png_path
-            except Exception as e:
-                logger.warning(f"Error converting SVG to PNG: {e}")
-                all_feedback += str(e)
-                
-            if all_feedback:
-                prompt = FIX_SVG_PROMPT.format(feedback=all_feedback)
-                run_openhands_prompt(prompt, config, add_file_summary=False)
-        
-        with open(get_svg_path(config), "r", encoding="utf-8") as f:
-            svg_code = f.read()
+#         # Initialize LLM
+#         llm = init_chat_model(
+#             config.llm.chat.model,
+#             base_url=config.llm.chat.base_url,
+#             model_provider="openai",
+#             openai_api_key=config.llm.chat.api_key,
+#             extra_body={"chat_template_kwargs": {"enable_thinking": True}},
+#         )
+#         # If svg does not exists, re-generate
+#         if (not current_svg):
+#             # Get base64 of the image
+#             desc_prompt = f"""
+# I need to generate a diagram for the following plan:
+# {plan}
+# Please generate a detailed description for the diagram, including all included elements, their relationships, their locations, and any special considerations.
+# """
+#             image_desc = llm.invoke([HumanMessage(content=desc_prompt)])
+#             generate_prompt = image_desc.content + DIRECT_SVG_GENERATION_PROMPT
+#             svg_code = llm.invoke([HumanMessage(content=generate_prompt)])
+#             svg_code = svg_code.content.strip().replace("```svg", "").replace("```", "")
+#         else:
+#             svg_code = current_svg
 
-        return svg_code
+#         if svg_code:
 
-    except Exception as e:
-        logger.error(f"Error in generate_svg_from_image: {e}")
-        logger.error(traceback.format_exc())
-        return f"Error generating SVG directly from image: {str(e)}"
+#             with open(get_svg_path(config), "w", encoding="utf-8") as f:
+#                 f.write(svg_code)
+
+#             all_feedback = feedback
+#             try:
+#                 png_path = convert_svg_to_png(get_svg_path(config))
+#                 state["generated_png_path"] = png_path
+#             except Exception as e:
+#                 logger.warning(f"Error converting SVG to PNG: {e}")
+#                 all_feedback += str(e)
+
+#             if all_feedback:
+#                 prompt = FIX_SVG_PROMPT.format(feedback=all_feedback)
+#                 run_openhands_prompt(prompt, config, add_file_summary=False)
+
+#         with open(get_svg_path(config), "r", encoding="utf-8") as f:
+#             svg_code = f.read()
+
+#         return svg_code
+
+#     except Exception as e:
+#         logger.error(f"Error in generate_svg_from_image: {e}")
+#         logger.error(traceback.format_exc())
+#         return f"Error generating SVG directly from image: {str(e)}"
 
 
 def compare_images(config: Config, merged_image_path: str) -> str:
@@ -267,7 +303,7 @@ def merge_images(config: Config, original_image_path: str, generated_image_path:
 
 def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
     """Build the chart artist workflow graph"""
-    
+
     @track_node_call("chart_artist")
     def initialize_chart_artist(state: State) -> State:
         """Initialize the chart artist workflow"""
@@ -287,7 +323,7 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
         """Generate SVG code directly from input image"""
 
         # Call the direct SVG generation function with error feedback
-        svg_result = generate_svg_from_image(config, state["input_image_path"], state.get("svg_conversion_error", ""), state.get("current_svg", ""))
+        svg_result = generate_svg_from_image(config, state["input_image_path"], "", state.get("current_svg", ""))
         # svg_result = generate_svg_from_plan(config, str(state["plan"]), state.get("svg_conversion_error", ""), state.get("current_svg", ""))
 
         # Save SVG code to file
@@ -299,23 +335,20 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
         logger.info(f"Generated SVG code directly from image: {svg_path}")
         return state
 
-
     @track_node_call("chart_artist")
     def merge_images_node(state: State) -> State:
         """Merge original and generated images side by side"""
-        
-        # Clear any previous conversion error
-        if state.get("svg_conversion_error", ""):
-            state["svg_conversion_error"] = ""
-        
-        png_path = convert_svg_to_png(get_svg_path(config))
 
-        # Call the image merge function
-        merge_result = merge_images(config, state["input_image_path"], png_path)
+        try:
+            png_path = convert_svg_to_png(get_svg_path(config))
+            # Call the image merge function
+            merge_result = merge_images(config, state["input_image_path"], png_path)
+        except Exception as e:
+            logger.warning(f"Error converting SVG to PNG for merging: {e}")
+            merge_result = f"Error converting SVG to PNG for merging: {str(e)}"
 
         if merge_result.startswith("Error:"):
             logger.error(f"Image merging failed: {merge_result}")
-            state["image_merge_error"] = merge_result
         else:
             state["merged_image_path"] = merge_result
             logger.info(f"Images merged: {merge_result}")
@@ -349,7 +382,9 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
             return state
 
         # Call the SVG update function with original image and feedback
-        updated_svg_result = generate_svg_from_image(config, state["input_image_path"], state.get("comparison_feedback", ""), state.get("current_svg", ""))
+        updated_svg_result = generate_svg_from_image(
+            config, state["input_image_path"], state.get("comparison_feedback", ""), state.get("current_svg", "")
+        )
         state["current_svg"] = updated_svg_result
 
         # Update iteration counter
@@ -390,7 +425,9 @@ def build_chart_artist(config: Config, file_manager: FileManager) -> StateGraph:
         else:
             return "update_svg"
 
-    graph_builder.add_conditional_edges("compare_images", should_continue_iteration, {"update_svg": "update_svg", "end": END})
+    graph_builder.add_conditional_edges(
+        "compare_images", should_continue_iteration, {"update_svg": "update_svg", "end": END}
+    )
 
     graph_builder.add_edge("update_svg", "merge_images")
 
@@ -406,7 +443,6 @@ if __name__ == "__main__":
     config.workflow.e2e_test = False
     state["resume_node_call_stack"] = []
     state["node_call_stack"] = []
-    state["svg_conversion_error"] = ""
     state["current_svg"] = ""
 
     # Find the first existing image

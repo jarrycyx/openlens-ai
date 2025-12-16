@@ -21,6 +21,7 @@ TRANSLATIONS = {
         "log_in": "Log in",
         "email": "Email",
         "logout": "Log out",
+        'points': "Points",
         
         # Language options
         "chs": "Chinese",
@@ -34,10 +35,10 @@ TRANSLATIONS = {
         "mimic-iv-icu": "MIMIC-IV ICU",
         
         # Process related
-        "max_processes_reached": "Maximum number of processes ({max}) reached. Please wait for some processes to finish.",
-        "failed_to_start_process": "Failed to start process, Maximum number of processes ({max}) reached. Can submit an issue on GitHub for help.",
+        "failed_to_start_process": "Failed to start the process. There are currently {n_processes} running processes in the system, of which {n_user_processes} belong to this user. The maximum allowed number of processes is {max_processes} system-wide and {max_user_processes} per user.",
         "creating_job": "Creating job...",
-        "current_running_jobs": "Current Running Jobs: {current}/{max}",
+        "current_running_jobs": "Running jobs: {n_processes}/{max_processes}, user jobs: {n_user_processes}/{max_user_processes}",
+        "failed_to_resume_task": "Failed to resume the task. The system is currently running {n_processes} processes in total, including {n_user_processes} processes owned by this user. The maximum allowed limits are {max_processes} processes system-wide and {max_user_processes} processes per user.",
         
         # Task related
         "question_label": "Question:",
@@ -48,7 +49,6 @@ TRANSLATIONS = {
         "job_not_running": "Task {thread_id} is not running.",
         "continue_task": "Continue Task",
         "task_resumed": "Task resumed successfully with PID: {pid}",
-        "failed_to_resume_task": "Failed to resume task. Please try again.",
         "task_dir_not_found": "Task directory not found: {dir}",
         "start_research": "🚀 **Start Research**",
         "start_research_maintenance": "🚀 **Start Research (under maintenance)**", 
@@ -58,8 +58,9 @@ TRANSLATIONS = {
         "task_interrupted": "Task interrupted successfully",
         "failed_to_interrupt_task": "Failed to interrupt task. Please try again.",
         "confirm_submission": "Confirm Submission",
-        "confirm_submission_warning": "⚠️ Sure to submit this research question? \nAfter the initial research, the process will **pause** to allow you to review and continue. \nAll research processes will take quite a long time (from several hours to a few days), and progress will be notified via email.",
+        "confirm_submission_warning": "⚠️ Sure to submit this research question? \nAfter the initial research, the process will **pause** to allow you to review and continue. \nAll research processes will take quite a long time (from several hours to a few days), and progress will be notified via email {email}.",
         "confirm": "Confirm",
+        "missing_fields": "Please fill in question, dataset path and make sure the email address is correct.",
         
         # UI elements
         "refresh": "Refresh",
@@ -68,7 +69,7 @@ TRANSLATIONS = {
         "github_link": "🌟 Star us on GitHub",
         
         # Application title and description
-        "app_title": "OpenLens AI: Fully Autonomous Multimodal Agent for Health Infomatics Research",
+        "app_title": "OpenLens AI: Fully Autonomous Multimodal Agent for Health Informatics Research",
         "research_question": "Research Question",
         "dataset_source": "Dataset Source",
         "upload_dataset_files": "Upload Dataset Files",
@@ -105,6 +106,7 @@ TRANSLATIONS = {
         "log_in": "登录",
         "email": "邮箱",
         "logout": "登出",
+        'points': "积分",
         
         # Language options
         "chs": "中文",
@@ -118,10 +120,10 @@ TRANSLATIONS = {
         "mimic-iv-icu": "MIMIC-IV ICU",
         
         # Process related
-        "max_processes_reached": "已达到最大进程数 ({max})。请等待一些进程完成。",
-        "failed_to_start_process": "启动进程失败，已达到最大进程数 ({max})，可在GitHub上提交issue反馈。",
+        "failed_to_start_process": "启动进程失败，当前系统中共有 {n_processes} 个正在运行的进程，最大 {max_processes} 个。其中该用户占用 {n_user_processes} 个，最大 {max_user_processes} 个。",
         "creating_job": "正在创建任务...",
-        "current_running_jobs": "当前运行任务: {current}/{max}",
+        "current_running_jobs": "当前运行任务: {n_processes}/{max_processes}，当前用户任务: {n_user_processes}/{max_user_processes}",
+        "failed_to_resume_task": "任务恢复失败，当前系统中共有 {n_processes} 个正在运行的进程，最大 {max_processes} 个。其中该用户占用 {n_user_processes} 个，最大 {max_user_processes} 个。",
         
         # Task related
         "question_label": "问题:",
@@ -135,7 +137,6 @@ TRANSLATIONS = {
         "start_research_maintenance": "🚀 **开始研究 (维护中)**",
         "continue_task": "继续任务",
         "task_resumed": "任务已成功恢复，PID: {pid}",
-        "failed_to_resume_task": "恢复任务失败，请重试。",
         "task_dir_not_found": "未找到任务目录: {dir}",
         "task_running": "任务运行中",
         "task_stopped": "任务已停止",
@@ -143,8 +144,9 @@ TRANSLATIONS = {
         "task_interrupted": "任务已成功中断",
         "failed_to_interrupt_task": "中断任务失败，请重试。",
         "confirm_submission": "确认提交",
-        "confirm_submission_warning": "⚠️ 确认提交研究问题？\n完成基础调研后将**自动暂停**，等待您确认。\n全部研究过程会需要相当长的时间（从几小时到一两天），进度会通过邮件通知您。",
+        "confirm_submission_warning": "⚠️ 确认提交研究问题？\n完成基础调研后将**自动暂停**，等待您确认。\n全部研究过程会需要相当长的时间（从几小时到一两天），进度会通过邮件 {email} 通知您。",
         "confirm": "确认",
+        "missing_fields": "请填写研究问题，数据集，并确保注册邮箱可用。",
         
         # UI elements
         "refresh": "刷新",
@@ -153,7 +155,7 @@ TRANSLATIONS = {
         "github_link": "🌟 在GitHub上Star我们",
         
         # Application title and description
-        "app_title": "OpenLens AI: 全自主医学科研智能体",
+        "app_title": "OpenLens AI: 全自主多模态医学科研智能体",
         "research_question": "研究问题",
         "dataset_source": "数据集来源",
         "upload_dataset_files": "上传数据集文件",

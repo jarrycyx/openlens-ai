@@ -43,7 +43,6 @@ class State(TypedDict):
     generated_png_path: str = ""
     comparison_feedback: str = ""
     current_svg: str = ""
-    svg_conversion_error: str = ""
     chart_artist_iteration: int = 0
     merged_image_path: str = ""
 

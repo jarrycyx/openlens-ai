@@ -44,6 +44,7 @@ webui/utils/translation_llm.json
 exp/mle_bench/datasets/kaggle.sh
 exp/mle_bench/datasets/kaggle.json
 llm_router/litellm/config.yaml
+private
 
 # 缓存和临时文件
 code_logging

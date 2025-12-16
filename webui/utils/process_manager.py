@@ -14,6 +14,7 @@ class ProcessManager:
     Class for managing OpenLens AI processes
     """
     MAX_PROCESSES = 10
+    MAX_USER_PROCESSES = 1
 
     def __init__(self):
         """Initialize process manager"""
@@ -45,18 +46,23 @@ class ProcessManager:
         with open(self.process_file, 'w') as f:
             json.dump(processes, f, indent=2, ensure_ascii=False)
 
-    def add_process(self, pid: int, thread_id: str) -> bool:
+    def add_process(self, pid: int, thread_id: str, user: str = "") -> bool:
         """Add new process, return True if successful, return False if max processes reached"""
         processes = self.load_processes()
+        user_processes = [p for p in processes if p.get('user') == user]
         
         # 检查是否已达到最大进程数
         if len(processes) >= self.MAX_PROCESSES:
             return False
+        if len(user_processes) >= self.MAX_USER_PROCESSES:
+            return False
+
         
         # 添加新进程
         new_process = {
             'pid': pid,
-            'thread_id': thread_id
+            'thread_id': thread_id,
+            'user': user,
         }
         processes.append(new_process)
         self.save_processes(processes)
@@ -71,10 +77,14 @@ class ProcessManager:
     def get_process_count(self) -> int:
         """Get current process count"""
         return len(self.load_processes())
+    
+    def get_user_process_count(self, user: str = "") -> int:
+        """Get current user process count"""
+        return len([p for p in self.load_processes() if p.get('user') == user])
 
-    def is_full(self) -> bool:
+    def is_full(self, user: str = "") -> bool:
         """Check if process manager is full"""
-        return self.get_process_count() >= self.MAX_PROCESSES
+        return (self.get_process_count() >= self.MAX_PROCESSES) or (self.get_user_process_count(user) >= self.MAX_USER_PROCESSES)
 
     def cleanup_finished_processes(self, processes):
         """Clean up finished processes"""
