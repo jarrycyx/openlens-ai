@@ -727,7 +727,7 @@ def main():
         # after it's been refreshed 100 times.
         running_process = process_manager.get_process_list()
         running_process = "\n".join([process["thread_id"] for process in running_process])
-        logger.warning(f"Auto refresh is enabled, running processes: {running_process}")
+        # logger.warning(f"Auto refresh is enabled, running processes: {running_process}")
         count = st_autorefresh(interval=10000, limit=100, key="fizzbuzzcounter")
     else:
         show_initial_page()
