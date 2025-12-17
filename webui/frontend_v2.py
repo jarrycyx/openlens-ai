@@ -375,7 +375,7 @@ def main():
     if "question_input" not in st.session_state:
         st.session_state.question_input = ""
     if "dataset_selected" not in st.session_state:
-        st.session_state.dataset_selected = "MIMIC-IV-ICU"
+        st.session_state.dataset_selected = "eICU-Demo"
     # Initialize language settings
     if "language" not in st.session_state:
         st.session_state.language = "chs"
@@ -686,9 +686,9 @@ def main():
                     with col:
                         # Create card-style button
                         # Sample question names need translation for better user experience
-                        question = t(exp.get("question", "No question specified"))
-                        dataset = t(exp.get("dataset", "Unknown dataset").split("/")[-1])
-                        language = t(exp.get("language", "eng"))
+                        question = t(exp.get("question", "No question specified")).strip()
+                        dataset = t(exp.get("dataset", "Unknown dataset").split("/")[-1]).strip()
+                        language = t(exp.get("language", "eng")).strip()
                         if st.button(
                             f"**{language}** | {question} | *{dataset}*",
                             key=f"use_case_{i}",

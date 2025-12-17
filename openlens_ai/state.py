@@ -15,6 +15,12 @@ from langchain.load.dump import dumps
 from file1agent.file_manager import FileManager
 
 from .utils.config import Config
+from .utils.frontend_messages import (
+    frontend_add_message,
+    frontend_add_tool_call,
+    frontend_node_complete,
+    frontend_add_file_msg,
+)
 
 
 class State(TypedDict):
@@ -82,6 +88,7 @@ def track_node_call(subgraph_name: str = ""):
                 f.write(dumps(state, ensure_ascii=False, indent=4))
 
             logger.info(f"Calling node: {node_name}")
+            
             # 调用原始函数
             _return = func(state, **kwargs)
             

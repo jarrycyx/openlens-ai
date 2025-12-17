@@ -13,12 +13,14 @@ import json
 import traceback
 from pypdf import PdfReader
 from PIL import Image
+from datetime import datetime
 
 from openlens_ai.utils.file_utils import collect_files, collect_token_usage
 from openlens_ai.utils.frontend_messages import _get_messages_file_path, _message_remove_duplicates
 from openlens_ai.utils.config import Config
 
-from .translations import t
+from .translations import t, load_llm_config
+from .summarize import get_content_summary, get_summary_cache_key, summarize_content, summarize_with_llm_async
 
 
 
@@ -173,7 +175,7 @@ def display_messages_from_file(config: Config):
     question = t(config.question)
     dataset_path = config.dataset_path
     language = t(config.llm.language)
-    st.chat_message("human").write(f"**{t('question_label')}** " + question + f"\n\n**{t('dataset_path_label')}** " + dataset_path + f"\n\n**{t('language')}:** " + language)
+    st.chat_message("human").write(f"**{t('question_label')}** " + question + f"\n\n**{t('dataset_path_label')}** " + dataset_path + f"\n\n**{t('language')}** " + language)
     messages_file = _get_messages_file_path(config)
     if not messages_file or not os.path.exists(messages_file):
         return
@@ -190,24 +192,64 @@ def display_messages_from_file(config: Config):
     # Display messages
     for msg in messages:
         if msg["type"] == "message":
-            role = msg["role"]
-            title = msg["title"]
+            role = "ai"
+            title = ""
             content = msg["content"]
-
-            with st.chat_message(role, avatar="🔍" if role == "user" else None):
-                if title:
-                    st.write(f"**{title}**")
-                if len(content) > 2000:
-                    with st.container(height=300):
-                        st.write(content)
-                    # content = content[:300] + "\n\n" + t("content_truncated")
-                    # st.write(content)
+            time_str = msg.get("timestamp", "")
+            try:
+                timestamp_int = datetime.fromisoformat(time_str).timestamp()
+                time_str = datetime.fromtimestamp(timestamp_int).strftime("%Y-%m-%d %H:%M:%S")
+            except Exception as e:
+                print(f"Failed to parse timestamp: {time_str}: {e}")
+                time_str = ""
+            
+            content_search_lower = content[:100].lower().replace("\n", " ")
+            if "search" in content_search_lower:
+                avatar = "🌐"
+                title = t("Searching")
+            elif "latex" in content_search_lower or "manuscript" in content_search_lower or "paper" in content_search_lower:
+                avatar = "📑"
+                title = t("Writing")
+            elif "coding" in content_search_lower:
+                avatar = "👩‍💻"
+                title = t("Coding")
+            elif "decision" in content_search_lower:
+                if "polish" in content_search_lower:
+                    avatar = "🧐"
+                    title = t("Polishing the paper")
+                if "fix_last_subtask" in content_search_lower:
+                    avatar = "🔧"
+                    title = t("Fixing the code")
+                elif "continue" in content_search_lower:
+                    avatar = "✅"
                 else:
-                    st.write(content)
+                    avatar = "🤔"
+            # elif "subtask" in content_search_lower:
+            #     avatar = "📝"
+            else:
+                # print("Not sure what to show: ", content_search_lower)
+                avatar = "🫧"
+                # title = "OpenLens AI"
+
+            with st.chat_message(role, avatar=avatar):
+                if title and (title != "Agent"):
+                    with st.container(horizontal=True, width="content"):
+                        st.write(f"**{title.strip()}**")
+                        st.caption(time_str)
+                content_summary = get_content_summary(content, max_length=50, language=config.llm.language)
+                st.write(content_summary)
+                # if len(content) > 2000:
+                #     with st.container(height=300):
+                #         st.write(content)
+                #     # content = content[:300] + "\n\n" + t("content_truncated")
+                #     # st.write(content)
+                # else:
+                #     st.write(content)
         elif msg["type"] == "tool_call":
-            st.chat_message("tool").write(msg["content"])
+            st.chat_message("tool").write(t(msg["content"]))
         elif msg["type"] == "node_update":
-            st.info(msg["content"])
+            # st.info(msg["content"])
+            st.divider()
         elif "file_content" in msg["type"]:
             pass
 
@@ -232,29 +274,31 @@ def show_scrollable(content, file_name, height=200):
 
 
 
-@st.cache_data
+@st.cache_data(ttl=600)
 def get_zip(config: Config):
     collect_files(config)
     with open(os.path.join(config.save_path, "compressed", "all_files.zip"), "rb") as f:
         zip_buffer = f.read()
     return zip_buffer
 
-@st.cache_data
+@st.cache_data(ttl=600)
 def get_pdf(config: Config):
     pdf_path = os.path.join(config.save_path, "workspace", "manuscript", "main.pdf")
     if os.path.exists(pdf_path):
         with open(pdf_path, "rb") as f:
             pdf_bytes = f.read()
         return pdf_bytes
+    logger.warning(f"No PDF found for {config.save_path}")
     return None
 
-@st.cache_data
+@st.cache_data(ttl=600)
 def get_plan(config: Config):
     plan_path = os.path.join(config.save_path, "plan.md")
     if os.path.exists(plan_path):
         with open(plan_path, "r") as f:
             plan_str = f.read()
         return plan_str
+    logger.warning(f"No plan found for {config.save_path}")
     return None
 
 def download_workspace_button(config):

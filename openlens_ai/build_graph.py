@@ -25,7 +25,7 @@ from .agents.literature_reviewer import build_literature_review_subgraph
 from .agents.latex_writer import build_latex_writer
 from .agents.artifact_publisher import build_artifact_publisher
 from .state import State, load_state, track_node_call  # Import load_state function from state module
-from .utils.frontend_messages import frontend_add_message, frontend_add_tool_call, frontend_update_node
+from .utils.frontend_messages import frontend_add_message, frontend_node_start, frontend_node_complete
 from .utils.config import Config
 
 graph = None
@@ -165,12 +165,14 @@ def get_next_node(graph: CompiledStateGraph, this_node_name: str):
     for a, b in graph.builder.edges:
         if a == this_node_name:
             return b
+    return None
 
 
 def get_last_node(graph: CompiledStateGraph, this_node_name: str):
     for a, b in graph.builder.edges:
         if a == this_node_name:
             return b
+    return None
 
 
 def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, interrupt_after_subgraph=""):
@@ -196,7 +198,12 @@ def run_graph(config: Config, graph: CompiledStateGraph, init_state: State, inte
             # event: [("...", "..."), {}]
             if len(list(event.keys())) > 0:
                 state_name = list(event.keys())[0]
-                frontend_update_node(state_name, config)
+                # frontend_node_complete(state_name, config)
+                next_node = get_next_node(graph, state_name)
+                if next_node:
+                    frontend_node_start(next_node, config)
+                else:
+                    frontend_node_complete("All tasks", config)
                 step_i += 1
 
                 if state_name == interrupt_after_subgraph:

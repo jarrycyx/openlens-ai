@@ -119,7 +119,7 @@ def collect_files(config: Config, max_size: int = 10 * 1024 * 1024, compressed_d
         # file_patterns = ['*.py', '*.json', '*.md', '*.txt', '*.tex', '*.bib', '*.sty', '*.log', '*.pdf', '*']
 
         # Collect all matching files
-        exclude_path = ["backup/openlens_ai"]
+        exclude_path = ["backup/openlens_ai", "llm_calls", "tool_calls", "config.toml", "streamlit", "openhands"]
         files = []
         for pattern in file_patterns:
             this_pattern_files = glob.glob(os.path.join(save_path, "**", pattern), recursive=True)

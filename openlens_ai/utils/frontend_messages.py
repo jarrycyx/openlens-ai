@@ -9,7 +9,6 @@ from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 
 from .config import Config
 
-current_node = ""
 last_message = None
 
 
@@ -27,7 +26,7 @@ tool_show_message = {
 
 def frontend_add_message(new_message: Union[ToolMessage, HumanMessage, AIMessage], config: Config):
     try:
-        global current_node, last_message
+        global last_message
 
         if new_message == last_message:
             last_message = new_message
@@ -75,17 +74,21 @@ def frontend_add_tool_call(tool_name: str, tool_args: dict, config: Config):
         logger.warning(f"Error in frontend_add_tool_call: {e}")
 
 
-def frontend_update_node(node_name: str, config: Config):
+def frontend_node_complete(node_name: str, config: Config):
     try:
-        global current_node
-        current_node = node_name
-
         # Save the node update data
-        message_data = {"timestamp": datetime.now().isoformat(), "type": "node_update", "node_name": node_name, "content": f"Subgraph complete: {node_name}"}
+        message_data = {"timestamp": datetime.now().isoformat(), "type": "node_update", "node_name": node_name, "content": f"{node_name} Completed"}
         _save_message(config, message_data)
     except Exception as e:
-        logger.warning(f"Error in frontend_update_node: {e}")
+        logger.warning(f"Error in frontend_node_complete: {e}")
 
+def frontend_node_start(node_name: str, config: Config):
+    try:
+        # Save the node update data
+        message_data = {"timestamp": datetime.now().isoformat(), "type": "node_update", "node_name": node_name, "content": f"{node_name} Starting"}
+        _save_message(config, message_data)
+    except Exception as e:
+        logger.warning(f"Error in frontend_node_start: {e}")
 
 
 def frontend_add_file_msg(file_path, config: Optional[Config] = None, file_status="added"):
