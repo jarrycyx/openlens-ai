@@ -46,7 +46,8 @@ dependencies = [
   "Authlib", 
   "fastmcp",
   "graphviz",
-  "html2image"
+  "html2image",
+  "streamlit-autorefresh"
 ]
 
 [project.scripts]

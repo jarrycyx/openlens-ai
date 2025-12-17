@@ -6,6 +6,10 @@ import subprocess
 import time
 import psutil
 
+# 子进程列表
+processes = []
+    
+    
 PROCESS_FILE = os.path.join("outputs", "processes.json")
 
 

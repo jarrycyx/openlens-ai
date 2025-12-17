@@ -19,10 +19,13 @@ from openlens_ai.utils.file_utils import collect_files, collect_token_usage
 from openlens_ai.utils.frontend_messages import _get_messages_file_path, _message_remove_duplicates
 from openlens_ai.utils.config import Config
 
-from .translations import t, load_llm_config
-from .summarize import get_content_summary, get_summary_cache_key, summarize_content, summarize_with_llm_async
-
-
+from webui.utils.translations import t, load_llm_config
+from webui.utils.summarize import (
+    get_content_summary,
+    get_summary_cache_key,
+    summarize_content,
+    summarize_with_llm_async,
+)
 
 
 pdf_file_ext = [".pdf"]
@@ -30,6 +33,7 @@ image_file_ext = [".png", ".jpg", ".jpeg", ".gif", ".svg"]
 text_file_ext = [".md", ".txt"]
 code_file_ext = [".py"]
 all_view_ext = pdf_file_ext + image_file_ext + text_file_ext + code_file_ext
+
 
 def display_single_file(config: Config, file_path: str):
     rel_path = os.path.relpath(file_path, config.save_path)
@@ -58,7 +62,13 @@ def display_single_file(config: Config, file_path: str):
     with open(file_path, "rb") as f:
         file_data = f.read()
 
-    st.download_button(label=f"⬇️ {t('download')}", data=file_data, file_name=rel_path, key=f"download_{rel_path}_{random.randint(1000, 9999)}")
+    st.download_button(
+        label=f"⬇️ {t('download')}",
+        data=file_data,
+        file_name=rel_path,
+        key=f"download_{rel_path}_{random.randint(1000, 9999)}",
+    )
+
 
 def get_paper_path(config: Config):
     if os.path.exists(os.path.join(config.save_path, "workspace", "manuscript", "main.pdf")):
@@ -70,17 +80,18 @@ def get_paper_path(config: Config):
         else:
             return None
 
+
 def check_file(file_path: str):
     """Check if the file is valid and readable
-    
+
     Args:
         file_path: File path
-        
+
     Returns:
         bool: Whether the file is valid and readable
     """
     # First check if the file exists
-        
+
     # Try to read file content
     try:
         assert os.path.exists(file_path), f"File {file_path} does not exist"
@@ -92,7 +103,7 @@ def check_file(file_path: str):
             return True
         elif file_path.endswith(tuple(pdf_file_ext)):
             # Try to parse the PDF
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 reader = PdfReader(f)
                 # Check if the PDF has pages
                 assert len(reader.pages) > 0, f"PDF {file_path} has no pages"
@@ -127,22 +138,21 @@ def get_latest_files(config: Config, max_files: int = 10):
             file_path = os.path.join(root, file)
             if (file.startswith(".")) or (file.endswith(".pyc")):
                 continue
-            if ((pdf_path) and (os.path.basename(file_path) == os.path.basename(pdf_path))):
+            if (pdf_path) and (os.path.basename(file_path) == os.path.basename(pdf_path)):
                 continue
             if not check_file(file_path):
                 continue
-                        
+
             rel_path = os.path.relpath(file_path, workspace_path)
             try:
                 all_files[file_path] = (file_path, rel_path, os.path.getmtime(file_path))
             except Exception as e:
                 logger.warning(f"Failed to get mtime for {file_path}: {e}")
-                    
+
     if not all_files:
         # st.info(t("no_files_generated_yet"))
         return []
 
-    
     all_files = list(all_files.values())
     # Sort by modification time, take the latest files
     all_files = sorted(all_files, key=lambda x: x[2], reverse=True)
@@ -153,6 +163,7 @@ def get_latest_files(config: Config, max_files: int = 10):
     latest_files = all_files[:max_files]  # Display the latest 10 files
 
     return latest_files
+
 
 def display_multiple_file_preview(config: Config):
     """Display preview of the latest generated file content"""
@@ -175,7 +186,14 @@ def display_messages_from_file(config: Config):
     question = t(config.question)
     dataset_path = config.dataset_path
     language = t(config.llm.language)
-    st.chat_message("human").write(f"**{t('question_label')}** " + question + f"\n\n**{t('dataset_path_label')}** " + dataset_path + f"\n\n**{t('language')}** " + language)
+    st.chat_message("human").write(
+        f"**{t('question_label')}** "
+        + question
+        + f"\n\n**{t('dataset_path_label')}** "
+        + dataset_path
+        + f"\n\n**{t('language')}** "
+        + language
+    )
     messages_file = _get_messages_file_path(config)
     if not messages_file or not os.path.exists(messages_file):
         return
@@ -202,12 +220,16 @@ def display_messages_from_file(config: Config):
             except Exception as e:
                 print(f"Failed to parse timestamp: {time_str}: {e}")
                 time_str = ""
-            
+
             content_search_lower = content[:100].lower().replace("\n", " ")
-            if "search" in content_search_lower:
+            if "search" in content_search_lower or "搜索" in content_search_lower: 
                 avatar = "🌐"
                 title = t("Searching")
-            elif "latex" in content_search_lower or "manuscript" in content_search_lower or "paper" in content_search_lower:
+            elif (
+                "latex" in content_search_lower
+                or "manuscript" in content_search_lower
+                or "paper" in content_search_lower
+            ):
                 avatar = "📑"
                 title = t("Writing")
             elif "coding" in content_search_lower:
@@ -236,7 +258,9 @@ def display_messages_from_file(config: Config):
                     with st.container(horizontal=True, width="content"):
                         st.write(f"**{title.strip()}**")
                         st.caption(time_str)
-                content_summary = get_content_summary(content, max_length=50, language=config.llm.language)
+                content_summary = get_content_summary(
+                    content, max_length=50, language=st.session_state.language_selected
+                )
                 st.write(content_summary)
                 # if len(content) > 2000:
                 #     with st.container(height=300):
@@ -252,7 +276,6 @@ def display_messages_from_file(config: Config):
             st.divider()
         elif "file_content" in msg["type"]:
             pass
-
 
 
 def show_scrollable(content, file_name, height=200):
@@ -273,13 +296,13 @@ def show_scrollable(content, file_name, height=200):
         component(content)
 
 
-
 @st.cache_data(ttl=600)
 def get_zip(config: Config):
-    collect_files(config)
+    # collect_files(config)
     with open(os.path.join(config.save_path, "compressed", "all_files.zip"), "rb") as f:
         zip_buffer = f.read()
     return zip_buffer
+
 
 @st.cache_data(ttl=600)
 def get_pdf(config: Config):
@@ -291,6 +314,7 @@ def get_pdf(config: Config):
     logger.warning(f"No PDF found for {config.save_path}")
     return None
 
+
 @st.cache_data(ttl=600)
 def get_plan(config: Config):
     plan_path = os.path.join(config.save_path, "plan.md")
@@ -300,6 +324,7 @@ def get_plan(config: Config):
         return plan_str
     logger.warning(f"No plan found for {config.save_path}")
     return None
+
 
 def download_workspace_button(config):
 
@@ -314,17 +339,12 @@ def download_workspace_button(config):
         mime="application/zip",
     )
     if pdf_buffer:
-        st.download_button(label=f"📑 {t('download_paper')}",
-                           data=pdf_buffer,
-                           mime="application/pdf",
-                           file_name="main.pdf")
+        st.download_button(
+            label=f"📑 {t('download_paper')}", data=pdf_buffer, mime="application/pdf", file_name="main.pdf"
+        )
 
     if plan_str:
-        st.download_button(label=f"✍️ {t('download_plan')}",
-                           data=plan_str,
-                           mime="text/markdown",
-                           file_name="plan.md")
-
+        st.download_button(label=f"✍️ {t('download_plan')}", data=plan_str, mime="text/markdown", file_name="plan.md")
 
 
 def show_workspace(config):

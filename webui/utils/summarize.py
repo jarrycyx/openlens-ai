@@ -11,7 +11,7 @@ import json
 import requests
 import threading
 import sqlite3
-
+import numpy as np
 
 from .translations import t, load_llm_config
 
@@ -20,7 +20,7 @@ from .translations import t, load_llm_config
 SUMMARY_CACHE_DB = os.path.join(os.path.dirname(__file__), "summary_cache.db")
 
 # 最大并发线程数
-MAX_CONCURRENT_SUMMARIES = 1
+MAX_CONCURRENT_SUMMARIES = 3
 
 # 全局变量用于跟踪正在进行的概括任务
 _ongoing_summaries = {}
@@ -70,13 +70,17 @@ def save_summary_to_db(cache_key: str, summary: str) -> None:
     """将概括保存到数据库"""
     for try_i in range(3):
         try:
-            conn = sqlite3.connect(SUMMARY_CACHE_DB)
+            time.sleep(np.random.uniform(0, 0.3))
+            conn = sqlite3.connect(SUMMARY_CACHE_DB, timeout=30)
             cursor = conn.cursor()
+            cursor.execute('PRAGMA journal_mode = WAL')
+            result = cursor.fetchone()
+            # logger.info(f"WAL: {result[0]}")  # 应该输出 'wal'
             cursor.execute(
                 """
                 INSERT OR REPLACE INTO summaries (content_hash, summary, created_at)
                 VALUES (?, ?, CURRENT_TIMESTAMP)
-            """,
+                """,
                 (cache_key, summary),
             )
             conn.commit()
@@ -87,9 +91,11 @@ def save_summary_to_db(cache_key: str, summary: str) -> None:
             time.sleep(3)
 
 
-def get_summary_cache_key(content: str) -> str:
+def get_summary_cache_key(content: str, target_lang: str = "") -> str:
     """生成概括缓存键"""
-    return hashlib.md5(content.encode("utf-8")).hexdigest()
+    # return hashlib.md5(content.encode("utf-8")).hexdigest()
+    # TODO: Too time consuming
+    return target_lang + "|" + content[:100]
 
 
 def summarize_with_llm_async(content: str, cache_key: str, max_len: int = 50, language: str = "中文") -> None:
@@ -108,9 +114,14 @@ def summarize_with_llm_async(content: str, cache_key: str, max_len: int = 50, la
             logger.warning("LLM配置不完整")
             return
 
+        if language.lower() == "chs" or language.lower() == "chinese":
+            language = "中文"
+        elif language.lower() == "eng" or language.lower() == "english":
+            language = "英文"
+        
         # 构建概括提示
-        prompt = f"""请用不超过{max_len}个字的{language}概括以下处理进度的核心要点，只返回概括的进度内容，不需要解释或额外信息。
-内容: {content[:1000]}
+        prompt = f"""请用不超过{max_len}个中文字/英文词的{language}概括以下处理进度的核心要点，只返回概括的进度内容，不需要解释或额外信息。
+内容: {content[:300]}
 /no_think"""
 
         # 调用LLM API
@@ -133,8 +144,8 @@ def summarize_with_llm_async(content: str, cache_key: str, max_len: int = 50, la
             )
 
             # 确保概括不超过指定字数
-            if len(summary) > max_len:
-                summary = summary[:max_len] + "..." if len(summary) > max_len + 3 else summary[:max_len]
+            if len(summary) > max_len * 4:
+                summary = summary[:max_len * 4] + "..." if len(summary) > max_len * 4 + 3 else summary[:max_len * 4]
 
             # 保存到数据库
             save_summary_to_db(cache_key, summary)
@@ -167,17 +178,17 @@ def summarize_content(content: str, max_len: int = 50, language: str = "中文")
     # init_summary_db()
 
     # 检查是否已在进行中
-    cache_key = get_summary_cache_key(content)
+    cache_key = get_summary_cache_key(content, language)
     with _summary_lock:
         if cache_key in _ongoing_summaries:
-            return None  # 已在进行中，不重新开始
+            return t("Processing...")  # 已在进行中，不重新开始
 
         # 标记为进行中
         _ongoing_summaries[cache_key] = True
 
     # 检查数据库缓存
     cached_summary = get_summary_from_db(cache_key)
-    if cached_summary:
+    if cached_summary and (not "None" in str(cached_summary)):
         with _summary_lock:
             if cache_key in _ongoing_summaries:
                 del _ongoing_summaries[cache_key]
@@ -190,8 +201,12 @@ def summarize_content(content: str, max_len: int = 50, language: str = "中文")
 
     thread = threading.Thread(target=run_with_semaphore, daemon=True)
     thread.start()
+    
+    # with st.spinner(text=t("loading")):
+    #     summarize_with_llm_async(content, cache_key, max_len, language)
 
-    return content[:max_len]  # 立即返回None，表示概括正在进行中
+    # return content[:(max_len * 4)]  # 立即返回None，表示概括正在进行中
+    return t("Processing...")
 
 
 def get_content_summary(content: str, max_length: int = 200, language: str = "中文") -> str:
@@ -208,16 +223,9 @@ def get_content_summary(content: str, max_length: int = 200, language: str = "�
     if not content or not content.strip():
         return "无内容"
 
-    if len(content) <= max_length:
-        return content
+    if len(content) <= max_length * 4:
+        return t(content)
 
     # 尝试使用LLM概括
     summary = summarize_content(content, max_len=max_length, language=language)
-    if summary:
-        return summary
-
-    # 如果LLM概括不可用，使用简单截断
-    if len(content) <= max_length:
-        return content
-    else:
-        return content[: max_length - 3] + "..."
+    return summary

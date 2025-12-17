@@ -1,7 +1,23 @@
 [server]
 sslCertFile = '.streamlit/app.openlens.icu.pem'
 sslKeyFile = '.streamlit/app.openlens.icu.key'
-folderWatchBlacklist = [".setup", ".vscode", ".venv", "build", "data", "download", "outputs", "exp", "modules", "datasets", "llm_router"]
+folderWatchBlacklist = [
+    ".setup",
+    ".vscode",
+    ".venv",
+    "build",
+    "data",
+    "download",
+    "outputs",
+    "exp",
+    "modules",
+    "datasets",
+    "llm_router",
+    "webui/utils",
+    "webui/__pycache__"
+]
+folderWatchList = ["webui"]
+fileWatcherType = "none"
 
 [theme]
 font = "sans-serif"

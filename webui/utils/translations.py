@@ -13,6 +13,8 @@ import requests
 import threading
 import time
 import sqlite3
+import streamlit as st
+import numpy as np
 
 # Language lookup table
 TRANSLATIONS = {
@@ -42,9 +44,11 @@ TRANSLATIONS = {
         "Fixing the code": "Fixing the code",
         "Polishing the paper": "Polishing the paper",
         "Searching": "Searching",
+        "loading": "Loading",
         # Task related
         "question_label": "Question:",
         "dataset_path_label": "Dataset Path:",
+        "paper_language": "Paper language:",
         "language": "Language:",
         "thread_id": "Thread ID: {thread_id}",
         "job_progress_notification": "Job progress and results will be sent to {email}, please make sure the address is correct.",
@@ -123,9 +127,11 @@ TRANSLATIONS = {
         "Fixing the code": "正在修改程序",
         "Polishing the paper": "正在润色论文",
         "Searching": "正在搜索",
+        "loading": "处理中",
         # Task related
         "question_label": "问题:",
         "dataset_path_label": "数据集路径:",
+        "paper_language": "论文语言:",
         "language": "语言:",
         "thread_id": "线程ID: {thread_id}",
         "job_progress_notification": "任务进度和结果将发送至 {email}，请确保地址正确。",
@@ -185,7 +191,7 @@ TRANSLATIONS = {
 TRANSLATION_CACHE_DB = os.path.join(os.path.dirname(__file__), "trans_cache.db")
 
 # 最大并发线程数
-MAX_CONCURRENT_TRANSLATIONS = 1
+MAX_CONCURRENT_TRANSLATIONS = 3
 
 
 def init_translation_db():
@@ -231,13 +237,17 @@ def save_translation_to_db(text_hash: str, target_lang: str, translated_text: st
     """将翻译保存到数据库"""
     for try_i in range(3):
         try:
-            conn = sqlite3.connect(TRANSLATION_CACHE_DB)
+            time.sleep(np.random.uniform(0, 0.3))
+            conn = sqlite3.connect(TRANSLATION_CACHE_DB, timeout=30)
             cursor = conn.cursor()
+            cursor.execute('PRAGMA journal_mode = WAL')
+            result = cursor.fetchone()
+            # logger.info(f"WAL: {result[0]}")  # 应该输出 'wal'
             cursor.execute(
                 """
                 INSERT OR REPLACE INTO translations (text_hash, target_lang, translated_text, created_at)
                 VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-            """,
+                """,
                 (text_hash, target_lang, translated_text),
             )
             conn.commit()
@@ -252,9 +262,11 @@ def save_translation_to_db(text_hash: str, target_lang: str, translated_text: st
 init_translation_db()
 
 
-def get_cache_key(text: str, target_lang: str) -> str:
+def get_cache_key(text: str, target_lang: str = "") -> str:
     """Generate cache key - use text hash for database storage"""
-    return hashlib.md5(f"{text}_{target_lang}".encode("utf-8")).hexdigest()
+    # return hashlib.md5(f"{text}_{target_lang}".encode("utf-8")).hexdigest()
+    # TODO: Too time consuming
+    return target_lang + "|" + text[:100]
 
 
 def load_llm_config() -> Dict[str, Any]:
@@ -299,7 +311,7 @@ def translate_with_llm_async(text: str, target_lang: str, cache_key: str) -> Non
         prompt = f"""Please translate the following text to {target_language}.
 Only return the translated text, no explanations or additional content.
 
-Text to translate: {text}
+Text to translate: {text[:1000]}
 
 Translation:/no_think"""
 
@@ -371,6 +383,9 @@ def translate_with_llm(text: str, target_lang: str) -> Optional[str]:
 
     thread = threading.Thread(target=run_with_semaphore, daemon=True)
     thread.start()
+    
+    # with st.spinner(text=t("loading")):
+    #     translate_with_llm_async(text, target_lang, cache_key)
 
     return text  # Immediately return None, indicating translation is in progress
 
