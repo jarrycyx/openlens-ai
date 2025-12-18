@@ -15,6 +15,7 @@ from pypdf import PdfReader
 from PIL import Image
 from datetime import datetime
 from streamlit_pdf_viewer import pdf_viewer
+from pdf2image import convert_from_path
 
 from openlens_ai.utils.file_utils import collect_files, collect_token_usage
 from openlens_ai.utils.frontend_messages import _get_messages_file_path, _message_remove_duplicates
@@ -36,20 +37,44 @@ code_file_ext = [".py"]
 all_view_ext = pdf_file_ext + image_file_ext + text_file_ext + code_file_ext
 
 
+def display_pdf_as_image(pdf_path: str, max_pages: int = 10):
+    pdf_path_hash = hashlib.sha256(pdf_path.encode("utf-8")).hexdigest()
+    pdf_image_dir = os.path.join("outputs", "pdf_cache", pdf_path_hash)
+    if not os.path.exists(pdf_image_dir):
+        logger.info(f"Generating PDF cache for {pdf_path}")
+        all_image_path = []
+        page_cnt = 0
+        with st.spinner(t("loading")):
+            pages = convert_from_path(pdf_path, dpi=300, last_page=max_pages)
+            for count, page in enumerate(pages):
+                save_path = os.path.join(pdf_image_dir, f"{pdf_path_hash}_{count}.jpg")
+                os.makedirs(os.path.dirname(save_path), exist_ok=True)
+                page.save(save_path, "JPEG")
+                all_image_path.append(save_path)
+                page_cnt += 1
+                if page_cnt >= max_pages:
+                    break
+    else:
+        all_image_path = glob.glob(os.path.join(pdf_image_dir, f"{pdf_path_hash}_*.jpg"))
+        all_image_path = sorted(all_image_path[:max_pages])
+    for image_path in all_image_path:
+        st.image(image_path)
+
+
 def display_single_file(config: Config, file_path: str):
     # Provide download button
     with open(file_path, "rb") as f:
         file_data = f.read()
-    
+
     rel_path = os.path.relpath(file_path, config.save_path)
     # Try to read file content
     if rel_path.endswith(tuple(image_file_ext)):
         st.image(file_path)
     elif rel_path.endswith(tuple(pdf_file_ext)):
         st.caption(t("pdf_viewer_tip"))
-        pdf_viewer(file_path, pages_to_render=list(range(10)))
+        display_pdf_as_image(file_path)
         # st.pdf(file_path, height=1200, key=f"pdf_{file_path}")
-        # TODO st.pdf have chinese bug, so we use pdf viewer instead
+        # TODO st.pdf have chinese bug, so we use manual pdf to image viewer
     elif rel_path.endswith(tuple(text_file_ext + code_file_ext)):
         with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
@@ -71,7 +96,6 @@ def display_single_file(config: Config, file_path: str):
         file_name=rel_path,
         key=f"download_{rel_path}_{random.randint(1000, 9999)}",
     )
-
 
 
 def get_paper_path(config: Config):
@@ -226,7 +250,7 @@ def display_messages_from_file(config: Config):
                 time_str = ""
 
             content_search_lower = content[:100].lower().replace("\n", " ")
-            if "search" in content_search_lower or "搜索" in content_search_lower: 
+            if "search" in content_search_lower or "搜索" in content_search_lower:
                 avatar = "🌐"
                 title = t("Searching")
             elif (
@@ -262,9 +286,7 @@ def display_messages_from_file(config: Config):
                     with st.container(horizontal=True, width="content"):
                         st.write(f"**{title.strip()}**")
                         st.caption(time_str)
-                content_summary = get_content_summary(
-                    content, max_length=50, language=st.session_state.ui_language
-                )
+                content_summary = get_content_summary(content, max_length=50, language=st.session_state.ui_language)
                 st.write(content_summary)
                 # if len(content) > 2000:
                 #     with st.container(height=300):

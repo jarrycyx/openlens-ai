@@ -68,6 +68,7 @@ TRANSLATIONS = {
         "confirm_submission_warning": "⚠️ Sure to submit this research question? \nAfter the initial research, the process will **pause** to allow you to review and continue. \nAll research processes will take quite a long time (from several hours to a few days), and progress will be notified via email {email}.",
         "confirm": "Confirm",
         "missing_fields": "Please fill in question, dataset path and make sure the email address is correct.",
+        "question_hint": "Enter a **complete scientific research question**, and ensure that the provided data are sufficient to support investigation of that question. \n\nFor example:\n\n- How can neural networks be used to predict acute kidney injury?\n\nNot recommended:\n\n- Please analyze the data I provided **(this is not a research question)**\n\n- Continue the research based on the previous results **(the question is incomplete)**",
         # UI elements
         "refresh": "Refresh",
         "conversation_history": "Conversation History",
@@ -99,7 +100,7 @@ TRANSLATIONS = {
         "file_list_item": "- {rel_path}",
         "no_files_in_workspace": "No files in workspace yet.",
         # Placeholder text
-        "question_placeholder": "What is the prediction precision of AKI in ICU patients when dynamically predicting each day based on the past two days of historical data?",
+        "question_placeholder": "Input a complete scientific question or research target, make sure the provided data can support the research.",
         # Note
         "note": "Note: OpenLens AI is not responsible for any errors or omissions in the results. Please verify the results independently. The research results are for informational purposes only and should not be used as a substitute for direct submission.",
     },
@@ -150,9 +151,10 @@ TRANSLATIONS = {
         "task_interrupted": "任务已成功中断",
         "failed_to_interrupt_task": "中断任务失败，请重试。",
         "confirm_submission": "确认提交",
-        "confirm_submission_warning": "⚠️ 确认提交研究问题？\n完成基础调研后将**自动暂停**，等待您确认。\n全部研究过程会需要相当长的时间（从几小时到一两天），进度会通过邮件 {email} 通知您。",
+        "confirm_submission_warning": "⚠️ 确认提交研究问题？\n\n完成基础调研后将**自动暂停**，等待您确认。\n\n全部研究过程会需要相当长的时间（从几小时到一两天），进度会通过邮件 {email} 通知您。",
         "confirm": "确认",
         "missing_fields": "请填写研究问题，数据集，并确保注册邮箱可用。",
+        "question_hint": "输入一个**完整的科学问题或者目标**，并保证提供的数据能支持该问题的研究。\n\n例如：\n\n- 如何用神经网络预测急性肾损伤\n\n不建议输入：\n\n- 请分析我提供的数据 **（不是一个问题或者目标）**\n\n- 基于刚才的结果继续进行研究 **（不完整）**",
         # UI elements
         "refresh": "刷新",
         "conversation_history": "对话历史",
@@ -183,7 +185,7 @@ TRANSLATIONS = {
         "file_list_item": "- {rel_path}",
         "no_files_in_workspace": "工作区中尚无文件。",
         # Placeholder text
-        "question_placeholder": "在ICU患者中，基于过去两天的历史数据动态预测每一天，AKI的预测精度是多少？",
+        "question_placeholder": "输入一个完整的科学问题或者目标，并保证提供的数据能支持该问题的研究。",
         # Note
         "note": "注意：OpenLens AI 不承担任何因使用其结果而导致的错误或遗漏。请独立验证结果。研究结果仅供参考，不应直接用于学术投稿。",
     },
@@ -312,6 +314,7 @@ def translate_with_llm_async(text: str, target_lang: str, cache_key: str) -> Non
 
         prompt = f"""Please translate the following text to {target_language}.
 Only return the translated text, no explanations or additional content.
+Note: the word "polish" means improve the words (“润色”).
 
 Text to translate: {text[:1000]}
 
@@ -498,12 +501,12 @@ def set_language(lang: str) -> None:
     Args:
         lang: Language code ("eng" or "chs")
     """
-    import streamlit as st
 
-    if "language" not in st.session_state:
+    if "ui_language" not in st.session_state:
         st.session_state.ui_language = "chs"
 
     if lang in ["eng", "chs"]:
+        # logger.info(f"Set language to {lang}")
         st.session_state.ui_language = lang
 
 
@@ -514,9 +517,10 @@ def get_current_language() -> str:
     Returns:
         Current language code
     """
-    import streamlit as st
+    current_lang = st.session_state.get("ui_language", "chs")
+    # logger.info(f"Get current language: {current_lang}")
 
-    return st.session_state.get("ui_language", "eng")
+    return current_lang
 
 
 def t(key: str, **kwargs) -> str:

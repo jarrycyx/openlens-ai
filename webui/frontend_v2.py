@@ -492,6 +492,7 @@ def show_project():
                     tab_names,
                     index=0,
                     label_visibility="collapsed",
+                    accept_new_options=False
                 )
             with st.container(height=900, border=False):
                 file_path, _, _ = latest_files[tab_names.index(selected_file)]
@@ -520,10 +521,11 @@ def show_initial_page():
 
     # Main interface design
     # st.title("🫧 OpenLens AI")
-    st.subheader(f"🫧 {t('app_title')}")
+    with st.container(horizontal=True):
+        st.image("static/logo.svg", width=40)
+        st.subheader(t('app_title'))
 
     # Display current process count
-    process_count = process_manager.get_process_count()
     st.caption(
         t(
             "current_running_jobs",
@@ -543,6 +545,7 @@ def show_initial_page():
         height=150,
         placeholder=t("question_placeholder"),
         key="question_input_main",
+        help=t("question_hint")
     )
 
     # If user entered a question, hide Use Cases
@@ -556,7 +559,7 @@ def show_initial_page():
             t("dataset_source"),
             ["MIMIC-IV-ICU", "eICU-Demo", "Upload My Own"],
             index=["MIMIC-IV-ICU", "eICU-Demo", "Upload My Own"].index(st.session_state.dataset_selected),
-            key="dataset_select",
+            key="dataset_select"
         )
         st.session_state.dataset_selected = dataset_option
 
@@ -613,7 +616,7 @@ def show_initial_page():
             dataset_path = None
 
     with st.container(horizontal=True):
-        submit_button = st.button(t("start_research"), help=t("start_research"), type="secondary")
+        submit_button = st.button(t("start_research"), help=t("question_hint"), type="secondary")
         # submit_button = st.button(t('start_research_maintenance'), type="secondary", disabled=True)
 
     @st.dialog(t("confirm_submission"))
@@ -696,7 +699,7 @@ def main():
     if "dataset_selected" not in st.session_state:
         st.session_state.dataset_selected = "eICU-Demo"
     # Initialize language settings
-    if "language" not in st.session_state:
+    if "ui_language" not in st.session_state:
         st.session_state.ui_language = "chs"
     # Initialize language selection
     if "language_selected" not in st.session_state:
