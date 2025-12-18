@@ -28,6 +28,7 @@ from .utils.frontend_utils import (
     display_messages_from_file,
     get_zip,
     display_multiple_file_preview,
+    download_workspace_button,
     display_single_file,
     get_latest_files,
 )
@@ -60,37 +61,40 @@ def load_config(dir_path: str) -> Config:
 def load_saved_experiments():
     """Load saved experiments from exp/saved_exp directory"""
     preset_experiments = []
-    saved_exp_root = "exp/saved_exp/eval_0915_old"
+    saved_exp_root = "exp/saved_exp/neat_example"
 
     if not os.path.exists(saved_exp_root):
         return []
 
     # Traverse all subdirectories to find experiment directories
-    for root, dirs, files in os.walk(saved_exp_root):
-        for dir_name in dirs:
-            if dir_name.startswith("test_"):
-                # Parse directory name to get dataset and question information
-                # Format: test_{dataset}_{question}
-                dir_path = os.path.join(root, dir_name)
-                config_path = os.path.join(dir_path, "config.json")
+    dirs = os.listdir(saved_exp_root)
+    for dir_name in dirs:
+        if os.path.isdir(os.path.join(saved_exp_root, dir_name)):
+            # Parse directory name to get dataset and question information
+            # Format: test_{dataset}_{question}
+            dir_path = os.path.join(saved_exp_root, dir_name)
+            config_path = os.path.join(dir_path, "config.json")
 
-                try:
-                    config = load_config(dir_path)
-
-                    preset_experiments.append(
-                        {
-                            "question": config.question,
-                            "dataset": config.dataset_path,
-                            "dir_name": dir_name,
-                            "path": dir_path,
-                            "thread_id": config.thread_id,
-                            "email": config.notify_email,
-                            "language": config.llm.language,
-                        }
-                    )
-                except Exception as e:
-                    logger.warning(f"Failed to load config from {config_path}: {e}")
+            try:
+                config = load_config(dir_path)
+                if (not config.question) or (not config.thread_id):
+                    logger.warning(f"Invalid config in {dir_path}")
                     continue
+
+                preset_experiments.append(
+                    {
+                        "question": config.question,
+                        "dataset": config.dataset_path,
+                        "dir_name": dir_name,
+                        "path": dir_path,
+                        "thread_id": config.thread_id,
+                        "email": config.notify_email,
+                        "language": config.llm.language,
+                    }
+                )
+            except Exception as e:
+                logger.warning(f"Failed to load config from {config_path}: {e}")
+                continue
 
     return preset_experiments
 
@@ -140,7 +144,7 @@ def load_user_projects(email: str) -> List[Dict[str, Any]]:
     return sorted(projects, key=lambda x: x["last_modified"], reverse=True)
 
 
-def show_language_popover():
+def show_ui_language_popover():
     current_lang = get_current_language()
     lang_button_text = "🌐" if current_lang == "eng" else "🌐"
     with st.popover(lang_button_text, width="stretch"):
@@ -162,7 +166,7 @@ def build_sidebar():
             with col1:
                 st.button(f"🚶‍♂️‍➡ {t('log_in')}", help=t("log_in"), width="stretch", on_click=st.login)
             with col2:
-                show_language_popover()
+                show_ui_language_popover()
 
             # st.stop()  # Stop execution when not logged in
         else:
@@ -183,7 +187,7 @@ def build_sidebar():
                         st.write(f"{t('points')}: 0")
                     st.button(f"🚶‍♂️‍➡ {t('logout')}", on_click=st.logout, width="content", type="tertiary")
             with col2:
-                show_language_popover()
+                show_ui_language_popover()
 
         st.divider()
         # User-specific project list (moved to bottom of sidebar)
@@ -352,11 +356,6 @@ def watch_job(config):
     if not task_process:
         st.warning(t("job_not_running", thread_id=thread_id))
 
-        # Get task directory path
-        task_dir = os.path.join("outputs", thread_id)
-
-        if not os.path.exists(task_dir):
-            st.error(t("task_dir_not_found", dir=task_dir))
     else:
         st.warning(t("job_progress_notification", email=email))
 
@@ -463,14 +462,10 @@ def show_project():
 
         st.button(f"🔄 {t('refresh')}", type="secondary", key="refresh_button")
 
-    latest_files = get_latest_files(config, max_files=20)
+    latest_files = get_latest_files(config, max_files=50)
     logger.debug(f"Latest files: {[f[0] for f in latest_files]}")
     if latest_files:
         latest_file_path, _, _ = latest_files[0]
-        file_path = st.session_state.preview_file if st.session_state.preview_file else latest_file_path
-        # Split into left and right columns
-
-        # st.divider()
 
         col1, col2 = st.columns([1, 2])
 
@@ -480,16 +475,30 @@ def show_project():
                 watch_job(config)
 
         with col2:
-            tab_names = [f"**{t('all_files')}**"]
-            tab_names += [os.path.basename(fp) for fp, _, _ in latest_files]
-            tab_list = st.tabs(tab_names, default=tab_names[1])
-            for i, (latest_file_path, _, _) in enumerate(latest_files):
-                with tab_list[i + 1]:
-                    with st.container(height=900, border=False):
-                        display_single_file(config, latest_file_path)
-            with tab_list[0]:
-                with st.container(height=900, border=False):
-                    show_workspace(config)
+            with st.container(horizontal=True):
+                download_workspace_button(config)
+                # tab_names = [f"**{t('all_files')}**"]
+                tab_names = [os.path.basename(fp) for fp, _, _ in latest_files]
+                # tab_list = st.tabs(tab_names, default=tab_names[1])
+                # for i, (latest_file_path, _, _) in enumerate(latest_files):
+                #     with tab_list[i + 1]:
+                #         with st.container(height=900, border=False):
+                #             display_single_file(config, latest_file_path)
+                # with tab_list[0]:
+                #     with st.container(height=900, border=False):
+                #         show_workspace(config)
+                selected_file = st.selectbox(
+                    "📁",
+                    tab_names,
+                    index=0,
+                    label_visibility="collapsed",
+                )
+            with st.container(height=900, border=False):
+                file_path, _, _ = latest_files[tab_names.index(selected_file)]
+                logger.info(f"Selected file: {file_path}")
+                display_single_file(config, file_path)
+            
+
 
     else:
         watch_job(config)
@@ -632,7 +641,7 @@ def show_initial_page():
         with st.spinner(t("loading_use_cases")):
             saved_experiments = load_saved_experiments()
             # saved_experiments = random.sample(saved_experiments, min(6, len(saved_experiments)))
-            saved_experiments = saved_experiments[:12]
+            saved_experiments = saved_experiments[:10]
 
         # Create three columns for card-style display (add one column for Resume Session)
         col1, col2 = st.columns(2)
@@ -688,10 +697,10 @@ def main():
         st.session_state.dataset_selected = "eICU-Demo"
     # Initialize language settings
     if "language" not in st.session_state:
-        st.session_state.language = "chs"
+        st.session_state.ui_language = "chs"
     # Initialize language selection
     if "language_selected" not in st.session_state:
-        st.session_state.language_selected = "中文"
+        st.session_state.language_selected = "English"
     st.markdown(
         """
     <style>
@@ -728,7 +737,7 @@ def main():
         running_process = process_manager.get_process_list()
         running_process = "\n".join([process["thread_id"] for process in running_process])
         # logger.warning(f"Auto refresh is enabled, running processes: {running_process}")
-        count = st_autorefresh(interval=10000, limit=100, key="fizzbuzzcounter")
+        count = st_autorefresh(interval=30000, limit=100, key="fizzbuzzcounter")
     else:
         show_initial_page()
 

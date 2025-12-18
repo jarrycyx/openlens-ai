@@ -16,20 +16,20 @@ import numpy as np
 from .translations import t, load_llm_config
 
 
-# 内容概括缓存数据库路径
+# Content summary cache database path
 SUMMARY_CACHE_DB = os.path.join(os.path.dirname(__file__), "summary_cache.db")
 
-# 最大并发线程数
+# Maximum concurrent threads
 MAX_CONCURRENT_SUMMARIES = 3
 
-# 全局变量用于跟踪正在进行的概括任务
+# Global variables for tracking ongoing summary tasks
 _ongoing_summaries = {}
 _summary_lock = threading.Lock()
 _summary_semaphore = threading.Semaphore(MAX_CONCURRENT_SUMMARIES)
 
 
 def init_summary_db():
-    """初始化概括缓存数据库"""
+    """Initialize summary cache database"""
     try:
         conn = sqlite3.connect(SUMMARY_CACHE_DB)
         cursor = conn.cursor()
@@ -45,15 +45,15 @@ def init_summary_db():
         conn.commit()
         conn.close()
     except Exception as e:
-        logger.warning(f"初始化概括缓存数据库失败: {e}")
+        logger.warning(f"Failed to initialize summary cache database: {e}")
 
 
-# 初始化数据库
+# Initialize database
 init_summary_db()
 
 
 def get_summary_from_db(cache_key: str) -> Optional[str]:
-    """从数据库中获取概括"""
+    """Get summary from database"""
     try:
         conn = sqlite3.connect(SUMMARY_CACHE_DB)
         cursor = conn.cursor()
@@ -62,12 +62,12 @@ def get_summary_from_db(cache_key: str) -> Optional[str]:
         conn.close()
         return result[0] if result else None
     except Exception as e:
-        logger.warning(f"从数据库获取概括失败: {e}")
+        logger.warning(f"Failed to get summary from database: {e}")
         return None
 
 
 def save_summary_to_db(cache_key: str, summary: str) -> None:
-    """将概括保存到数据库"""
+    """Save summary to database"""
     for try_i in range(3):
         try:
             time.sleep(np.random.uniform(0, 0.3))
@@ -87,23 +87,23 @@ def save_summary_to_db(cache_key: str, summary: str) -> None:
             conn.close()
             return
         except Exception as e:
-            logger.warning(f"保存概括到数据库失败: {e}, 重试中{try_i}...")
+            logger.warning(f"Failed to save summary to database: {e}, retrying {try_i}...")
             time.sleep(3)
 
 
 def get_summary_cache_key(content: str, target_lang: str = "") -> str:
-    """生成概括缓存键"""
+    """Generate summary cache key"""
     # return hashlib.md5(content.encode("utf-8")).hexdigest()
     # TODO: Too time consuming
     return target_lang + "|" + content[:100]
 
 
-def summarize_with_llm_async(content: str, cache_key: str, max_len: int = 50, language: str = "中文") -> None:
-    """使用LLM异步概括内容"""
+def summarize_with_llm_async(content: str, cache_key: str, max_len: int = 50, language: str = "Chinese") -> None:
+    """Asynchronously summarize content using LLM"""
     try:
         llm_config = load_llm_config()
         if not llm_config:
-            logger.warning("未找到LLM配置")
+            logger.warning("No LLM configuration found")
             return
 
         model = llm_config.get("model", "")
@@ -111,17 +111,17 @@ def summarize_with_llm_async(content: str, cache_key: str, max_len: int = 50, la
         api_key = llm_config.get("api_key", "")
 
         if not all([model, base_url, api_key]):
-            logger.warning("LLM配置不完整")
+            logger.warning("Incomplete LLM configuration")
             return
 
         if language.lower() == "chs" or language.lower() == "chinese":
-            language = "中文"
+            language = "Chinese"
         elif language.lower() == "eng" or language.lower() == "english":
-            language = "英文"
+            language = "English"
         
-        # 构建概括提示
-        prompt = f"""请用不超过{max_len}个中文字/英文词的{language}概括以下处理进度的核心要点，只返回概括的进度内容，不需要解释或额外信息。
-内容: {content[:300]}
+        # Build summary prompt
+        prompt = f"""Please summarize the following processing progress in {language} in no more than {max_len} Chinese characters/English words. Only return the summarized progress content, no explanations or additional information needed.
+Content: {content[:300]}
 /no_think"""
 
         # 调用LLM API
@@ -143,50 +143,50 @@ def summarize_with_llm_async(content: str, cache_key: str, max_len: int = 50, la
                 summary.replace("\n", " ").replace("*", " ").replace("<think>", "").replace("</think>", "").strip()
             )
 
-            # 确保概括不超过指定字数
+            # Ensure summary does not exceed specified length
             if len(summary) > max_len * 4:
                 summary = summary[:max_len * 4] + "..." if len(summary) > max_len * 4 + 3 else summary[:max_len * 4]
 
-            # 保存到数据库
+            # Save to database
             save_summary_to_db(cache_key, summary)
 
-            logger.info(f"成功概括内容，长度: {len(summary)}字")
+            logger.info(f"Successfully summarized content, length: {len(summary)} characters")
         else:
             logger.warning(f"LLM API请求失败: {response.status_code}, {response.text}")
 
     except Exception as e:
-        logger.warning(f"使用LLM概括内容失败: {e}")
+        logger.warning(f"Failed to summarize content using LLM: {e}")
     finally:
-        # 清理正在进行的概括任务记录
+        # Clean up ongoing summary task records
         with _summary_lock:
             if cache_key in _ongoing_summaries:
                 del _ongoing_summaries[cache_key]
 
 
-def summarize_content(content: str, max_len: int = 50, language: str = "中文") -> Optional[str]:
+def summarize_content(content: str, max_len: int = 50, language: str = "Chinese") -> Optional[str]:
     """
-    使用LLM概括内容（非阻塞版本）
+    Summarize content using LLM (non-blocking version)
 
     Args:
-        content: 需要概括的内容
-        max_len: 概括的最大长度
+        content: Content to be summarized
+        max_len: Maximum length of the summary
 
     Returns:
-        Optional[str]: 如果缓存中有概括则返回，否则返回None表示正在处理
+        Optional[str]: Return summary if available in cache, otherwise return None indicating processing
     """
-    # # 确保数据库已初始化
+    # # Ensure database is initialized
     # init_summary_db()
 
-    # 检查是否已在进行中
+    # Check if already in progress
     cache_key = get_summary_cache_key(content, language)
     with _summary_lock:
         if cache_key in _ongoing_summaries:
             return t("Processing...")  # 已在进行中，不重新开始
 
-        # 标记为进行中
+        # Mark as in progress
         _ongoing_summaries[cache_key] = True
 
-    # 检查数据库缓存
+    # Check database cache
     cached_summary = get_summary_from_db(cache_key)
     if cached_summary and (not "None" in str(cached_summary)):
         with _summary_lock:
@@ -194,7 +194,7 @@ def summarize_content(content: str, max_len: int = 50, language: str = "中文")
                 del _ongoing_summaries[cache_key]
         return cached_summary
 
-    # 启动异步概括，使用信号量控制并发数
+    # Start asynchronous summary with semaphore control
     def run_with_semaphore():
         with _summary_semaphore:
             summarize_with_llm_async(content, cache_key, max_len, language)
@@ -205,27 +205,27 @@ def summarize_content(content: str, max_len: int = 50, language: str = "中文")
     # with st.spinner(text=t("loading")):
     #     summarize_with_llm_async(content, cache_key, max_len, language)
 
-    # return content[:(max_len * 4)]  # 立即返回None，表示概括正在进行中
+    # return content[:(max_len * 4)]  # Immediately return None, indicating summary is in progress
     return t("Processing...")
 
 
-def get_content_summary(content: str, max_length: int = 200, language: str = "中文") -> str:
+def get_content_summary(content: str, max_length: int = 200, language: str = "Chinese") -> str:
     """
-    获取内容概括，优先使用LLM概括，如果不可用则使用简单截断
+    Get content summary, prioritize LLM summary, use simple truncation if unavailable
 
     Args:
-        content: 需要概括的内容
-        max_length: 当LLM概括不可用时的最大显示长度
+        content: Content to be summarized
+        max_length: Maximum display length when LLM summary is unavailable
 
     Returns:
-        str: 内容概括
+        str: Content summary
     """
     if not content or not content.strip():
-        return "无内容"
+        return "No content"
 
     if len(content) <= max_length * 4:
         return t(content)
 
-    # 尝试使用LLM概括
+    # Try to use LLM summary
     summary = summarize_content(content, max_len=max_length, language=language)
     return summary

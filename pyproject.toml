@@ -40,6 +40,7 @@ dependencies = [
   "python-dotenv>=1.0.1",
   "streamlit",
   "streamlit[pdf]",
+  "streamlit-pdf-viewer",
   "typing-extensions",
   "vllm",
   "pillow",

@@ -40,7 +40,7 @@ curie/setup/env.sh
 .streamlit/openlens.icu.pem
 .streamlit/app.openlens.icu.key
 .streamlit/app.openlens.icu.pem
-webui/utils/translation_llm.json
+webui/utils/translation_llm*.json
 exp/mle_bench/datasets/kaggle.sh
 exp/mle_bench/datasets/kaggle.json
 llm_router/litellm/config.yaml
@@ -59,7 +59,6 @@ build
 openlens_ai/tools/openhands_configs/texlive
 cache
 **/*.db
-**/*.db-journal
 
 # 测试相关
 curie/tests/test_claude.py

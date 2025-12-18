@@ -73,6 +73,7 @@ TRANSLATIONS = {
         "conversation_history": "Conversation History",
         "all_files": "All files",
         "github_link": "🌟 Star us on GitHub",
+        "pdf_viewer_tip": "⚠️ May take some time to load the PDF, download to view the full version.",
         # Application title and description
         "app_title": "OpenLens AI: Fully Autonomous Multimodal Agent for Health Informatics Research",
         "research_question": "Research Question",
@@ -157,6 +158,7 @@ TRANSLATIONS = {
         "conversation_history": "对话历史",
         "all_files": "所有文件",
         "github_link": "🌟 在GitHub上Star我们",
+        "pdf_viewer_tip": "⚠️ 加载PDF可能会耗时较长，点击\"下载论文\"查看完整版本。",
         # Application title and description
         "app_title": "OpenLens AI: 全自主多模态医学科研智能体",
         "research_question": "研究问题",
@@ -190,12 +192,12 @@ TRANSLATIONS = {
 # Translation cache database path
 TRANSLATION_CACHE_DB = os.path.join(os.path.dirname(__file__), "trans_cache.db")
 
-# 最大并发线程数
+# Maximum concurrent threads
 MAX_CONCURRENT_TRANSLATIONS = 3
 
 
 def init_translation_db():
-    """初始化翻译缓存数据库"""
+    """Initialize translation cache database"""
     try:
         conn = sqlite3.connect(TRANSLATION_CACHE_DB)
         cursor = conn.cursor()
@@ -214,11 +216,11 @@ def init_translation_db():
         conn.commit()
         conn.close()
     except Exception as e:
-        logger.warning(f"初始化翻译缓存数据库失败: {e}")
+        logger.warning(f"Failed to initialize translation cache database: {e}")
 
 
 def get_translation_from_db(text_hash: str, target_lang: str) -> Optional[str]:
-    """从数据库中获取翻译"""
+    """Get translation from database"""
     try:
         conn = sqlite3.connect(TRANSLATION_CACHE_DB)
         cursor = conn.cursor()
@@ -229,12 +231,12 @@ def get_translation_from_db(text_hash: str, target_lang: str) -> Optional[str]:
         conn.close()
         return result[0] if result else None
     except Exception as e:
-        logger.warning(f"从数据库获取翻译失败: {e}")
+        logger.warning(f"Failed to get translation from database: {e}")
         return None
 
 
 def save_translation_to_db(text_hash: str, target_lang: str, translated_text: str) -> None:
-    """将翻译保存到数据库"""
+    """Save translation to database"""
     for try_i in range(3):
         try:
             time.sleep(np.random.uniform(0, 0.3))
@@ -254,11 +256,11 @@ def save_translation_to_db(text_hash: str, target_lang: str, translated_text: st
             conn.close()
             return
         except Exception as e:
-            logger.warning(f"保存翻译到数据库失败: {e}, 重试中{try_i}...")
+            logger.warning(f"Failed to save translation to database: {e}, retrying {try_i}...")
             time.sleep(3)
 
 
-# 初始化数据库
+# Initialize database
 init_translation_db()
 
 
@@ -305,7 +307,7 @@ def translate_with_llm_async(text: str, target_lang: str, cache_key: str) -> Non
             return
 
         # Build translation prompt
-        lang_map = {"chs": "中文", "eng": "English"}
+        lang_map = {"chs": "Chinese", "eng": "English"}
         target_language = lang_map.get(target_lang, target_lang)
 
         prompt = f"""Please translate the following text to {target_language}.
@@ -451,7 +453,7 @@ def get_text(key: str, lang: str = "eng", **kwargs) -> str:
         # Immediately return English version, translation happens in background
         logger.info(f"Translation started for '{key}', returning English version for now")
 
-        # 如果提供了格式化参数，进行格式化
+        # If formatting parameters are provided, format the text
         if kwargs:
             try:
                 return english_text.format(**kwargs)
@@ -469,7 +471,7 @@ def get_text(key: str, lang: str = "eng", **kwargs) -> str:
         if translated_text:
             # logger.info(f"Used cached translation for key '{key}' in {lang}")
 
-            # 如果提供了格式化参数，进行格式化
+            # If formatting parameters are provided, format the text
             if kwargs:
                 try:
                     return translated_text.format(**kwargs)
@@ -499,10 +501,10 @@ def set_language(lang: str) -> None:
     import streamlit as st
 
     if "language" not in st.session_state:
-        st.session_state.language = "chs"
+        st.session_state.ui_language = "chs"
 
     if lang in ["eng", "chs"]:
-        st.session_state.language = lang
+        st.session_state.ui_language = lang
 
 
 def get_current_language() -> str:
@@ -514,7 +516,7 @@ def get_current_language() -> str:
     """
     import streamlit as st
 
-    return st.session_state.get("language", "eng")
+    return st.session_state.get("ui_language", "eng")
 
 
 def t(key: str, **kwargs) -> str:

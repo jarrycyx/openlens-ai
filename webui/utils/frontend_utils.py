@@ -14,6 +14,7 @@ import traceback
 from pypdf import PdfReader
 from PIL import Image
 from datetime import datetime
+from streamlit_pdf_viewer import pdf_viewer
 
 from openlens_ai.utils.file_utils import collect_files, collect_token_usage
 from openlens_ai.utils.frontend_messages import _get_messages_file_path, _message_remove_duplicates
@@ -36,13 +37,19 @@ all_view_ext = pdf_file_ext + image_file_ext + text_file_ext + code_file_ext
 
 
 def display_single_file(config: Config, file_path: str):
+    # Provide download button
+    with open(file_path, "rb") as f:
+        file_data = f.read()
+    
     rel_path = os.path.relpath(file_path, config.save_path)
     # Try to read file content
     if rel_path.endswith(tuple(image_file_ext)):
         st.image(file_path)
     elif rel_path.endswith(tuple(pdf_file_ext)):
-        # pdf_viewer(file_path)
-        st.pdf(file_path, height=1200, key=f"pdf_{file_path}")
+        st.caption(t("pdf_viewer_tip"))
+        pdf_viewer(file_path, pages_to_render=list(range(10)))
+        # st.pdf(file_path, height=1200, key=f"pdf_{file_path}")
+        # TODO st.pdf have chinese bug, so we use pdf viewer instead
     elif rel_path.endswith(tuple(text_file_ext + code_file_ext)):
         with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
@@ -58,16 +65,13 @@ def display_single_file(config: Config, file_path: str):
     else:
         pass
 
-    # Provide download button
-    with open(file_path, "rb") as f:
-        file_data = f.read()
-
     st.download_button(
         label=f"⬇️ {t('download')}",
         data=file_data,
         file_name=rel_path,
         key=f"download_{rel_path}_{random.randint(1000, 9999)}",
     )
+
 
 
 def get_paper_path(config: Config):
@@ -259,7 +263,7 @@ def display_messages_from_file(config: Config):
                         st.write(f"**{title.strip()}**")
                         st.caption(time_str)
                 content_summary = get_content_summary(
-                    content, max_length=50, language=st.session_state.language_selected
+                    content, max_length=50, language=st.session_state.ui_language
                 )
                 st.write(content_summary)
                 # if len(content) > 2000:
@@ -326,7 +330,7 @@ def get_plan(config: Config):
     return None
 
 
-def download_workspace_button(config):
+def download_workspace_button(config: Config):
 
     zip_buffer = get_zip(config)
     pdf_buffer = get_pdf(config)
@@ -373,8 +377,8 @@ def show_workspace(config):
             current_fils_hash[fp] = hashlib.md5(open(fp, "rb").read()).hexdigest()
 
     with st.container(horizontal=False):
-        with st.container(horizontal=True):
-            download_workspace_button(config)
+        # with st.container(horizontal=True):
+        #     download_workspace_button(config)
 
         # with st.popover("See file list"):
         st.success(t("click_download_workspace"))
