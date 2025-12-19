@@ -9,7 +9,7 @@ import uuid
 # Once defined, these can be passed in proxy_config.yaml
 
 # Create output directory for logged calls
-LOGGED_CALLS_DIR = "outputs/logged_calls_1211"
+LOGGED_CALLS_DIR = "outputs/logged_calls_1219"
 os.makedirs(LOGGED_CALLS_DIR, exist_ok=True)
 
 def convert_to_dict(obj, max_depth=10, current_depth=0):
@@ -42,10 +42,12 @@ def convert_to_dict(obj, max_depth=10, current_depth=0):
 def save_call_to_json(call_data, call_type):
     """Save API call data to a JSON file"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    day_str = datetime.now().strftime("%Y%m%d")
     call_id = str(uuid.uuid4())
     
     filename = f"{call_type}_{timestamp}"
-    filepath = os.path.join(LOGGED_CALLS_DIR, f"{filename}.json")
+    filepath = os.path.join(LOGGED_CALLS_DIR, day_str, f"{filename}.json")
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
     
     try:
         with open(filepath, 'w', encoding='utf-8') as f:

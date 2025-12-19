@@ -1,0 +1,38 @@
+model_list:
+  - model_name: glm-4.5-air
+    litellm_params:
+      model: openai/glm-4.5-air
+      api_base: https://cloud.infini-ai.com/maas/v1/
+      api_key: "os.environ/INFINI_API_KEY"
+  - model_name: glm-4.6
+    litellm_params:
+      model: openai/glm-4.6
+      api_base: https://cloud.infini-ai.com/maas/v1/
+      api_key: "os.environ/INFINI_API_KEY"
+  - model_name: glm-4.6v
+    litellm_params:
+      model: openai/glm-4.6v
+      api_base: https://cloud.infini-ai.com/maas/v1/
+      api_key: "os.environ/INFINI_API_KEY"
+  - model_name: mimo-v2-flash
+    litellm_params:
+      model: openai/mimo-v2-flash
+      api_base: https://api.xiaomimimo.com/v1/
+      api_key: "os.environ/MIMO_API_KEY"
+  - model_name: deepseek-v3.2
+    litellm_params:
+      model: openai/deepseek-v3.2
+      api_base: https://api.modelarts-maas.com/v2/
+      api_key: "os.environ/HUAWEI_API_KEY"
+  - model_name: bge-reranker-v2-m3
+    litellm_params:
+      model: cohere/bge-reranker-v2-m3
+      api_base: https://cloud.infini-ai.com/maas/v1/rerank
+      api_key: os.environ/INFINI_API_KEY
+litellm_settings:
+  callbacks: litellm_logger.proxy_handler_instance
+  cache: True
+  ttl: 259200
+  cache_params:
+    type: disk
+    disk_cache_dir: outputs  # OPTIONAL, default to ./.litellm_cache

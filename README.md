@@ -43,6 +43,7 @@
 </table>
 
 🔥 **New:** General domain supported (e.g. software, machine learning, etc.)
+
 🔥 **New:** Chinese language support for figures and papers.
 
 ## 🔍 Key Features

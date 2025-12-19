@@ -43,7 +43,7 @@ curie/setup/env.sh
 webui/utils/translation_llm*.json
 exp/mle_bench/datasets/kaggle.sh
 exp/mle_bench/datasets/kaggle.json
-llm_router/litellm/config.yaml
+llm_router/litellm/start_litellm.sh
 private
 
 # 缓存和临时文件

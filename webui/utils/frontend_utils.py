@@ -38,10 +38,11 @@ all_view_ext = pdf_file_ext + image_file_ext + text_file_ext + code_file_ext
 
 
 def display_pdf_as_image(pdf_path: str, max_pages: int = 10):
-    pdf_path_hash = hashlib.sha256(pdf_path.encode("utf-8")).hexdigest()
+    pdf_modify_time = str(os.path.getmtime(pdf_path))
+    pdf_path_hash = hashlib.sha256((pdf_path + pdf_modify_time).encode("utf-8")).hexdigest()
     pdf_image_dir = os.path.join("outputs", "pdf_cache", pdf_path_hash)
     if not os.path.exists(pdf_image_dir):
-        logger.info(f"Generating PDF cache for {pdf_path}")
+        logger.info(f"Generating PDF cache for {pdf_path}, {pdf_modify_time}")
         all_image_path = []
         page_cnt = 0
         with st.spinner(t("loading")):
