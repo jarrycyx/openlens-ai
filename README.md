@@ -1,6 +1,6 @@
 **[中文版本](README_CN.md)**
 
-# OpenLens AI: Fully Autonomous Multimodal Agent for Health Informatics Research
+# OpenLens AI: A Fully Autonomous Multimodal Research Agent
 
 <p align="center">
   <!-- <a href="https://arxiv.org/abs/2509.14778">
@@ -36,8 +36,8 @@
       <img src="static/logo.svg" alt="Logo" width="100">
     </td>
     <td style="text-align: justify;">
-      <strong>OpenLens AI</strong> is a fully autonomous multimodal agent designed for the medical research field.  
-      Provide it with your dataset and a single-line research idea, and it will independently conduct literature review, design experiments, analyze data, and generate comprehensive research reports—<strong>no manual intervention required</strong>. <i> Also supports domains other than healthcare. </i>
+      <strong>OpenLens AI</strong> is a fully autonomous multimodal agent designed for medical/ML/stats research, or any data-driven project, and is optimized for medical + AI research.
+      Provide it with your dataset and a single-line research idea, and it will independently conduct literature review, design experiments, analyze data, and generate comprehensive research reports—<strong>no manual intervention required</strong>.
     </td>
   </tr>
 </table>
@@ -54,8 +54,8 @@ No installation required! Visit our <a href="https://openlens.icu">project page<
 
 <img src="static/papers/example.png" alt="Logo" width="100%">
 
-- ✅ **Automated Literature Review**: Search and summarize medical papers based on your research question
-- ✅ **Data Analysis**: Analyze medical datasets and generate comprehensive reports
+- ✅ **Automated Literature Review**: Search and summarize papers based on your research question
+- ✅ **Data Analysis**: Analyze datasets and generate comprehensive reports
 - ✅ **Experiment Design**: Suggest and validate experimental approaches
 - ✅ **Code Generation and Execution**: Generate and execute code for data analysis and experiments with [OpenHands](https://github.com/All-Hands-AI/OpenHands)
 - ✅ **Multi-Agent Collaboration**: Coordinate multiple specialized agents to handle complex research tasks
@@ -201,8 +201,8 @@ Then open your browser to `http://localhost:8501` to access the interactive inte
 
 OpenLens AI uses a multi-module architecture powered by LangGraph:
 
-1. **Literature Reviewer**: Searches and analyzes relevant medical literature
-2. **Data Analyzer**: Processes and analyzes medical datasets
+1. **Literature Reviewer**: Searches and analyzes relevant literature
+2. **Data Analyzer**: Processes and analyzes datasets
 3. **Supervisor**: Coordinates the research process and makes high-level decisions
 4. **Coder**: Generates code and technical solutions for data processing
 5. **LaTeX Writer**: Generates LaTeX documents for research papers and reports
@@ -333,4 +333,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Uses [OpenHands](https://github.com/All-Hands-AI/OpenHands) for code execution sandbox
 - Powered by [LangGraph](https://github.com/langchain-ai/langgraph) for workflow orchestration
 - Uses [Streamlit](https://streamlit.io/) for the web interface
-- Inspired by recent advances in AI for medical research
+- Inspired by recent advances in AI for research

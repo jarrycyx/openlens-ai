@@ -1,6 +1,6 @@
 **[English Version](README.md)**
 
-# OpenLens AI：面向医疗信息学的全自动多模态科研智能体
+# OpenLens AI：全自主多模态科研智能体
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.9%2B-blue" alt="Python Version">
@@ -26,8 +26,8 @@
       <img src="static/logo.svg" alt="Logo" width="100">
     </td>
     <td style="text-align: justify;">
-      <strong>OpenLens AI</strong> 是一个专为医学领域设计的全自动研究智能体。
-      只需提供您的数据集和一个单行的研究想法，它便能独立进行文献综述、设计实验、分析数据并生成全面的研究报告——<strong>无需任何人工干预</strong>。<i> 同时也支持医疗以外的领域。</i>
+      <strong>OpenLens AI</strong> 是一个专为医学/ML/统计研究或任何数据驱动项目设计的完全自主的多模态智能体，为AI+医学研究优化。
+      只需提供您的数据集和一个单行的研究想法，它便能独立进行文献综述、设计实验、分析数据并生成全面的研究报告——<strong>无需任何人工干预</strong>。
     </td>
   </tr>
 </table>
@@ -44,8 +44,8 @@
 
 <img src="static/papers/example.png" alt="Logo" width="100%">
 
-- ✅ **自动化文献综述**：根据您的研究问题搜索和总结医学论文
-- ✅ **数据分析**：分析医学数据集并生成综合报告
+- ✅ **自动化文献综述**：根据您的研究问题搜索和总结论文
+- ✅ **数据分析**：分析数据集并生成综合报告
 - ✅ **实验设计**：建议并验证实验方法
 - ✅ **代码生成与执行**：使用 [OpenHands](https://github.com/All-Hands-AI/OpenHands) 生成和执行用于数据分析与实验的代码
 - ✅ **多智能体协作**：协调多个专业智能体处理复杂研究任务
@@ -190,8 +190,8 @@ streamlit run start_app.py
 
 OpenLens AI 使用由 LangGraph 驱动的多智能体架构：
 
-1.  **文献综述员 (Literature Reviewer)**：搜索和分析相关医学文献
-2.  **数据分析员 (Data Analyzer)**：处理和分析医学数据集
+1.  **文献综述员 (Literature Reviewer)**：搜索和分析相关文献
+2.  **数据分析员 (Data Analyzer)**：处理和分析数据集
 3.  **监督员 (Supervisor)**：协调研究过程并做出高层决策
 4.  **程序员 (Coder)**：生成数据处理代码和技术解决方案
 5.  **LaTeX 撰写员 (LaTeX Writer)**：生成研究论文和报告的 LaTeX 文档
@@ -347,4 +347,4 @@ export GITHUB_TOKEN=github_pat_XXXXXXXXXXXXXXXX
 - 使用 [OpenHands](https://github.com/All-Hands-AI/OpenHands) 作为代码执行沙箱
 - 由 [LangGraph](https://github.com/langchain-ai/langgraph) 提供工作流编排支持
 - 使用 [Streamlit](https://streamlit.io/) 作为 Web 界面
-- 灵感来源于人工智能在医学研究中的最新进展
+- 灵感来源于人工智能在科研中的最新进展

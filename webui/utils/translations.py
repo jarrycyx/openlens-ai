@@ -76,7 +76,7 @@ TRANSLATIONS = {
         "github_link": "🌟 Star us on GitHub",
         "pdf_viewer_tip": "⚠️ May take some time to load the PDF, download to view the full version.",
         # Application title and description
-        "app_title": "OpenLens AI: Fully Autonomous Multimodal Agent for Health Informatics Research",
+        "app_title": "OpenLens AI: A Fully Autonomous Multimodal Research Agent",
         "research_question": "Research Question",
         "dataset_source": "Dataset Source",
         "upload_dataset_files": "Upload Dataset Files",
@@ -162,7 +162,7 @@ TRANSLATIONS = {
         "github_link": "🌟 在GitHub上Star我们",
         "pdf_viewer_tip": "⚠️ 加载PDF可能会耗时较长，点击\"下载论文\"查看完整版本。",
         # Application title and description
-        "app_title": "OpenLens AI: 全自主多模态医学科研智能体",
+        "app_title": "OpenLens AI: 全自主多模态科研智能体",
         "research_question": "研究问题",
         "dataset_source": "数据集来源",
         "upload_dataset_files": "上传数据集文件",

@@ -14,6 +14,11 @@ model_list:
       model: openai/glm-4.6v
       api_base: https://cloud.infini-ai.com/maas/v1/
       api_key: "os.environ/INFINI_API_KEY"
+  - model_name: qwen3-8b
+    litellm_params:
+      model: openai/qwen3-8b
+      api_base: https://cloud.infini-ai.com/maas/v1/
+      api_key: "os.environ/INFINI_API_KEY"
   - model_name: mimo-v2-flash
     litellm_params:
       model: openai/mimo-v2-flash
