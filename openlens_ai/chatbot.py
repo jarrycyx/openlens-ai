@@ -391,7 +391,15 @@ def chatbot_with_context_manager(
                 except Exception as e:
                     # Force to convert to all HumanMessage
                     logger.warning(f"Error when calling llm: {e}, force convert to all HumanMessage")
-                    message_to_llm = [HumanMessage(content=str(msg)) for msg in message_to_llm]
+                    message_to_llm = []
+                    for msg in state["messages"]:
+                        if isinstance(msg, HumanMessage):
+                            message_to_llm.append(msg)
+                        else:
+                            str_msg = str(msg)
+                            original_len = len(msg.content) if hasattr(msg, "content") else len(str_msg)
+                            str_msg = str_msg[-original_len:]
+                            message_to_llm.append(HumanMessage(content=str_msg))
                     logger.warning(traceback.format_exc())
                     logger.warning("Retrying...")
                     time.sleep(5)

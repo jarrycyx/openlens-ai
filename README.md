@@ -67,6 +67,10 @@ No installation required! Visit our <a href="https://openlens.icu">project page<
 - ⬜ **Powerpoint-Based Figures**: Automated generation of Powerpoint-based figures for demonstrations for better visual quality (to replace the current graphviz-based figures)
 - ⬜ **Context Manager via Long Context Model**: Integrate with long context model for context management (in addition to the current vector search-based approach)
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=jarrycyx/openlens-ai&type=date&legend=top-left)](https://www.star-history.com/#jarrycyx/openlens-ai&type=date&legend=top-left)
+
 ## 🚀 Quick Start
 
 ### Prerequisites

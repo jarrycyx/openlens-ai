@@ -57,6 +57,10 @@
 - ⬜ **基于 Powerpoint 的图表**：自动生成基于 Powerpoint 的演示图表以获得更好的视觉质量（以替代当前的 graphviz 图表）
 - ⬜ **通过长上下文模型管理上下文**：集成长上下文模型进行上下文管理（作为当前基于向量搜索方法的补充）
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=jarrycyx/openlens-ai&type=date&legend=top-left)](https://www.star-history.com/#jarrycyx/openlens-ai&type=date&legend=top-left)
+
 ## 🚀🚀🚀 快速开始
 
 ### 前置条件
