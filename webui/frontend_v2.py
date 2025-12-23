@@ -506,7 +506,23 @@ def show_project():
 
 
 def show_initial_page():
+    @st.dialog(t("before_use_title"), width="large", dismissible=False)
+    def show_before_use_dialog():
+        
+        with st.container(horizontal=True, width="content"):
+            if st.button("🇨🇳 中文", key="lang_zh_note"):
+                set_language("chs")
+                st.rerun()
+            if st.button("🇺🇸 English", key="lang_en_note"):
+                set_language("eng")
+                st.rerun()
+        st.write(t("before_use"))
+        if st.button(t("got_it"), type="primary"):
+            st.session_state.guide_shown = True
+            st.rerun()
 
+    if not st.session_state.guide_shown:
+        show_before_use_dialog()
     st.set_page_config(
         page_title="OpenLens AI",
         layout="wide",
@@ -524,6 +540,9 @@ def show_initial_page():
     with st.container(horizontal=True):
         st.image("static/logo.svg", width=40)
         st.subheader(t('app_title'))
+        if st.button(t("show_guide")):
+            st.session_state.guide_shown = False
+            st.rerun()
 
     # Display current process count
     st.caption(
@@ -700,10 +719,13 @@ def main():
         st.session_state.dataset_selected = "eICU-Demo"
     # Initialize language settings
     if "ui_language" not in st.session_state:
-        st.session_state.ui_language = "chs"
+        st.session_state.ui_language = "eng"
     # Initialize language selection
     if "language_selected" not in st.session_state:
         st.session_state.language_selected = "English"
+    if "guide_shown" not in st.session_state:
+        st.session_state.guide_shown = False
+        
     st.markdown(
         """
     <style>
