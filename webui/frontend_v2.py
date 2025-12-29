@@ -719,7 +719,7 @@ def main():
         st.session_state.dataset_selected = "eICU-Demo"
     # Initialize language settings
     if "ui_language" not in st.session_state:
-        st.session_state.ui_language = "eng"
+        st.session_state.ui_language = "chs"
     # Initialize language selection
     if "language_selected" not in st.session_state:
         st.session_state.language_selected = "English"
