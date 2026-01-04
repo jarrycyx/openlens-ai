@@ -195,6 +195,8 @@ python -m openlens_ai.main \
 
 #### Option 2: Interactive Web Interface
 
+Configure your https settings in `.streamlit/config.toml` if needed. Otherwise comment ```sslKeyFile``` and ```sslCertFile``` out.
+
 ```bash
 streamlit run start_app.py
 ```

@@ -317,7 +317,7 @@ def start_job(question, dataset_path, email, language="chs"):
                     dir_path = os.path.join("outputs", thread_id)
                     config = load_config(dir_path)
                     st.session_state.config = config
-                    user_manager.update_user_points(st.user.email, -20, f"Job started: {thread_id}")
+                    user_manager.update_user_points(st.user.email, -40, f"Job started: {thread_id}")
                     st.rerun()
                     break
                 except Exception as e:
@@ -444,6 +444,7 @@ def show_project():
                         # Add process information to the process manager
                         if process_manager.add_process(process.pid, config.thread_id, user=st.user.email):
                             st.success(t("task_resumed", pid=process.pid))
+                            user_manager.update_user_points(st.user.email, -5, f"Job started: {config.thread_id}")
                             st.rerun()
                         else:
                             process.terminate()  # If adding fails, terminate the process
@@ -574,13 +575,32 @@ def show_initial_page():
     col1, col2 = st.columns([2, 1])
 
     with col1:
+        datasets = ["MIMIC-IV-ICU", "eICU-Demo", "Upload My Own"]
+        selected_dataset = st.session_state.get("dataset_selected", None)
+        logger.info(f"Selected dataset from session state: {selected_dataset}")
         dataset_option = st.selectbox(
             t("dataset_source"),
-            ["MIMIC-IV-ICU", "eICU-Demo", "Upload My Own"],
-            index=["MIMIC-IV-ICU", "eICU-Demo", "Upload My Own"].index(st.session_state.dataset_selected),
-            key="dataset_select"
+            datasets,
+            index=datasets.index(selected_dataset) if selected_dataset in datasets else None,
+            key="dataset_option",
+            placeholder=t("dataset_source_help"),
         )
-        st.session_state.dataset_selected = dataset_option
+        logger.info(f"Dataset option selected: {dataset_option}")
+        if dataset_option and (not selected_dataset):
+            @st.dialog(t("dataset_alert_title"), width="medium", dismissible=True)
+            def dataset_help_dialog():
+                st.write(t("dataset_alert", dataset=dataset_option))
+                with st.container(horizontal=True):
+                    if st.button(t("dataset_confirm"), type="primary"):
+                        st.session_state.dataset_selected = dataset_option
+                        st.rerun()
+                    if st.button(t("dataset_cancel")):
+                        st.session_state.dataset_selected = None
+                        st.rerun()
+                    if st.button(t("show_guide")):
+                        st.write(t("before_use"))
+                
+            dataset_help_dialog()
 
     with col2:
         # Language selection box
@@ -606,7 +626,7 @@ def show_initial_page():
         uploaded_files = st.file_uploader(
             t("upload_dataset_files"),
             accept_multiple_files=True,
-            type=["csv", "txt", "json", "parquet", "xls", "xlsx"],
+            type=["csv", "txt", "json", "xls", "xlsx"],
             help=t("upload_dataset_help"),
         )
 
@@ -716,7 +736,7 @@ def main():
     if "question_input" not in st.session_state:
         st.session_state.question_input = ""
     if "dataset_selected" not in st.session_state:
-        st.session_state.dataset_selected = "eICU-Demo"
+        st.session_state.dataset_selected = None
     # Initialize language settings
     if "ui_language" not in st.session_state:
         st.session_state.ui_language = "chs"

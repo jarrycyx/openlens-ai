@@ -184,6 +184,8 @@ python -m openlens_ai.main \
 
 #### 选项 2：交互式 Web 界面
 
+如果需要https，在 `.streamlit/config.toml` 中配置您的 https 设置。如果不需要https支持请将 `sslKeyFile` 和 `sslCertFile` 注释掉。
+
 ```bash
 streamlit run start_app.py
 ```
