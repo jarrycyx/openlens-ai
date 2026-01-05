@@ -371,7 +371,13 @@ def download_workspace_button(config: Config):
         )
 
     if plan_str:
-        st.download_button(label=f"✍️ {t('download_plan')}", data=plan_str, mime="text/markdown", file_name="plan.md")
+        # st.download_button(label=f"✍️ {t('download_plan')}", data=plan_str, mime="text/markdown", file_name="plan.md")
+        # Show plan in dialog
+        @st.dialog(t("view_plan"), width="large")
+        def show_plan_dialog():
+            st.markdown(plan_str)
+        if st.button(f"✍️ {t('view_plan')}", key="view_plan_button"):
+            show_plan_dialog()
 
 
 def show_workspace(config):

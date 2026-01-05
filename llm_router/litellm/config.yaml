@@ -40,4 +40,4 @@ litellm_settings:
   ttl: 259200
   cache_params:
     type: disk
-    disk_cache_dir: outputs  # OPTIONAL, default to ./.litellm_cache
+    disk_cache_dir: outputs/.litellm_cache  # OPTIONAL, default to ./.litellm_cache

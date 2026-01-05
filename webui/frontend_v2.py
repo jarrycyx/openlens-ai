@@ -128,11 +128,13 @@ def load_user_projects(email: str) -> List[Dict[str, Any]]:
             chinese_char_cnt = len(re.findall(r"[\u4e00-\u9fa5]", question))
             chinese_ratio = chinese_char_cnt / len(question) if len(question) > 0 else 0
             title_truncate_len = 30 if chinese_ratio > 0.5 else 100
+            question_show = question[:title_truncate_len] + ("..." if len(question) > title_truncate_len else "")
+            question_show = question_show.replace("\n", " ").replace("\r", " ")
             projects.append(
                 {
                     "thread_id": config_data.thread_id,
                     "language": config_data.llm.language,
-                    "title": question[:title_truncate_len] + ("..." if len(question) > title_truncate_len else ""),
+                    "title": question_show,
                     "question": config_data.question,
                     "dataset": config_data.dataset_path,
                     "path": path,
@@ -489,18 +491,12 @@ def show_project():
                 #     with st.container(height=900, border=False):
                 #         show_workspace(config)
                 selected_file = st.selectbox(
-                    "📁",
-                    tab_names,
-                    index=0,
-                    label_visibility="collapsed",
-                    accept_new_options=False
+                    "📁", tab_names, index=0, label_visibility="collapsed", accept_new_options=False
                 )
             with st.container(height=900, border=False):
                 file_path, _, _ = latest_files[tab_names.index(selected_file)]
                 logger.info(f"Selected file: {file_path}")
                 display_single_file(config, file_path)
-            
-
 
     else:
         watch_job(config)
@@ -509,7 +505,7 @@ def show_project():
 def show_initial_page():
     @st.dialog(t("before_use_title"), width="large", dismissible=False)
     def show_before_use_dialog():
-        
+
         with st.container(horizontal=True, width="content"):
             if st.button("🇨🇳 中文", key="lang_zh_note"):
                 set_language("chs")
@@ -565,7 +561,7 @@ def show_initial_page():
         height=150,
         placeholder=t("question_placeholder"),
         key="question_input_main",
-        help=t("question_hint")
+        help=t("question_hint"),
     )
 
     # If user entered a question, hide Use Cases
@@ -587,9 +583,11 @@ def show_initial_page():
         )
         logger.info(f"Dataset option selected: {dataset_option}")
         if dataset_option and (not selected_dataset):
+
             @st.dialog(t("dataset_alert_title"), width="medium", dismissible=True)
             def dataset_help_dialog():
-                st.write(t("dataset_alert", dataset=dataset_option))
+                st.write(t("dataset_alert", 
+                           dataset="" if dataset_option == "Upload My Own" else dataset_option))
                 with st.container(horizontal=True):
                     if st.button(t("dataset_confirm"), type="primary"):
                         st.session_state.dataset_selected = dataset_option
@@ -599,7 +597,7 @@ def show_initial_page():
                         st.rerun()
                     if st.button(t("show_guide")):
                         st.write(t("before_use"))
-                
+
             dataset_help_dialog()
 
     with col2:
@@ -745,7 +743,7 @@ def main():
         st.session_state.language_selected = "English"
     if "guide_shown" not in st.session_state:
         st.session_state.guide_shown = False
-        
+
     st.markdown(
         """
     <style>
