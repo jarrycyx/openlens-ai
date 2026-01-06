@@ -125,6 +125,28 @@ cd ../../
 ```
 Then ````cd modules/OpenHands``` and install OpenHands following the [instructions](https://github.com/All-Hands-AI/OpenHands/blob/main/Development.md).
 
+Then install Openhands with mamba:
+```bash
+# Download and install Mamba (a faster version of conda)
+curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
+bash Miniforge3-$(uname)-$(uname -m).sh
+
+# Install Python 3.12, nodejs, and poetry
+mamba install python=3.12
+mamba install conda-forge::nodejs
+mamba install conda-forge::poetry
+```
+
+or with conda:
+```bash
+cd modules/OpenHands
+conda create -n py312 python=3.12 # Or with uv / venv
+conda activate py312
+conda install conda-forge::nodejs
+conda install conda-forge::poetry
+make install
+```
+
 Install python dependencies:
 ```bash
 # If wish to visualize the workflow, install graphviz:
