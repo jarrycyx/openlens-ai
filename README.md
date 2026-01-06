@@ -24,7 +24,7 @@
 
 <strong>🌐 Project Page:</strong> <a href="https://openlens.icu">Explore detailed documentation and examples</a> 
 
-<strong>🚀 Try Now:</strong> <a href="https://openlens.icu">Use our cloud application directly in your browser</a>
+<strong>🚀 Try Now:</strong> <a href="https://app.openlens.icu">Use our cloud application directly in your browser</a>
 <p> </p>
 
 </p>
@@ -58,10 +58,10 @@ No installation required! Visit our <a href="https://openlens.icu">project page<
 - ✅ **Data Analysis**: Analyze datasets and generate comprehensive reports
 - ✅ **Experiment Design**: Suggest and validate experimental approaches
 - ✅ **Code Generation and Execution**: Generate and execute code for data analysis and experiments with [OpenHands](https://github.com/All-Hands-AI/OpenHands)
-- ✅ **Multi-Agent Collaboration**: Coordinate multiple specialized agents to handle complex research tasks
 - ✅ **LaTeX Paper Generation**: Automated creation and management of research papers and reports in LaTeX format
 - ✅ **Interactive UI**: Streamlit-based interface for monitoring and interacting with the research process
 - ✅ **Context Management**: Automated management of contextual information for agents via vector search
+- ✅ **Agent File Management**: Identify and remove duplicate files and mock data with [👕 file1.agent](https://github.com/jarrycyx/file1agent)
 - ✅ **Vision-Language Feedback**: Integrate with VLM for visualization and feedback
 - ✅ **Chinese Language Support**: Full support for Chinese paper writing
 - ⬜ **Powerpoint-Based Figures**: Automated generation of Powerpoint-based figures for demonstrations for better visual quality (to replace the current graphviz-based figures)

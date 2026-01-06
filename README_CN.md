@@ -15,7 +15,7 @@
 
 <strong>🌐 项目主页：</strong> <a href="https://openlens.icu">浏览详细文档和示例</a> 
 
-<strong>🚀 立即体验：</strong> <a href="https://openlens.icu">直接在浏览器中使用我们的云应用</a>
+<strong>🚀 立即体验：</strong> <a href="https://app.openlens.icu">直接在浏览器中使用我们的云应用</a>
 <p> </p>
 
 </p>
@@ -49,10 +49,10 @@
 - ✅ **数据分析**：分析数据集并生成综合报告
 - ✅ **实验设计**：建议并验证实验方法
 - ✅ **代码生成与执行**：使用 [OpenHands](https://github.com/All-Hands-AI/OpenHands) 生成和执行用于数据分析与实验的代码
-- ✅ **多智能体协作**：协调多个专业智能体处理复杂研究任务
 - ✅ **LaTeX 论文生成**：自动创建和管理 LaTeX 格式的研究论文和报告
 - ✅ **交互式用户界面**：基于 Streamlit 的界面，用于监控和交互研究过程
 - ✅ **上下文管理**：通过向量搜索自动管理智能体的上下文信息
+- ✅ **智能体文件管理**：使用 [👕 file1.agent](https://github.com/jarrycyx/file1agent) 识别和删除重复文件和模拟数据
 - ✅ **视觉-语言反馈**：集成 VLM（视觉语言模型）进行可视化和反馈
 - ✅ **中文写作支持**：全面支持中文论文写作
 - ⬜ **基于 Powerpoint 的图表**：自动生成基于 Powerpoint 的演示图表以获得更好的视觉质量（以替代当前的 graphviz 图表）
