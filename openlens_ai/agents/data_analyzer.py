@@ -53,9 +53,9 @@ def build_data_analyzer(config: Config, file_manager: FileManager) -> StateGraph
         openai_api_key=config.llm.chat.api_key,
         extra_body={"chat_template_kwargs": {"enable_thinking": True}},
     )
-    report_writer_tool = ReportWriterTool(config.save_path, file_name="data_report.md")
-    tools = [report_writer_tool]
-    llm_with_tools = llm.bind_tools(tools)
+    # report_writer_tool = ReportWriterTool(config.save_path, file_name="data_report.md")
+    # tools = [report_writer_tool]
+    # llm_with_tools = llm.bind_tools(tools)
 
     @track_node_call("data_analyzer")
     def data_sample_node(state: State):
@@ -157,33 +157,57 @@ def build_data_analyzer(config: Config, file_manager: FileManager) -> StateGraph
 
         return state
 
+    # @track_node_call("data_analyzer")
+    # def chatbot(state: State):
+    #     with open(os.path.join(state["save_path"], "workspace", "data_analyze", "data_show.md"), "r") as f:
+    #         data_show = f.read()
+
+    #     state["data_show"] = data_show
+    #     this_chatbot = chatbot_with_context_manager(
+    #         config, llm_with_tools, data_report_prompt, calling_subgraph="data_analyzer"
+    #     )
+    #     state = this_chatbot(state)
+    #     return state
+    
     @track_node_call("data_analyzer")
-    def chatbot(state: State):
+    def chatbot_direct_write(state: State):
+        logger.info(f"Direct write data report to {os.path.join(state["save_path"], "workspace", "data_report.md")}")
         with open(os.path.join(state["save_path"], "workspace", "data_analyze", "data_show.md"), "r") as f:
             data_show = f.read()
 
         state["data_show"] = data_show
         this_chatbot = chatbot_with_context_manager(
-            config, llm_with_tools, data_report_prompt, calling_subgraph="data_analyzer"
+            config, llm, data_report_prompt, calling_subgraph="data_analyzer"
         )
         state = this_chatbot(state)
+        try:
+            last_content = state["messages"][-1].content
+            assert len(last_content) > 1000, "Last content is empty"
+        except Exception as e:
+            logger.warning(f"Failed to get last content from chatbot, use data_show instead: {e}")
+            last_content = data_show
+        
+        with open(os.path.join(state["save_path"], "workspace", "data_report.md"), "w") as f:
+            f.write(last_content)
         return state
 
     graph_builder = StateGraph(State)
 
-    router_by_write_reports = route_by_tool_call("report_writer_tool")
+    # router_by_write_reports = route_by_tool_call("report_writer_tool")
 
-    tool_node = BasicToolNode(tools, config)
-    graph_builder.add_node("data_chatbot", chatbot)
+    # tool_node = BasicToolNode(tools, config)
+    # graph_builder.add_node("data_chatbot", chatbot)
+    graph_builder.add_node("data_chatbot_direct_write", chatbot_direct_write)
     graph_builder.add_node("data_sample_node", data_sample_node)
-    graph_builder.add_node("data_tools", tool_node)
+    # graph_builder.add_node("data_tools", tool_node)
 
     graph_builder.add_edge(START, "data_sample_node")
-    graph_builder.add_edge("data_sample_node", "data_chatbot")
-    graph_builder.add_edge("data_chatbot", "data_tools")
-    graph_builder.add_conditional_edges(
-        "data_tools", router_by_write_reports, {"RETURN_TO_LLM": "data_chatbot", END: END}
-    )
+    graph_builder.add_edge("data_sample_node", "data_chatbot_direct_write")
+    # graph_builder.add_edge("data_chatbot", "data_tools")
+    # graph_builder.add_conditional_edges(
+    #     "data_tools", router_by_write_reports, {"RETURN_TO_LLM": "data_chatbot_direct_write", END: END}
+    # )
+    graph_builder.add_edge("data_chatbot_direct_write", END)
 
     graph = graph_builder.compile()
 

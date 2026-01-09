@@ -1,0 +1,1 @@
+{ "exclude": ["**/outputs", "datasets", ".venv", "build"] }
