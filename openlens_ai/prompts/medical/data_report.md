@@ -27,13 +27,10 @@ Data Report Should Include:
 3. Description and basic statistics of each column in each data file
 4. Guidance on how to read them (e.g., column names, data types, missing values, etc.)
 
-Description of some available tools:
-- "report_writer_tool": A tool that writes data analysis report to a fixed locations.
-
 Target Research Question:
 {question}
 
 Overview of the Data:
 {data_show}
 
-IMPORTANT: You should ONLY interact with the tool provided to you AND NEVER ASK FOR HUMAN HELP. Make sure to always call "plan_writer_tool" to write the data analysis report.
+IMPORTANT: You should ONLY output the data analysis report and nothing else. DO NOT ask for human help or interact with any tools.

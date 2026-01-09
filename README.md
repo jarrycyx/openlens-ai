@@ -144,7 +144,7 @@ conda create -n py312 python=3.12 # Or with uv / venv
 conda activate py312
 conda install conda-forge::nodejs
 conda install conda-forge::poetry
-make install
+make build
 ```
 
 Install python dependencies:
