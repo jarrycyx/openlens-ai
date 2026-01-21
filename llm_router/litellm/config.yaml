@@ -4,6 +4,11 @@ model_list:
       model: openai/glm-4.5-air
       api_base: https://cloud.infini-ai.com/maas/v1/
       api_key: "os.environ/INFINI_API_KEY"
+  - model_name: local-llm
+    litellm_params:
+      model: openai/llm
+      api_base: http://127.0.0.1:8000/v1
+      api_key: "0"
   - model_name: glm-4.6
     litellm_params:
       model: openai/glm-4.6

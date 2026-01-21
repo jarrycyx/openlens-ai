@@ -114,7 +114,7 @@ def get_subplan(state: State) -> str:
 
 def load_state(
     save_dir: str, copy_to_new: bool = False, start_from_subgraph: str = "", start_from_subtask_index: int = 1
-) -> tuple[Config, State]:
+) -> tuple[Config, State, str, FileManager]:
 
     config_path = os.path.join(save_dir, "config.toml")
     if not os.path.exists(config_path):
@@ -133,7 +133,6 @@ def load_state(
     if copy_to_new:
         logger.info(f"Config save_path: {config.save_path} -> {save_dir}")
         config.save_path = save_dir
-        config.resume_dir_id = config.thread_id
         config.thread_id = os.path.basename(save_dir)
         config.save_toml(config_path)
 

@@ -73,7 +73,7 @@ def build_data_analyzer(config: Config, file_manager: FileManager) -> StateGraph
         )
 
         # Get file tree with summaries
-        dataset_manager.file_summary.get_all_summaries()
+        _ = dataset_manager.file_summary.get_all_summaries()
         state["file_summary"] = dataset_manager.file_summary.file_cache
 
         # Create output directory if it doesn't exist
