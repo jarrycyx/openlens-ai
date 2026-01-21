@@ -234,7 +234,7 @@ def chatbot_with_context_manager(
                         config.rerank.rerank_api_key,
                         config.rerank.rerank_base_url,
                         prompt,
-                        token_cnt=32000,
+                        token_cnt=config.context.max_context_token_cnt // 2,
                     )
                 this_prompt = this_prompt.replace("{data_show}", str(data_show))
             except Exception as e:

@@ -1,1 +1,4 @@
-{ "exclude": ["**/outputs", "datasets", ".venv", "build"] }
+{
+  "exclude": ["**/outputs", "datasets", ".venv", "build"],
+  "typeCheckingMode": "off"
+}

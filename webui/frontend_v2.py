@@ -271,8 +271,7 @@ def start_job(question, dataset_path, email, language="chs"):
         language_code = "chs" if language == "中文" else "eng"
 
         # Start a new process to run the task
-        process = subprocess.Popen(
-            [
+        command = [
                 "python",
                 "-m",
                 "openlens_ai.main",
@@ -288,12 +287,15 @@ def start_job(question, dataset_path, email, language="chs"):
                 language_code,
                 "--interrupt-after-subgraph",
                 "literature_reviewer",
-            ],
+            ]
+        process = subprocess.Popen(
+            command,
             start_new_session=True,
             stdout=subprocess.DEVNULL,  # 重定向标准输出到/dev/null
             stderr=subprocess.DEVNULL,  # 重定向标准错误到/dev/null
             close_fds=True,  # 关闭文件描述符
         )
+        logger.info(f"Started process {process.pid} for thread {thread_id} with command: {' '.join(command)}")
 
         # Add process information to the process manager
         if not process_manager.add_process(process.pid, thread_id, user=st.user.email):
