@@ -177,7 +177,7 @@ def build_data_analyzer(config: Config, file_manager: FileManager) -> StateGraph
 
         state["data_show"] = data_show
         this_chatbot = chatbot_with_context_manager(
-            config, llm, data_report_prompt, calling_subgraph="data_analyzer"
+            config, llm, data_report_prompt, calling_subgraph="" # do not set calling_subgraph, so that it will not be recorded in state, otherwise when resuming, "chatbot" node cannot be found because chatbot_direct_write is already skipped
         )
         state = this_chatbot(state)
         try:

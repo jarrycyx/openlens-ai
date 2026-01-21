@@ -65,6 +65,7 @@ def react_pre_model_wrapper(vector_search_question: str, config: Config):
 
     return react_pre_model_hook
 
+CHAR_PER_TOKEN = 3
 
 def chatbot_with_context_manager(
     config: Config,
@@ -90,6 +91,8 @@ def chatbot_with_context_manager(
     Returns:
         Chatbot function
     """
+    max_prompt_token_cnt = int(config.context.max_context_token_cnt * 0.2)
+    max_context_token_cnt = int(config.context.max_context_token_cnt * 0.8)
 
     def detect_error_message(state: State):
         """
@@ -126,7 +129,7 @@ def chatbot_with_context_manager(
             if token_cnt + this_token_cnt > max_token_cnt:
                 message_clamped = message.copy()
                 try:
-                    message_clamped.content = message_clamped.content[: (max_token_cnt - token_cnt) * 4]
+                    message_clamped.content = message_clamped.content[: (max_token_cnt - token_cnt) * CHAR_PER_TOKEN]
                     logger.debug(
                         f"Clamped message content from {len(message.content)} to {len(message_clamped.content)}"
                     )
@@ -226,7 +229,7 @@ def chatbot_with_context_manager(
 
         if "{data_show}" in this_prompt:
             try:
-                if len(data_show) > 32000 * 4:
+                if len(data_show) > ((max_prompt_token_cnt // 2) * CHAR_PER_TOKEN):
                     logger.warning("data_show is too long, clamping with vector search")
                     data_show = vector_search(
                         data_show,
@@ -234,7 +237,7 @@ def chatbot_with_context_manager(
                         config.rerank.rerank_api_key,
                         config.rerank.rerank_base_url,
                         prompt,
-                        token_cnt=config.context.max_context_token_cnt // 2,
+                        token_cnt=max_prompt_token_cnt // 2,
                     )
                 this_prompt = this_prompt.replace("{data_show}", str(data_show))
             except Exception as e:
@@ -243,7 +246,7 @@ def chatbot_with_context_manager(
 
         if "{literature_report}" in this_prompt:
             try:
-                if len(literature_report) > 4000 * 4:
+                if len(literature_report) > 4000 * CHAR_PER_TOKEN:
                     logger.warning("Literature report is too long, clamping with vector search")
                     literature_report = vector_search(
                         literature_report,
@@ -261,7 +264,7 @@ def chatbot_with_context_manager(
         if "{plan}" in this_prompt:
             try:
                 plan_str = json.dumps(plan, ensure_ascii=False, indent=4)
-                if len(plan_str) > 4000 * 4:
+                if len(plan_str) > (4000 * CHAR_PER_TOKEN):
                     logger.warning("Plan is too long, clamping with vector search")
                     plan_str = vector_search(plan_str, prompt, token_cnt=4000)
                 this_prompt = this_prompt.replace("{plan}", str(plan_str))
@@ -285,6 +288,7 @@ def chatbot_with_context_manager(
 
         # Add language prompt
         this_prompt += get_lang_prompt(config.llm.language)
+        this_prompt = this_prompt[:max_prompt_token_cnt * CHAR_PER_TOKEN]
 
         return this_prompt
 
@@ -326,14 +330,13 @@ def chatbot_with_context_manager(
                 config.rerank.rerank_api_key,
                 config.rerank.rerank_base_url,
                 this_prompt,
-                token_cnt=config.context.max_context_token_cnt,
+                token_cnt=max_context_token_cnt,
             )
-        elif context_manage == "token_cnt_large":
-            max_context_token_cnt_large = config.context.max_context_token_cnt_large
-            logger.info(f"Use max_context_token_cnt_large: {max_context_token_cnt_large}")
-            message_to_llm = clamp_token_cnt(state["messages"], max_context_token_cnt_large)
+        # elif context_manage == "token_cnt_large":
+        #     max_context_token_cnt_large = config.context.max_context_token_cnt_large
+        #     logger.info(f"Use max_context_token_cnt_large: {max_context_token_cnt_large}")
+        #     message_to_llm = clamp_token_cnt(state["messages"], max_context_token_cnt_large)
         else:  # Default is token_cnt
-            max_context_token_cnt = config.context.max_context_token_cnt
             logger.info(f"Use max_context_token_cnt: {max_context_token_cnt}")
             message_to_llm = clamp_token_cnt(state["messages"], max_context_token_cnt)
 
@@ -385,22 +388,27 @@ def chatbot_with_context_manager(
         else:
             for try_i in range(10):
                 try:
+                    logger.debug(f"Call LLM try {try_i}")
                     state["messages"].append(llm.invoke(message_to_llm))
                     frontend_add_message(state["messages"][-1], config)
+                    logger.info(f"LLM response: {state['messages'][-1].content[:1000]}...")
                     break
                 except Exception as e:
                     # Force to convert to all HumanMessage
                     logger.warning(f"Error when calling llm: {e}, force convert to all HumanMessage")
-                    message_to_llm = []
-                    for msg in state["messages"]:
-                        if isinstance(msg, HumanMessage):
-                            message_to_llm.append(msg)
-                        else:
-                            str_msg = str(msg)
-                            original_len = len(msg.content) if hasattr(msg, "content") else len(str_msg)
-                            str_msg = str_msg[-original_len:]
-                            message_to_llm.append(HumanMessage(content=str_msg))
                     logger.warning(traceback.format_exc())
+                    
+                    if "ContextWindow" in str(e) or "context length" in str(e) or "tokens" in str(e):
+                        # If context window error, then just convert the whole message_to_llm to a single HumanMessage then shrink the token count
+                        str_message = str(message_to_llm)
+                        shorten_to = int(len(str_message) * 0.6)
+                        logger.warning(f"Context window error, shrink the message to {shorten_to} chars")
+                        message_to_llm = [HumanMessage(content=str_message[-shorten_to:])]
+                    
+                    if try_i >=3:
+                        # If still error after 3 times, then just convert the whole message_to_llm to a single HumanMessage
+                        message_to_llm = [HumanMessage(content=str(message_to_llm))]
+                    
                     logger.warning("Retrying...")
                     time.sleep(5)
                     continue

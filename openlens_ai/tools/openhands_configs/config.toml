@@ -13,7 +13,8 @@ api_key = "{api_key}"
 base_url = "{base_url}"
 input_cost_per_token = 1.0
 output_cost_per_token = 1.0
-max_message_chars = 30000
+max_message_chars = 5000
+max_input_tokens = {max_context_token_cnt}
 native_tool_calling = true
 retry_max_wait = 60
 log_completions_folder = "{log_completions_folder}"
@@ -28,7 +29,7 @@ base_url = "{condenser_base_url}"
 type = "llm"
 llm_config = "condenser"
 keep_first = 1
-max_size = 50
+max_size = 30
 
 [sandbox]
 volumes = "{sandbox_volumes}"

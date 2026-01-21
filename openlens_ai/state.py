@@ -61,6 +61,7 @@ class State(TypedDict):
 
 def track_node_call(subgraph_name: str = ""):
     def track_node_call_inner(func):
+        
         node_name = f"subgraph_{subgraph_name}.{func.__name__}"
 
         def skip_func(state: State, **kwargs):
@@ -68,6 +69,9 @@ def track_node_call(subgraph_name: str = ""):
             return state
 
         def wrapper(state: State, **kwargs):
+            # If not provide subgraph_name, just call the function, do not try to skip
+            if not subgraph_name:
+                return func(state, **kwargs)
 
             # Log the node call if state is provided
             if state:
