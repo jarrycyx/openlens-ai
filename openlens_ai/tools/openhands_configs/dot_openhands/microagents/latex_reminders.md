@@ -32,3 +32,4 @@ and refer to them using \ref{fig:figure_name}
   - 8. Appendix
 - When fixing issues or writing improved version, edit the original files directly, do not write new files, i.e. DO NOT create files such as main_improved.tex, main_fixed.tex, main_clean.tex, main_fixed.pdf, etc because this may make the workspace messy and difficult to manage.
 - Only write latex files, reports and compile pdf in the designated directory (/workspace/manuscript), do not create files outside the directory (i.e., DO NOT CREATE ANY FILES directly in /workspace or its other subdirectories).
+- NEVER DOWNLOAD texlive or any other version of texlive because it is already installed in the container, if pdflatex, xeletex, or latex is not found, execute ```export PATH=/usr/local/texlive/2025/bin/x86_64-linux/:$PATH```.
