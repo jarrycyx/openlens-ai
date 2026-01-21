@@ -283,6 +283,7 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True,
         oh_config = oh_config.replace("{base_url}", config.llm.chat.base_url)
         oh_config = oh_config.replace("{code_model}", config.llm.chat.model)
         oh_config = oh_config.replace("{analyze_file_vlm_port}", str(port))
+        oh_config = oh_config.replace("{max_context_token_cnt}", str(config.context.max_context_token_cnt))
 
         if config.llm.condenser.model:
             oh_config = oh_config.replace("{condenser_api_key}", config.llm.condenser.api_key)

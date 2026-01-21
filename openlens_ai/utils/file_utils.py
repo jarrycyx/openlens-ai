@@ -63,6 +63,9 @@ def sample_file_content(file_path: str, max_size: int = 100 * 1024 * 1024) -> Tu
                         random_indices = random.sample(range(10, len(lines)), min(10, len(lines) - 10))
                         random_10_lines = [lines[i] for i in sorted(random_indices)]
 
+                    # Truncate lines to 500 chars
+                    first_10_lines = [l[:500] for l in first_10_lines]
+                    random_10_lines = [l[:500] for l in random_10_lines]
                     return first_10_lines, random_10_lines
                 except Exception as e:
                     logger.warning(f"Error reading Excel file {file_path}: {e}")
@@ -84,6 +87,9 @@ def sample_file_content(file_path: str, max_size: int = 100 * 1024 * 1024) -> Tu
                 random_indices = random.sample(range(10, len(lines)), min(10, len(lines) - 10))
                 random_10_lines = [lines[i] for i in sorted(random_indices)]
 
+            # Truncate lines to 500 chars
+            first_10_lines = [l[:500] for l in first_10_lines]
+            random_10_lines = [l[:500] for l in random_10_lines]
             return first_10_lines, random_10_lines
     except Exception as e:
         logger.warning(f"Error sampling file {file_path}: {e}")
