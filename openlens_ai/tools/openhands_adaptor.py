@@ -283,7 +283,6 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True,
         oh_config = oh_config.replace("{base_url}", config.llm.chat.base_url)
         oh_config = oh_config.replace("{code_model}", config.llm.chat.model)
         oh_config = oh_config.replace("{analyze_file_vlm_port}", str(port))
-        oh_config = oh_config.replace("{max_context_token_cnt}", str(config.context.max_context_token_cnt))
 
         if config.llm.condenser.model:
             oh_config = oh_config.replace("{condenser_api_key}", config.llm.condenser.api_key)
@@ -428,10 +427,10 @@ if __name__ == "__main__":
     from ..state import load_state
 
     # prompt = "Write a python script to draw a circle and save it as a png file. Then check if the content of the image using VLM tool (analyze_image_vlm and analyze_pdf_vlm)."
-    prompt = "Check /workspace/manuscript/main.pdf to review if the paper is properly formatted."
-    # prompt = "Search on the internet for the latest news about the OpenHands project."
+    prompt = "write a latex document about Beijing, then compile to pdf using pdflatex"
+    # prompt = "执行一下echo $PATH, if pdflatex is not found, execute export PATH=/usr/local/texlive/2025/bin/x86_64-linux/:$PATH, then write a latex document about Beijing, then compile to pdf using pdflatex"
     dataset_path = "data/dataset.jsonl"
-    config, state, last_subgraph, file_manager = load_state("outputs/power_grid_fault_id_20251121164412")
+    config, state, last_subgraph, file_manager = load_state("outputs/OL_20260121120135_能否利用TCGA_LIHC的肿_出可解释的个体化复发风险评分__1790568213_qq_com_1175")
     result = run_openhands_prompt(prompt, config, file_manager=file_manager)
     with open("result.txt", "w") as f:
         f.write(result)
