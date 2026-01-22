@@ -6,7 +6,10 @@ import threading
 
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.state import CompiledStateGraph
-from langchain.load.dump import dumps
+try:
+    from langchain_core.load.dump import dumps
+except ImportError:
+    from langchain.load.dump import dumps
 from langchain_core.messages import AIMessage
 
 # pip install langgraph-checkpoint-sqlite pysqlite3

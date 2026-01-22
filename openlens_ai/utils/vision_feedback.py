@@ -12,8 +12,10 @@ from datetime import datetime
 from PIL import Image
 import io
 import cairosvg
-
-from langchain.load.dump import dumps
+try:
+    from langchain_core.load.dump import dumps
+except ImportError:
+    from langchain.load.dump import dumps
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 

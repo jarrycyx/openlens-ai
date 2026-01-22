@@ -86,7 +86,7 @@ No installation required! Visit our <a href="https://openlens.icu">project page<
 
 0. Clone the repository:
 ```bash
-git clone git@github.com:jarrycyx/openlens-ai.git --recurse-submodules
+git clone https://github.com/jarrycyx/openlens-ai.git --recurse-submodules
 cd openlens-ai
 ```
 
@@ -117,34 +117,23 @@ docker tag <IMAGE_ID> openlens-ai:runtime-latest
 ```
 
 2. Install dependencies:
-First install [file1.agent](https://github.com/jarrycyx/file1agent):
+First create conda environment and install [file1.agent](https://github.com/jarrycyx/file1agent):
 ```bash
+conda create -n py312 python=3.12 # Or with uv / venv
+conda activate py312
 cd modules/file1agent
 pip install -e .
 cd ../../
 ```
 Then ````cd modules/OpenHands``` and install OpenHands following the [instructions](https://github.com/All-Hands-AI/OpenHands/blob/main/Development.md).
 
-Then install Openhands with mamba:
-```bash
-# Download and install Mamba (a faster version of conda)
-curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
-bash Miniforge3-$(uname)-$(uname -m).sh
-
-# Install Python 3.12, nodejs, and poetry
-mamba install python=3.12
-mamba install conda-forge::nodejs
-mamba install conda-forge::poetry
-```
-
-or with conda:
+Then install Openhands with conda:
 ```bash
 cd modules/OpenHands
-conda create -n py312 python=3.12 # Or with uv / venv
-conda activate py312
 conda install conda-forge::nodejs
 conda install conda-forge::poetry
 make build
+cd ../../
 ```
 
 Install python dependencies:
@@ -152,17 +141,14 @@ Install python dependencies:
 # If wish to visualize the workflow, install graphviz:
 #   sudo apt-get install graphviz graphviz-dev
 #   pip install pygraphviz
-
-conda create -n py312 python=3.12 # Or with uv / venv
-conda activate py312
 pip install --upgrade pip
 pip install -e .
 ```
 
 3. Configure environment variables:
 ```bash
-cp .env.example .env
-# Edit .env with your API keys and model settings
+cp config.minimal.toml config.toml
+# Edit config.toml with your API keys and model settings
 ```
 
 ### Configuration

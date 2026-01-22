@@ -3,6 +3,15 @@
 # OpenLens AI：全自主多模态科研智能体
 
 <p align="center">
+  <!-- <a href="https://arxiv.org/abs/2509.14778">
+    <img src="https://img.shields.io/badge/arXiv-paper-red" alt="arXiv-paper" >
+  </a>
+  <a href="https://openlens.icu">
+    <img src="https://img.shields.io/badge/Project-Page-blue" alt="Project Page" >
+  </a>
+  <a href="https://app.openlens.icu">
+    <img src="https://img.shields.io/badge/Try-Now-green" alt="Try Now" >
+  </a> -->
   <img src="https://img.shields.io/badge/Python-3.9%2B-blue" alt="Python Version">
   <img src="https://img.shields.io/badge/LangGraph-Powered-orange" alt="LangGraph">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
@@ -76,7 +85,7 @@
 
 0. 克隆代码库：
 ```bash
-git clone git@github.com:jarrycyx/openlens-ai.git --recurse-submodules
+git clone https://github.com/jarrycyx/openlens-ai.git --recurse-submodules
 cd openlens-ai
 ```
 
@@ -107,35 +116,23 @@ docker tag <IMAGE_ID> openlens-ai:runtime-latest
 ```
 
 2. 安装依赖：
-
-首先安装 [file1.agent](https://github.com/jarrycyx/file1agent):
+首先创建 conda 环境并安装 [file1.agent](https://github.com/jarrycyx/file1agent)：
 ```bash
+conda create -n py312 python=3.12 # 或者使用 uv / venv
+conda activate py312
 cd modules/file1agent
 pip install -e .
 cd ../../
 ```
 然后 ```cd modules/OpenHands``` 并按照 [instructions](https://github.com/All-Hands-AI/OpenHands/blob/main/Development.md) 安装 OpenHands。
 
-然后使用 mamba 安装 OpenHands：
-```bash
-# 下载并安装 Mamba（conda 的更快版本）
-curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
-bash Miniforge3-$(uname)-$(uname -m).sh
-
-# 安装 Python 3.12、nodejs 和 poetry
-mamba install python=3.12
-mamba install conda-forge::nodejs
-mamba install conda-forge::poetry
-```
-
-或者使用 conda：
+然后使用 conda 安装 OpenHands：
 ```bash
 cd modules/OpenHands
-conda create -n py312 python=3.12 # 或者使用 uv / venv
-conda activate py312
 conda install conda-forge::nodejs
 conda install conda-forge::poetry
 make build
+cd ../../
 ```
 
 安装 Python 依赖：
@@ -143,17 +140,14 @@ make build
 # 如果希望可视化工作流，请安装 graphviz：
 #   sudo apt-get install graphviz graphviz-dev
 #   pip install pygraphviz
-
-conda create -n py312 python=3.12 # 或者使用 uv / venv
-conda activate py312
 pip install --upgrade pip
 pip install -e .
 ```
 
 3. 配置环境变量：
 ```bash
-cp .env.example .env
-# 使用您的 API 密钥和模型设置编辑 .env 文件
+cp config.minimal.toml config.toml
+# 使用您的 API 密钥和模型设置编辑 config.toml 文件
 ```
 
 ### 配置
