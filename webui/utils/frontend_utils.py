@@ -14,7 +14,6 @@ import traceback
 from pypdf import PdfReader
 from PIL import Image
 from datetime import datetime
-from streamlit_pdf_viewer import pdf_viewer
 from pdf2image import convert_from_path
 
 from openlens_ai.utils.file_utils import collect_files, collect_token_usage

@@ -16,8 +16,12 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 from langchain_core.messages.utils import count_tokens_approximately, get_buffer_string
 from langgraph.graph.state import CompiledStateGraph
-from langchain.load.dump import dumps
-from langchain.load.load import loads
+try:
+    from langchain_core.load.dump import dumps
+    from langchain_core.load.load import loads
+except ImportError:
+    from langchain.load.dump import dumps
+    from langchain.load.load import loads
 from langgraph.errors import GraphRecursionError
 
 from .state import State, load_state, get_subplan, track_node_call

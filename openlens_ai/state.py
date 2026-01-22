@@ -10,7 +10,10 @@ from loguru import logger
 from datetime import datetime
 
 from langchain_core.load.load import loads
-from langchain.load.dump import dumps
+try:
+    from langchain_core.load.dump import dumps
+except ImportError:
+    from langchain.load.dump import dumps
 
 from file1agent.file_manager import FileManager
 
