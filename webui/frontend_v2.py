@@ -35,6 +35,11 @@ from .utils.frontend_utils import (
 from .utils.process_manager import process_manager
 from .utils.user_manager import user_manager
 from .utils.translations import t, set_language, get_current_language
+from .utils.config_utils import (
+    show_config_dialog,
+    load_custom_config,
+    get_config_display_name,
+)
 
 logger.configure(handlers=[{"sink": sys.stderr, "level": "INFO"}])
 config = Config.from_toml("config.toml")
@@ -109,10 +114,10 @@ def load_user_projects(email: str) -> List[Dict[str, Any]]:
     admin_email = config.frontend.frontend_admin_email
 
     if email == admin_email:
-        pattern = os.path.join("./outputs", "*")
+        pattern = os.path.join("./outputs/user_proj", "*")
     else:
         email_show = email.replace("@", "_").replace(".", "_")
-        pattern = os.path.join("./outputs", f"OL_*{email_show}*")
+        pattern = os.path.join("./outputs/user_proj", f"OL_*{email_show}*")
 
     for path in glob.glob(pattern):
         if os.path.isdir(path):
@@ -192,6 +197,14 @@ def build_sidebar():
                 show_ui_language_popover()
 
         st.divider()
+
+        if st.user.is_logged_in:
+            # Advanced config management
+            st.subheader(f"⚙️ {t('config_management')}")
+            if st.button(f"&nbsp; 🔧&nbsp; {t('custom_config')}", help=t("custom_config"), width="stretch"):
+                show_config_dialog(user_manager)
+
+        st.divider()
         # User-specific project list (moved to bottom of sidebar)
         st.subheader(f"📁 {t('your_projects')}")
         # New project button
@@ -250,7 +263,7 @@ def build_sidebar():
         )
 
 
-def start_job(question, dataset_path, email, language="chs"):
+def start_job(question, dataset_path, email, language="chs", custom_config_path=None):
     if question and dataset_path and (len(email) > 5):
         # Get configuration
 
@@ -270,6 +283,13 @@ def start_job(question, dataset_path, email, language="chs"):
         # Map language selection to the value expected by main.py
         language_code = "chs" if language == "中文" else "eng"
 
+        # Create output directory for logs (same as process output directory)
+        # The process uses --save-root outputs/user_proj, so output is at outputs/user_proj/<thread_id>
+        output_dir = os.path.join("outputs", "user_proj", thread_id)
+        os.makedirs(output_dir, exist_ok=True)
+        log_file = os.path.join(output_dir, "startup.log")
+        error_file = os.path.join(output_dir, "startup.err")
+
         # Start a new process to run the task
         command = [
                 "python",
@@ -287,20 +307,30 @@ def start_job(question, dataset_path, email, language="chs"):
                 language_code,
                 "--interrupt-after-subgraph",
                 "literature_reviewer",
+                "--save-root",
+                os.path.join("outputs", "user_proj"),
             ]
+
+        if custom_config_path and os.path.exists(custom_config_path):
+            command.extend(["--config", custom_config_path])
+            logger.info(f"Using custom config: {custom_config_path}")
+
+        log_out = open(log_file, 'w')
+        err_out = open(error_file, 'w')
         process = subprocess.Popen(
             command,
             start_new_session=True,
-            stdout=subprocess.DEVNULL,  # 重定向标准输出到/dev/null
-            stderr=subprocess.DEVNULL,  # 重定向标准错误到/dev/null
-            close_fds=True,  # 关闭文件描述符
+            stdout=log_out,
+            stderr=err_out,
+            close_fds=False,
         )
+
         logger.info(f"Started process {process.pid} for thread {thread_id} with command: {' '.join(command)}")
 
         # Add process information to the process manager
         if not process_manager.add_process(process.pid, thread_id, user=st.user.email):
             process.terminate()  # If adding fails, terminate the process
-            st.error(
+            st.info(
                 t(
                     "failed_to_start_process",
                     max_processes=process_manager.MAX_PROCESSES,
@@ -317,8 +347,9 @@ def start_job(question, dataset_path, email, language="chs"):
             error_cnt = 0
             while True:
                 try:
-                    time.sleep(10)
-                    dir_path = os.path.join("outputs", thread_id)
+                    # Try to load config
+                    time.sleep(2)
+                    dir_path = os.path.join("outputs", "user_proj", thread_id)
                     config = load_config(dir_path)
                     st.session_state.config = config
                     user_manager.update_user_points(st.user.email, -40, f"Job started: {thread_id}")
@@ -326,18 +357,24 @@ def start_job(question, dataset_path, email, language="chs"):
                     break
                 except Exception as e:
                     error_cnt += 1
-                    if error_cnt > 5:
-                        st.error(
-                            t(
-                                "failed_to_start_process",
-                                max_processes=process_manager.MAX_PROCESSES,
-                                max_user_processes=process_manager.MAX_USER_PROCESSES,
-                                n_processes=process_manager.get_process_count(),
-                                n_user_processes=process_manager.get_user_process_count(
-                                    st.user.email if hasattr(st.user, "email") else ""
-                                ),
+                    if error_cnt > 30:
+                        # Check for error file content on final failure
+                        if os.path.exists(error_file) and os.path.getsize(error_file) > 0:
+                            with open(error_file, 'r') as f:
+                                error_content = f.read()
+                            st.error(f"Failed to start process. Error output:\n```\n{error_content}\n```")
+                        else:
+                            st.error(
+                                t(
+                                    "failed_to_start_process",
+                                    max_processes=process_manager.MAX_PROCESSES,
+                                    max_user_processes=process_manager.MAX_USER_PROCESSES,
+                                    n_processes=process_manager.get_process_count(),
+                                    n_user_processes=process_manager.get_user_process_count(
+                                        st.user.email if hasattr(st.user, "email") else ""
+                                    ),
+                                )
                             )
-                        )
                         return
                     logger.error(f"Error loading config: {e}")
                     continue
@@ -425,7 +462,7 @@ def show_project():
             st.markdown(f"🙋 **{t('question_label')}** {t(question_show)} | 🔴 {t('task_stopped')}")
 
             # If task is not running, show continue task button
-            task_dir = os.path.join("outputs", config.thread_id)
+            task_dir = os.path.join("outputs", "user_proj", config.thread_id)
             if os.path.exists(task_dir):
                 if st.button(f"▶️ {t('continue_task')}", key=f"continue_{config.thread_id}"):
                     # Call resume-from interface
@@ -654,16 +691,31 @@ def show_initial_page():
             st.warning("Please upload at least one file for your dataset")
             dataset_path = None
 
+    # Show selected custom config info
+    custom_config_path = user_manager.get_user_custom_config(st.user.email if hasattr(st.user, "email") else "")
+    if custom_config_path:
+        try:
+            custom_config_data = load_custom_config(custom_config_path)
+            st.info(f"{t('using_custom_config')}: **{get_config_display_name(custom_config_data)}**")
+        except Exception as e:
+            logger.warning(f"Failed to load custom config: {e}")
+
     with st.container(horizontal=True):
         submit_button = st.button(t("start_research"), help=t("question_hint"), type="secondary")
         # submit_button = st.button(t('start_research_maintenance'), type="secondary", disabled=True)
 
     @st.dialog(t("confirm_submission"))
-    def confirm(question, dataset_path, email, language_selected):
+    def confirm(question, dataset_path, email, language_selected, custom_config_path):
         if question and dataset_path and (len(email) > 5):
             st.markdown(t("confirm_submission_warning", email=st.user.email if hasattr(st.user, "email") else ""))
+            if custom_config_path:
+                try:
+                    custom_config_data = load_custom_config(custom_config_path)
+                    st.info(f"{t('using_custom_config')}: **{get_config_display_name(custom_config_data)}**")
+                except Exception as e:
+                    logger.warning(f"Failed to load custom config: {e}")
             if st.button(t("confirm")):
-                start_job(question, dataset_path, email, language_selected)
+                start_job(question, dataset_path, email, language_selected, custom_config_path)
         else:
             st.warning(t("missing_fields"))
 
@@ -671,7 +723,7 @@ def show_initial_page():
     if submit_button:
         if st.user.is_logged_in:
             # Alert window to confirm
-            confirm(question, dataset_path, st.session_state.email, st.session_state.language_selected)
+            confirm(question, dataset_path, st.session_state.email, st.session_state.language_selected, custom_config_path)
         else:
             st.login()
 

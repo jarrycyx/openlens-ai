@@ -11,7 +11,7 @@ class UserManager:
     """
     User management class, responsible for maintaining user information and points
     """
-    
+
     def __init__(self):
         """Initialize user manager"""
         self.users_file = USERS_FILE
@@ -170,16 +170,78 @@ class UserManager:
     def get_top_users_by_points(self, limit: int = 10) -> List[Dict[str, Any]]:
         """
         Get list of users with highest points
-        
+
         Args:
             limit: Limit on number of users to return
-            
+
         Returns:
             List of users sorted by points in descending order
         """
         users = self.load_users()
         sorted_users = sorted(users.values(), key=lambda x: x.get("points", 0), reverse=True)
         return sorted_users[:limit]
+
+    def set_user_custom_config(self, user_id: str, config_path: str) -> bool:
+        """
+        Set user's custom config path
+
+        Args:
+            user_id: User ID
+            config_path: Path to custom config file
+
+        Returns:
+            bool: Whether successfully updated
+        """
+        users = self.load_users()
+
+        if user_id not in users:
+            logger.warning(f"User {user_id} does not exist")
+            return False
+
+        users[user_id]["custom_config_path"] = config_path
+        users[user_id]["updated_at"] = datetime.now().isoformat()
+
+        self.save_users(users)
+        logger.info(f"Set custom config for user {user_id}: {config_path}")
+        return True
+
+    def get_user_custom_config(self, user_id: str) -> Optional[str]:
+        """
+        Get user's custom config path
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            Custom config path, returns None if not set
+        """
+        user_info = self.get_user_info(user_id)
+        return user_info.get("custom_config_path") if user_info else None
+
+    def clear_user_custom_config(self, user_id: str) -> bool:
+        """
+        Clear user's custom config setting
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            bool: Whether successfully cleared
+        """
+        users = self.load_users()
+
+        if user_id not in users:
+            logger.warning(f"User {user_id} does not exist")
+            return False
+
+        if "custom_config_path" in users[user_id]:
+            del users[user_id]["custom_config_path"]
+            users[user_id]["updated_at"] = datetime.now().isoformat()
+            self.save_users(users)
+            logger.info(f"Cleared custom config for user {user_id}")
+            return True
+
+        return False
 
 
 # Global user manager instance
