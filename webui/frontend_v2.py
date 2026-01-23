@@ -425,6 +425,11 @@ def show_project():
     # Sidebar design
     build_sidebar()
     config = st.session_state.config
+    
+    # print(config.save_path, os.path.exists(config.save_path))
+    if not os.path.exists(config.save_path):
+        config.save_path = os.path.join("outputs", "user_proj", config.thread_id)
+        logger.info(f"save_path change to {config.save_path}")
 
     with st.container(horizontal=True):
 
