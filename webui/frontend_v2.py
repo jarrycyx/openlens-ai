@@ -323,6 +323,7 @@ def start_job(question, dataset_path, email, language="chs", custom_config_path=
             stderr=err_out,
             close_fds=False,
         )
+
         logger.info(f"Started process {process.pid} for thread {thread_id} with command: {' '.join(command)}")
 
         logger.info(f"Started process {process.pid} for thread {thread_id} with command: {' '.join(command)}")
