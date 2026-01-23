@@ -253,7 +253,8 @@ def prepare_state(config: Config) -> Config:
         save_path = config.save_path
     else:
         save_path = os.path.join(config.save_root, config.thread_id)
-        if os.path.exists(save_path):
+        # If workspace folder already exists, this work has already been run, append timestamp to thread_id to avoid overwriting
+        if os.path.exists(os.path.join(save_path, "workspace")):
             config.thread_id = config.thread_id + "_" + datetime.now().strftime("%Y%m%d%H%M%S")
             save_path = os.path.join(config.save_root, config.thread_id)
         config.save_path = save_path
