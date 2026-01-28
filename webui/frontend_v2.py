@@ -472,7 +472,16 @@ def show_project():
                 if st.button(f"▶️ {t('continue_task')}", key=f"continue_{config.thread_id}"):
                     # Call resume-from interface
                     try:
+                        # Create log files for resuming task
+                        log_file = os.path.join(task_dir, "resume.log")
+                        error_file = os.path.join(task_dir, "resume.err")
+
+                        # Create output placeholder for logs
+                        output_placeholder = st.empty()
+
                         # Start a new process to continue the task
+                        log_out = open(log_file, 'w')
+                        err_out = open(error_file, 'w')
                         process = subprocess.Popen(
                             [
                                 "python",
@@ -482,15 +491,26 @@ def show_project():
                                 task_dir,
                             ],
                             start_new_session=True,
-                            stdout=subprocess.DEVNULL,  # 重定向标准输出到/dev/null
-                            stderr=subprocess.DEVNULL,  # 重定向标准错误到/dev/null
-                            close_fds=True,  # 关闭文件描述符
+                            stdout=log_out,
+                            stderr=err_out,
+                            close_fds=False,
                         )
 
                         # Add process information to the process manager
                         if process_manager.add_process(process.pid, config.thread_id, user=st.user.email):
                             st.success(t("task_resumed", pid=process.pid))
                             user_manager.update_user_points(st.user.email, -5, f"Job started: {config.thread_id}")
+
+                            # Display error output for a short time
+                            import time
+                            for _ in range(10):
+                                time.sleep(2)
+                                if os.path.exists(error_file) and os.path.getsize(error_file) > 0:
+                                    with open(error_file, 'r') as f:
+                                        error_content = f.read()
+                                    if error_content:
+                                        output_placeholder.error(f"Error output:\n```\n{error_content}\n```")
+
                             st.rerun()
                         else:
                             process.terminate()  # If adding fails, terminate the process
