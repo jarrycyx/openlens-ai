@@ -59,6 +59,8 @@ build
 openlens_ai/tools/openhands_configs/texlive
 cache
 **/*.db
+**/*.db-shm
+**/*.db-wal
 
 # 测试相关
 curie/tests/test_claude.py

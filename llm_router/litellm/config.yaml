@@ -9,9 +9,14 @@ model_list:
       model: openai/llm
       api_base: http://127.0.0.1:8000/v1
       api_key: "0"
-  - model_name: glm-4.6
+  - model_name: glm-4.7
     litellm_params:
-      model: openai/glm-4.6
+      model: openai/glm-4.7
+      api_base: https://cloud.infini-ai.com/maas/v1/
+      api_key: "os.environ/INFINI_API_KEY"
+  - model_name: qwen3-coder-480b-a35b-instruct
+    litellm_params:
+      model: openai/qwen3-coder-480b-a35b-instruct
       api_base: https://cloud.infini-ai.com/maas/v1/
       api_key: "os.environ/INFINI_API_KEY"
   - model_name: glm-4.6v

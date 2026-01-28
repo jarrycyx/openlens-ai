@@ -16,10 +16,10 @@ def load_questions(csv_file):
     with open(csv_file, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            questions.append(row['Question'])
+            questions.append([row['id'], row['question']])
     return questions
 
-def run_test(question, dataset_path, thread_id, email):
+def run_test(question, dataset_path, thread_id, email, save_root):
     """运行单个测试"""
     cmd = [
         'python', '-m', 'openlens_ai.main',
@@ -27,7 +27,9 @@ def run_test(question, dataset_path, thread_id, email):
         '--dataset-path', dataset_path,
         '--thread-id', thread_id,
         '--notify-email', email,
-        '--language', 'eng'
+        '--language', 'eng',
+        '--config', 'exp/config.toml',
+        '--save-root', save_root,
     ]
     
     print(f"Running: {' '.join(cmd)}")
@@ -41,26 +43,27 @@ def run_test(question, dataset_path, thread_id, email):
     
     return result.returncode == 0
 
-def create_thread_id(question, dataset_path):
+def create_thread_id(id, dataset_path):
     """为测试创建线程ID"""
     # 从数据集路径提取名称
     dataset_name = Path(dataset_path).name
     # 简化问题作为标识符
-    question_part = ''.join(c for c in question if c.isalnum() or c in ' _-')[:30]
+    question_part = ''.join(c for c in id if c.isalnum() or c in ' _-')[:30]
     return f"test_{dataset_name}_{question_part}".replace(' ', '_')
 
 def main():
     parser = argparse.ArgumentParser(description='并行测试脚本')
-    parser.add_argument('--csv-file', default='exp/eval/openlens_eval_dataset.csv', 
+    parser.add_argument('--csv-file', default='exp/eval/openlens_eval_dataset_v3.csv', 
                         help='包含问题的CSV文件路径')
     parser.add_argument('--email', default='dzdzzd@126.com', 
                         help='接收通知的邮箱')
     parser.add_argument('--max-workers', type=int, default=4, 
                         help='并行执行的最大工作线程数')
     parser.add_argument('--datasets', nargs='+', 
-                        default=['datasets/mimic-iv-icu', 'datasets/eicu-demo'],
+                        default=['datasets/eicu-demo'],
                         help='要测试的数据集路径列表')
     parser.add_argument('--start-index', type=int, default=0, help='从问题列表的起始索引开始执行测试')
+    parser.add_argument('--save-root', default='outputs/eval_v3/results', help='保存结果的根目录')
     
     args = parser.parse_args()
     
@@ -73,10 +76,10 @@ def main():
     
     # 准备所有测试任务
     tasks = []
-    for question in questions:
+    for id, question in questions:
         for dataset_path in args.datasets:
-            thread_id = create_thread_id(question, dataset_path)
-            tasks.append((question, dataset_path, thread_id, args.email))
+            thread_id = create_thread_id(id, dataset_path)
+            tasks.append((question, dataset_path, thread_id, args.email, args.save_root))
             
     tasks = tasks[args.start_index:]
     print(f"跳过 {args.start_index} 个问题")
@@ -88,8 +91,8 @@ def main():
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.max_workers) as executor:
         # 提交所有任务
         future_to_task = {
-            executor.submit(run_test, question, dataset_path, thread_id, email): (question, dataset_path, thread_id)
-            for question, dataset_path, thread_id, email in tasks
+            executor.submit(run_test, question, dataset_path, thread_id, email, save_root): (question, dataset_path, thread_id)
+            for question, dataset_path, thread_id, email, save_root in tasks
         }
         
         # 收集结果
