@@ -60,7 +60,7 @@ def main():
     parser.add_argument('--max-workers', type=int, default=4, 
                         help='并行执行的最大工作线程数')
     parser.add_argument('--datasets', nargs='+', 
-                        default=['datasets/eicu-demo'],
+                        default=['datasets/eicu20k'],
                         help='要测试的数据集路径列表')
     parser.add_argument('--start-index', type=int, default=0, help='从问题列表的起始索引开始执行测试')
     parser.add_argument('--save-root', default='outputs/eval_v3/results', help='保存结果的根目录')
