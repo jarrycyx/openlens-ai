@@ -34,7 +34,6 @@ dependencies = [
   "modelscope",
   "numpy",
   "pydantic",
-  "pymupdf",
   "pypdf",
   "python-dotenv>=1.0.1",
   "streamlit",
