@@ -1,4 +1,9 @@
 model_list:
+  - model_name: claude-sonnet-4-5-20250929
+    litellm_params:
+      model: openai/claude-sonnet-4-5-20250929
+      api_base: https://api3.wlai.vip/v1/
+      api_key: "os.environ/YUNWU_API_KEY"
   - model_name: glm-4.5-air
     litellm_params:
       model: openai/glm-4.5-air
