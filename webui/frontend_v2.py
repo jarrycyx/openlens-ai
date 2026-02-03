@@ -293,8 +293,7 @@ def start_job(question, dataset_path, email, language="chs", custom_config_path=
         # Start a new process to run the task
         command = [
                 "python",
-                "-m",
-                "openlens_ai.main",
+                "cli.py",
                 "--question",
                 question,
                 "--dataset-path",

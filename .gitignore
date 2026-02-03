@@ -84,3 +84,4 @@ curie/setup/*
 modules/OpenHands/docs
 modules/OpenHands/evaluation
 *.iso
+static/
