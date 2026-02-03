@@ -196,6 +196,53 @@ def monitor_process(pid: int, line_count: dict):
         last_line_count = line_count["count"]
 
 
+def make_openhands_config(template, config: Config):
+    """Replace placeholders in the template with actual values from the config"""
+    oh_config = oh_config_template.replace("{api_key}", config.llm.chat.api_key)
+    oh_config = oh_config.replace("{base_url}", config.llm.chat.base_url)
+    oh_config = oh_config.replace("{code_model}", config.llm.chat.model)
+    oh_config = oh_config.replace("{analyze_file_vlm_port}", str(port))
+    oh_config = oh_config.replace("{use_gpu}", "true" if config.docker.use_gpu else "false")
+
+    if config.llm.condenser.model:
+        oh_config = oh_config.replace("{condenser_api_key}", config.llm.condenser.api_key)
+        oh_config = oh_config.replace("{condenser_base_url}", config.llm.condenser.base_url)
+        oh_config = oh_config.replace("{code_condenser_model}", config.llm.condenser.model)
+    else:
+        logger.warning("Condenser model not specified, using chat model as condenser model.")
+        oh_config = oh_config.replace("{condenser_api_key}", config.llm.chat.api_key)
+        oh_config = oh_config.replace("{condenser_base_url}", config.llm.chat.base_url)
+        oh_config = oh_config.replace("{code_condenser_model}", config.llm.chat.model)
+
+    oh_config = oh_config.replace("{tavily_key}", config.tools.tavily_api_key)
+    oh_config = oh_config.replace("{openhands_traj_path}", openhands_traj_path)
+    oh_config = oh_config.replace("{log_completions_folder}", openhands_llm_log_path)
+    oh_config = oh_config.replace("{runtime_container_image}", docker_name)
+    
+    if config.workflow.e2e_test:
+        oh_config = oh_config.replace("{default_agent}", "DummyAgent")
+        logger.warning("E2E test mode enabled, using DummyAgent")
+    else:
+        oh_config = oh_config.replace("{default_agent}", "CodeActAgent")
+    
+    if config.dataset_path:
+        dataset_path = os.path.join(pwd, config.dataset_path)
+        assert os.path.exists(dataset_path), f"Dataset path {dataset_path} does not exist."
+        oh_config = oh_config.replace(
+            "{sandbox_volumes}",
+            f"{os.path.abspath(workspace_dir)}:/workspace/:rw,"
+            f"{os.path.abspath(config.dataset_path)}:/workspace/datasets/:ro,"
+            f"{os.path.abspath(latex_template_path)}:/workspace/latex_template/:ro,"
+            f"{os.path.abspath(dot_openhands_path)}:/workspace/.openhands/:ro",
+        )
+    else:
+        oh_config = oh_config.replace(
+            "{sandbox_volumes}",
+            f"{os.path.abspath(workspace_dir)}:/workspace/:rw,"
+            f"{os.path.abspath(latex_template_path)}:/workspace/latex_template/:ro,"
+            f"{os.path.abspath(dot_openhands_path)}:/workspace/.openhands/:ro",
+        )
+
 def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True, file_manager: FileManager = None):
     """
     Run OpenHands prompts and return results
@@ -278,49 +325,8 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True,
 
         with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
             oh_config_template = f.read()
-        oh_config = oh_config_template.replace("{api_key}", config.llm.chat.api_key)
-        oh_config = oh_config.replace("{base_url}", config.llm.chat.base_url)
-        oh_config = oh_config.replace("{code_model}", config.llm.chat.model)
-        oh_config = oh_config.replace("{analyze_file_vlm_port}", str(port))
-
-        if config.llm.condenser.model:
-            oh_config = oh_config.replace("{condenser_api_key}", config.llm.condenser.api_key)
-            oh_config = oh_config.replace("{condenser_base_url}", config.llm.condenser.base_url)
-            oh_config = oh_config.replace("{code_condenser_model}", config.llm.condenser.model)
-        else:
-            logger.warning("Condenser model not specified, using chat model as condenser model.")
-            oh_config = oh_config.replace("{condenser_api_key}", config.llm.chat.api_key)
-            oh_config = oh_config.replace("{condenser_base_url}", config.llm.chat.base_url)
-            oh_config = oh_config.replace("{code_condenser_model}", config.llm.chat.model)
-
-        oh_config = oh_config.replace("{tavily_key}", config.tools.tavily_api_key)
-        oh_config = oh_config.replace("{openhands_traj_path}", openhands_traj_path)
-        oh_config = oh_config.replace("{log_completions_folder}", openhands_llm_log_path)
-        oh_config = oh_config.replace("{runtime_container_image}", docker_name)
-        
-        if config.workflow.e2e_test:
-            oh_config = oh_config.replace("{default_agent}", "DummyAgent")
-            logger.warning("E2E test mode enabled, using DummyAgent")
-        else:
-            oh_config = oh_config.replace("{default_agent}", "CodeActAgent")
-        
-        if config.dataset_path:
-            dataset_path = os.path.join(pwd, config.dataset_path)
-            assert os.path.exists(dataset_path), f"Dataset path {dataset_path} does not exist."
-            oh_config = oh_config.replace(
-                "{sandbox_volumes}",
-                f"{os.path.abspath(workspace_dir)}:/workspace/:rw,"
-                f"{os.path.abspath(config.dataset_path)}:/workspace/datasets/:ro,"
-                f"{os.path.abspath(latex_template_path)}:/workspace/latex_template/:ro,"
-                f"{os.path.abspath(dot_openhands_path)}:/workspace/.openhands/:ro",
-            )
-        else:
-            oh_config = oh_config.replace(
-                "{sandbox_volumes}",
-                f"{os.path.abspath(workspace_dir)}:/workspace/:rw,"
-                f"{os.path.abspath(latex_template_path)}:/workspace/latex_template/:ro,"
-                f"{os.path.abspath(dot_openhands_path)}:/workspace/.openhands/:ro",
-            )
+            
+        oh_config = make_openhands_config(oh_config_template, config)
 
         this_config_path = os.path.join(config.save_path, "openhands_config.toml")
         with open(this_config_path, "w") as f:

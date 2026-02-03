@@ -191,7 +191,7 @@ See [config.full-example.toml](config.full-example.toml) for more detailed confi
 
 Example:
 ```bash
-python -m openlens_ai.main \
+python cli.py \
   --question "What are the temporal patterns of vital sign deterioration preceding cardiac arrest events in critical care settings?" \
   --dataset-path "datasets/eicu-demo" \
   --thread-id "pred_aki_trend_eicu_demo" \

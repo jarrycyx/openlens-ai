@@ -69,6 +69,7 @@ class WorkflowConfig(BaseModel):
 class DockerConfig(BaseModel):
     """Docker configuration"""
     docker_name: str = Field(default="openhands", description="Docker container name")
+    use_gpu: bool = Field(default=True, description="Enable or disable GPU acceleration")
 
 
 class FrontendConfig(BaseModel):
