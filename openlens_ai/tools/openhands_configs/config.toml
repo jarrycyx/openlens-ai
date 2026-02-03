@@ -35,7 +35,7 @@ volumes = "{sandbox_volumes}"
 user_id = 3407
 timeout = 3600
 runtime_container_image = "{runtime_container_image}"
-enable_gpu = true
+enable_gpu = "{use_gpu}"
 docker_runtime_kwargs = { mem_limit = "16g" }
 # https://docker-py.readthedocs.io/en/stable/containers.html?highlight=run#docker.models.containers.ContainerCollection.run
 
