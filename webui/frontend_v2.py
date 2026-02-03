@@ -416,7 +416,7 @@ def show_project():
         page_title="OpenLens AI",
         layout="wide",
         initial_sidebar_state="collapsed",
-        page_icon="static/logo.png",
+        page_icon="webui/logo.png",
         menu_items={
             "About": "https://github.com/OpenLens-AI/OpenLens-AI",
         },
@@ -587,7 +587,7 @@ def show_initial_page():
         page_title="OpenLens AI",
         layout="wide",
         initial_sidebar_state="expanded",
-        page_icon="static/logo.png",
+        page_icon="webui/logo.png",
         menu_items={
             "About": "https://github.com/OpenLens-AI/OpenLens-AI",
         },
@@ -598,8 +598,8 @@ def show_initial_page():
     # Main interface design
     # st.title("🫧 OpenLens AI")
     with st.container(horizontal=True):
-        st.image("static/logo.svg", width=40)
-        st.subheader(t("app_title"))
+        st.image("webui/logo.svg", width=40)
+        st.subheader(t('app_title'))
         if st.button(t("show_guide")):
             st.session_state.guide_shown = False
             st.rerun()
