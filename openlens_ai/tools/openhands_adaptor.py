@@ -196,9 +196,23 @@ def monitor_process(pid: int, line_count: dict):
         last_line_count = line_count["count"]
 
 
-def make_openhands_config(template, config: Config):
+def make_openhands_config(template, config: Config, port: int):
+    
+    pwd = os.getcwd()
+    workspace_dir = os.path.join(pwd, config.save_path, "workspace")
+    openhands_traj_path = os.path.join(pwd, config.save_path, "openhands_traj")
+    openhands_llm_log_path = os.path.join(pwd, config.save_path, "openhands_llm_log")
+    latex_template_path = os.path.join(pwd, "openlens_ai/tools/latex_template/blank")
+    dot_openhands_path = os.path.join(pwd, "openlens_ai/tools/openhands_configs/dot_openhands")
+    os.makedirs(os.path.join(workspace_dir, "manuscript"), exist_ok=True)
+    os.makedirs(os.path.join(workspace_dir, "data_analyze"), exist_ok=True)
+    os.makedirs(openhands_traj_path, exist_ok=True)
+    os.makedirs(openhands_llm_log_path, exist_ok=True)
+    
+    docker_name = config.docker.docker_name
+    logger.info(f"Runtime docker: {docker_name}")
     """Replace placeholders in the template with actual values from the config"""
-    oh_config = oh_config_template.replace("{api_key}", config.llm.chat.api_key)
+    oh_config = template.replace("{api_key}", config.llm.chat.api_key)
     oh_config = oh_config.replace("{base_url}", config.llm.chat.base_url)
     oh_config = oh_config.replace("{code_model}", config.llm.chat.model)
     oh_config = oh_config.replace("{analyze_file_vlm_port}", str(port))
@@ -242,6 +256,7 @@ def make_openhands_config(template, config: Config):
             f"{os.path.abspath(latex_template_path)}:/workspace/latex_template/:ro,"
             f"{os.path.abspath(dot_openhands_path)}:/workspace/.openhands/:ro",
         )
+    return oh_config
 
 def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True, file_manager: FileManager = None):
     """
@@ -302,31 +317,19 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True,
             if config.code_hint:
                 full_prompt += "\n## Important Instructions\n" + config.code_hint
 
-        pwd = os.getcwd()
-        workspace_dir = os.path.join(pwd, config.save_path, "workspace")
-        openhands_traj_path = os.path.join(pwd, config.save_path, "openhands_traj")
-        openhands_llm_log_path = os.path.join(pwd, config.save_path, "openhands_llm_log")
-        latex_template_path = os.path.join(pwd, "openlens_ai/tools/latex_template/blank")
-        dot_openhands_path = os.path.join(pwd, "openlens_ai/tools/openhands_configs/dot_openhands")
-        os.makedirs(os.path.join(workspace_dir, "manuscript"), exist_ok=True)
-        os.makedirs(os.path.join(workspace_dir, "data_analyze"), exist_ok=True)
-        os.makedirs(openhands_traj_path, exist_ok=True)
-        os.makedirs(openhands_llm_log_path, exist_ok=True)
 
         time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        prompt_file = os.path.join(pwd, config.save_path, "openhands_logs", f"prompt_{time_stamp}.txt")
+        prompt_file = os.path.join(os.getcwd(), config.save_path, "openhands_logs", f"prompt_{time_stamp}.txt")
         os.makedirs(os.path.dirname(prompt_file), exist_ok=True)
         with open(prompt_file, "w") as f:
             f.write(full_prompt)
 
         max_iter = config.workflow.openhands_max_iter
-        docker_name = config.docker.docker_name
-        logger.info(f"Runtime docker: {docker_name}")
 
         with open("openlens_ai/tools/openhands_configs/config.toml", "r") as f:
             oh_config_template = f.read()
             
-        oh_config = make_openhands_config(oh_config_template, config)
+        oh_config = make_openhands_config(oh_config_template, config, port)
 
         this_config_path = os.path.join(config.save_path, "openhands_config.toml")
         with open(this_config_path, "w") as f:

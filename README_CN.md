@@ -189,7 +189,7 @@ docker_name = "openlens-ai:runtime-latest"  # 用于智能体环境的 Docker �
 
 示例：
 ```bash
-python -m openlens_ai.main \
+python cli.py \
   --question "重症监护环境中，心脏骤停事件前生命体征恶化的时间模式是什么？" \
   --dataset-path "datasets/eicu-demo" \
   --thread-id "pred_aki_trend_eicu_demo" \

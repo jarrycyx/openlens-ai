@@ -246,11 +246,10 @@ def run_server(config: Union[Config, str], port: int = 9077):
     else:
         config = Config.from_toml(config)
     set_config(config)
-    mcp.run(transport="streamable-http", host="0.0.0.0", port=port)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     logger.add(
-        os.path.join(config.save_dir, f"mcp_server_logs_{timestamp}_pid{os.getpid()}.log"),
+        os.path.join(config.save_path, f"mcp_server_logs_{timestamp}_pid{os.getpid()}.log"),
         format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|openhands_mcp_server",
         colorize=False,
         rotation="10 MB",
@@ -258,6 +257,8 @@ def run_server(config: Union[Config, str], port: int = 9077):
     )
     
     logger.info(f"VLM MCP server running on port {port}")
+    
+    mcp.run(transport="streamable-http", host="0.0.0.0", port=port)
 
 
 
