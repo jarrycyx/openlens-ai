@@ -10,6 +10,8 @@ tmp*
 **/node_modules
 uv.lock
 .venv
+*build
+*dist
 
 # 字体
 openlens_ai/tools/openhands_configs/windows-fonts/*

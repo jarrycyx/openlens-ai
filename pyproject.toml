@@ -43,7 +43,9 @@ dependencies = [
   "fastmcp",
   "graphviz",
   "html2image",
-  "streamlit-autorefresh"
+  "streamlit-autorefresh", 
+  "langchain_text_splitters", 
+  "cairosvg"
 ]
 
 [project.scripts]
