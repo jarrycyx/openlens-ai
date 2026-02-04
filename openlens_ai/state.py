@@ -293,7 +293,7 @@ def prepare_state(config: Config) -> Config:
 
     # os.makedirs(os.path.join("outputs", "log"), exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    setup_logger(save_dir, timestamp, config)
+    setup_logger(save_path, timestamp, config)
 
     # 创建备份文件夹并复制openlens_ai文件夹和.env文件
     backup_path = os.path.join(save_path, "backup")
