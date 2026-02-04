@@ -7,6 +7,9 @@ import traceback
 import time
 import argparse
 from loguru import logger
+
+logger = logger.bind(module="openhands_mcp_server")
+
 from typing import List, Dict, Optional, Annotated, Union
 from pydantic import Field
 import fitz
@@ -246,15 +249,6 @@ def run_server(config: Union[Config, str], port: int = 9077):
     else:
         config = Config.from_toml(config)
     set_config(config)
-    
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    logger.add(
-        os.path.join(config.save_path, f"mcp_server_logs_{timestamp}_pid{os.getpid()}.log"),
-        format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|openhands_mcp_server",
-        colorize=False,
-        rotation="10 MB",
-        level="DEBUG",
-    )
     
     logger.info(f"VLM MCP server running on port {port}")
     

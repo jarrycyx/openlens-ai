@@ -119,6 +119,50 @@ def get_subplan(state: State) -> str:
     return subplan
 
 
+
+def setup_logger(save_dir: str, timestamp: str, config: Config):
+    def is_from_module(record):
+        module = record["extra"].get("module")
+        if str(module).startswith("file1agent"):
+            return "file1agent"
+        elif str(module).startswith("openhands_mcp"):
+            return "openhands_mcp"
+        else:
+            return ""
+    
+    logger.remove()
+    logger.add(
+        os.path.join(save_dir, "logs", f"logs_{timestamp}_pid{os.getpid()}.log"),
+        format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|" + config.thread_id,
+        colorize=False,
+        rotation="10 MB",
+        level="DEBUG",
+        filter=lambda r: not is_from_module(r),
+    )
+    logger.add(
+        os.path.join(save_dir, "logs", f"file1agent_{timestamp}_pid{os.getpid()}.log"),
+        format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|" + config.thread_id,
+        colorize=False,
+        rotation="10 MB",
+        level="DEBUG",
+        filter=lambda r: is_from_module(r) == "file1agent",
+    )
+    logger.add(
+        os.path.join(save_dir, "logs", f"openhands_mcp_{timestamp}_pid{os.getpid()}.log"),
+        format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|" + config.thread_id,
+        colorize=False,
+        rotation="10 MB",
+        level="DEBUG",
+        filter=lambda r: is_from_module(r) == "openhands_mcp",
+    )
+    logger.add(
+        sys.stdout,
+        format="<green>{time:YYYYMMDDHHmmss}</green>|<level>{level}</level>|{message}|<yellow>{file}:{line}</yellow>|"
+        + f"<cyan>{config.thread_id}</cyan>",
+        colorize=True,
+        level="INFO",
+    )
+
 def load_state(
     save_dir: str, copy_to_new: bool = False, start_from_subgraph: str = "", start_from_subtask_index: int = 1
 ) -> tuple[Config, State, str, FileManager]:
@@ -145,21 +189,7 @@ def load_state(
 
     # Load logger
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    logger.remove()
-    logger.add(
-        os.path.join(save_dir, f"logs_{timestamp}_pid{os.getpid()}.log"),
-        format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|" + config.thread_id,
-        colorize=False,
-        rotation="10 MB",
-        level="DEBUG",
-    )
-    logger.add(
-        sys.stdout,
-        format="<green>{time:YYYYMMDDHHmmss}</green>|<level>{level}</level>|{message}|<yellow>{file}:{line}</yellow>|"
-        + f"<cyan>{config.thread_id}</cyan>",
-        colorize=True,
-        level="INFO",
-    )
+    setup_logger(save_dir, timestamp, config)
 
     file_manager = FileManager(
         analyze_dir=os.path.join(config.save_path, "workspace"),
@@ -191,7 +221,6 @@ def load_state(
         logger.info(f"Start from subtask index: {start_from_subtask_index}")
 
     # Load node_call_stack and get last subgraph
-    last_subgraph = None
     try:
         node_call_stack = state["node_call_stack"]
 
@@ -264,21 +293,7 @@ def prepare_state(config: Config) -> Config:
 
     # os.makedirs(os.path.join("outputs", "log"), exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    logger.remove()
-    logger.add(
-        os.path.join(save_path, f"logs_{timestamp}_pid{os.getpid()}.log"),
-        format="{time:YYYYMMDDHHmmss}|{level}|{message}|{file}:{line}|" + config.thread_id,
-        colorize=False,
-        rotation="10 MB",
-        level="DEBUG",
-    )
-    logger.add(
-        sys.stdout,
-        format="<green>{time:YYYYMMDDHHmmss}</green>|<level>{level}</level>|{message}|<yellow>{file}:{line}</yellow>|"
-        + f"<cyan>{config.thread_id}</cyan>",
-        colorize=True,
-        level="INFO",
-    )
+    setup_logger(save_dir, timestamp, config)
 
     # 创建备份文件夹并复制openlens_ai文件夹和.env文件
     backup_path = os.path.join(save_path, "backup")
