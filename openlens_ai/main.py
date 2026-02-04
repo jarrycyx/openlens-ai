@@ -51,12 +51,12 @@ def main_resume(
         logger.info(error_info)
         zipfile, latest_md = None, ""
     # 发送进度邮件
-    send_email(
+    send_localized_email(
         config=config,
-        subject=f"OpenLens Job Resumed | {config.thread_id}",
-        content=latest_md,
+        template_key="job_resume",
         recipients=config.notify_email,
-        attachments=zipfile,
+        attachments=None,
+        latest_md=latest_md,
     )
     graph = build_graph(config, start_subgraph=start_from_subgraph, file_manager=file_manager)
     run_graph(config, graph, state, interrupt_after_subgraph=interrupt_after_subgraph)

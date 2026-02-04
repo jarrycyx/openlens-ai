@@ -20,6 +20,7 @@ EMAIL_TEMPLATES = {
         "job_progress": "OpenLens 任务进度 | {thread_id}",
         "job_paused": "OpenLens 任务已暂停 | {thread_id}",
         "job_update": "OpenLens 任务更新 | {thread_id}",
+        "job_resume": "OpenLens 任务已恢复 | {thread_id}",
         "job_failed": "OpenLens 任务失败 | {thread_id}",
         "job_successful": "OpenLens 任务成功 | {thread_id}",
         "job_still_running": "任务仍在运行中。当前进度：\n\n{latest_md}",
@@ -35,6 +36,7 @@ EMAIL_TEMPLATES = {
         "job_progress": "OpenLens Job Progress | {thread_id}",
         "job_paused": "OpenLens Job Paused | {thread_id}",
         "job_update": "OpenLens Job Update | {thread_id}",
+        "job_resume": "OpenLens Job Resumed | {thread_id}",
         "job_failed": "OpenLens Job Failed | {thread_id}",
         "job_successful": "OpenLens Job Successful | {thread_id}",
         "job_still_running": "Job is still running. Current progress:\n\n{latest_md}",
@@ -82,6 +84,8 @@ def send_localized_email(
             subject_key = "job_failed"
         elif template_key == "subgraph_paused":
             subject_key = "job_paused"
+        elif template_key == "job_resume":
+            subject_key = "job_resume"
 
         # Get localized subject and content
         subject = get_email_content(subject_key, language, thread_id=config.thread_id)

@@ -122,12 +122,16 @@ class Config(BaseModel):
         config = cls(**config_data)
         
         # Setup ENV
-        os.environ["LANGSMITH_TRACING"] = config.tools.langsmith_tracing
-        os.environ["LANGSMITH_ENDPOINT"] = config.tools.langsmith_endpoint
-        os.environ["LANGSMITH_PROJECT"] = config.tools.langsmith_project
-        os.environ["LANGSMITH_API_KEY"] = config.tools.langsmith_api_key
-        
-        os.environ["TAVILY_API_KEY"] = config.tools.tavily_api_key
+        if config.tools.langsmith_tracing:
+            os.environ["LANGSMITH_TRACING"] = config.tools.langsmith_tracing
+        if config.tools.langsmith_endpoint:
+            os.environ["LANGSMITH_ENDPOINT"] = config.tools.langsmith_endpoint
+        if config.tools.langsmith_project:
+            os.environ["LANGSMITH_PROJECT"] = config.tools.langsmith_project
+        if config.tools.langsmith_api_key:
+            os.environ["LANGSMITH_API_KEY"] = config.tools.langsmith_api_key
+        if config.tools.tavily_api_key:
+            os.environ["TAVILY_API_KEY"] = config.tools.tavily_api_key
         
         return config
     
