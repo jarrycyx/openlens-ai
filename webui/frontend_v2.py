@@ -292,30 +292,34 @@ def start_job(question, dataset_path, email, language="chs", custom_config_path=
 
         # Start a new process to run the task
         command = [
-                "python",
-                "cli.py",
-                "--question",
-                question,
-                "--dataset-path",
-                dataset_path,
-                "--thread-id",
-                thread_id,
-                "--notify-email",
-                email,
-                "--language",
-                language_code,
-                "--interrupt-after-subgraph",
-                "literature_reviewer",
-                "--save-root",
-                os.path.join("outputs", "user_proj"),
-            ]
+            "conda",
+            "run",
+            "-n",
+            "openlens",
+            "python",
+            "cli.py",
+            "--question",
+            question,
+            "--dataset-path",
+            dataset_path,
+            "--thread-id",
+            thread_id,
+            "--notify-email",
+            email,
+            "--language",
+            language_code,
+            "--interrupt-after-subgraph",
+            "literature_reviewer",
+            "--save-root",
+            os.path.join("outputs", "user_proj"),
+        ]
 
         if custom_config_path and os.path.exists(custom_config_path):
             command.extend(["--config", custom_config_path])
             logger.info(f"Using custom config: {custom_config_path}")
 
-        log_out = open(log_file, 'w')
-        err_out = open(error_file, 'w')
+        log_out = open(log_file, "w")
+        err_out = open(error_file, "w")
         process = subprocess.Popen(
             command,
             start_new_session=True,
@@ -361,7 +365,7 @@ def start_job(question, dataset_path, email, language="chs", custom_config_path=
                     if error_cnt > 30:
                         # Check for error file content on final failure
                         if os.path.exists(error_file) and os.path.getsize(error_file) > 0:
-                            with open(error_file, 'r') as f:
+                            with open(error_file, "r") as f:
                                 error_content = f.read()
                             st.error(f"Failed to start process. Error output:\n```\n{error_content}\n```")
                         else:
@@ -426,7 +430,7 @@ def show_project():
     # Sidebar design
     build_sidebar()
     config = st.session_state.config
-    
+
     # print(config.save_path, os.path.exists(config.save_path))
     if not os.path.exists(config.save_path):
         config.save_path = os.path.join("outputs", "user_proj", config.thread_id)
@@ -481,10 +485,14 @@ def show_project():
                         output_placeholder = st.empty()
 
                         # Start a new process to continue the task
-                        log_out = open(log_file, 'w')
-                        err_out = open(error_file, 'w')
+                        log_out = open(log_file, "w")
+                        err_out = open(error_file, "w")
                         process = subprocess.Popen(
                             [
+                                "conda",
+                                "run",
+                                "-n",
+                                "openlens",
                                 "python",
                                 "-m",
                                 "openlens_ai.main",
@@ -504,10 +512,11 @@ def show_project():
 
                             # Display error output for a short time
                             import time
+
                             for _ in range(10):
                                 time.sleep(2)
                                 if os.path.exists(error_file) and os.path.getsize(error_file) > 0:
-                                    with open(error_file, 'r') as f:
+                                    with open(error_file, "r") as f:
                                         error_content = f.read()
                                     if error_content:
                                         output_placeholder.error(f"Error output:\n```\n{error_content}\n```")
@@ -601,7 +610,7 @@ def show_initial_page():
     # st.title("🫧 OpenLens AI")
     with st.container(horizontal=True):
         st.image("webui/logo.svg", width=40)
-        st.subheader(t('app_title'))
+        st.subheader(t("app_title"))
         if st.button(t("show_guide")):
             st.session_state.guide_shown = False
             st.rerun()
@@ -651,8 +660,7 @@ def show_initial_page():
 
             @st.dialog(t("dataset_alert_title"), width="medium", dismissible=True)
             def dataset_help_dialog():
-                st.write(t("dataset_alert", 
-                           dataset="" if dataset_option == "Upload My Own" else dataset_option))
+                st.write(t("dataset_alert", dataset="" if dataset_option == "Upload My Own" else dataset_option))
                 with st.container(horizontal=True):
                     if st.button(t("dataset_confirm"), type="primary"):
                         st.session_state.dataset_selected = dataset_option
@@ -749,7 +757,9 @@ def show_initial_page():
     if submit_button:
         if st.user.is_logged_in:
             # Alert window to confirm
-            confirm(question, dataset_path, st.session_state.email, st.session_state.language_selected, custom_config_path)
+            confirm(
+                question, dataset_path, st.session_state.email, st.session_state.language_selected, custom_config_path
+            )
         else:
             st.login()
 

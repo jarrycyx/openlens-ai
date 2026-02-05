@@ -119,8 +119,8 @@ docker tag <IMAGE_ID> openlens-ai:runtime-latest
 2. Install dependencies:
 First create conda environment and install [file1.agent](https://github.com/jarrycyx/file1agent):
 ```bash
-conda create -n py312 python=3.12 # Or with uv / venv
-conda activate py312
+conda create -n openlens python=3.12 # Or with uv / venv
+conda activate openlens
 cd modules/file1agent
 pip install -e .
 cd ../../
