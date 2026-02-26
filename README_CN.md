@@ -33,7 +33,7 @@
 <table>
   <tr>
     <td style="width:3cm; text-align:center;">
-      <img src="static/logo.svg" alt="Logo" width="100">
+      <img src="webui/imgs/logo.svg" alt="Logo" width="100">
     </td>
     <td style="text-align: justify;">
       <strong>OpenLens AI</strong> 是一个专为医学/ML/统计研究或任何数据驱动项目设计的完全自主的多模态智能体，为 AI+医学研究优化。
@@ -52,7 +52,7 @@
 无需安装！访问我们的 <a href="https://openlens.icu">项目主页</a> 了解更多关于 OpenLens AI 的信息，或尝试我们的 <a href="https://openlens.icu">云应用</a>，无需任何设置即可体验全自动研究智能体。
 </p>
 
-<img src="static/papers/example.png" alt="Logo" width="100%">
+<img src="webui/imgs/example.png" alt="Logo" width="100%">
 
 - ✅ **自动化文献综述**：根据您的研究问题搜索和总结论文
 - ✅ **数据分析**：分析数据集并生成综合报告

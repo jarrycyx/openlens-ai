@@ -33,7 +33,7 @@
 <table>
   <tr>
     <td style="width:3cm; text-align:center;">
-      <img src="static/logo.svg" alt="Logo" width="100">
+      <img src="webui/imgs/logo.svg" alt="Logo" width="100">
     </td>
     <td style="text-align: justify;">
       <strong>OpenLens AI</strong> is a fully autonomous multimodal agent designed for medical/ML/stats research, or any data-driven project, and is optimized for medical + AI research.
@@ -52,7 +52,7 @@
 No installation required! Visit our <a href="https://openlens.icu">project page</a> to learn more about OpenLens AI or try our <a href="https://openlens.icu">cloud application</a> to experience the fully autonomous research agent without any setup.
 </p>
 
-<img src="static/papers/example.png" alt="Logo" width="100%">
+<img src="webui/imgs/example.png" alt="Logo" width="100%">
 
 - ✅ **Automated Literature Review**: Search and summarize papers based on your research question
 - ✅ **Data Analysis**: Analyze datasets and generate comprehensive reports

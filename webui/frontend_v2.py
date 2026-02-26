@@ -645,7 +645,7 @@ def show_initial_page():
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        datasets = ["MIMIC-IV-ICU", "eICU-Demo", "Upload My Own"]
+        datasets = ["eICU-Demo", "Upload My Own"]
         selected_dataset = st.session_state.get("dataset_selected", None)
         logger.info(f"Selected dataset from session state: {selected_dataset}")
         dataset_option = st.selectbox(
@@ -685,11 +685,11 @@ def show_initial_page():
 
     dataset_path = ""
 
-    # 处理数据集选择
-    if dataset_option == "MIMIC-IV-ICU":
-        dataset_path = "datasets/mimic-iv-icu"
-        # st.text_input("Dataset Path", dataset_path, disabled=True)
-    elif dataset_option == "eICU-Demo":
+    # # 处理数据集选择
+    # if dataset_option == "MIMIC-IV-ICU":
+    #     dataset_path = "datasets/mimic-iv-icu"
+    #     # st.text_input("Dataset Path", dataset_path, disabled=True)
+    if dataset_option == "eICU-Demo":
         dataset_path = "datasets/eicu-demo"
         # st.text_input("Dataset Path", dataset_path, disabled=True)
     elif dataset_option == "Upload My Own":
