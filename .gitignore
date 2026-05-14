@@ -33,6 +33,7 @@ llm_router/local_model_list.yaml
 llm_router/local_llm_tunnel.sh
 .streamlit/secrets.toml
 config.toml
+.trae
 
 # 凭据和敏感信息
 .aws_creds

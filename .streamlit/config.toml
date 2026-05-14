@@ -1,6 +1,6 @@
 [server]
-sslCertFile = '.streamlit/app.openlens.icu.pem'
-sslKeyFile = '.streamlit/app.openlens.icu.key'
+# sslCertFile = '.streamlit/app.openlens.icu.pem'
+# sslKeyFile = '.streamlit/app.openlens.icu.key'
 folderWatchBlacklist = [
     ".setup",
     ".vscode",
