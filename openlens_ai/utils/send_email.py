@@ -18,7 +18,7 @@ EMAIL_TEMPLATES = {
     "chs": {
         "job_start": "OpenLens 任务已启动 | {thread_id}",
         "job_progress": "OpenLens 任务进度 | {thread_id}",
-        "job_paused": "OpenLens 任务已暂停 | {thread_id}",
+        "job_paused": "OpenLens 任务已暂停，请在网页版继续 | {thread_id}",
         "job_update": "OpenLens 任务更新 | {thread_id}",
         "job_resume": "OpenLens 任务已恢复 | {thread_id}",
         "job_failed": "OpenLens 任务失败 | {thread_id}",
@@ -34,7 +34,7 @@ EMAIL_TEMPLATES = {
     "eng": {
         "job_start": "OpenLens Job Started | {thread_id}",
         "job_progress": "OpenLens Job Progress | {thread_id}",
-        "job_paused": "OpenLens Job Paused | {thread_id}",
+        "job_paused": "OpenLens Job Paused, Resume on the Website | {thread_id}",
         "job_update": "OpenLens Job Update | {thread_id}",
         "job_resume": "OpenLens Job Resumed | {thread_id}",
         "job_failed": "OpenLens Job Failed | {thread_id}",

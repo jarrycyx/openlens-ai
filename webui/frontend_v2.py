@@ -292,10 +292,10 @@ def start_job(question, dataset_path, email, language="chs", custom_config_path=
 
         # Start a new process to run the task
         command = [
-            # "conda",
-            # "run",
-            # "-n",
-            # "openlens",
+            "conda",
+            "run",
+            "-n",
+            "openlens",
             "python",
             "cli.py",
             "--question",
@@ -308,8 +308,8 @@ def start_job(question, dataset_path, email, language="chs", custom_config_path=
             email,
             "--language",
             language_code,
-            "--interrupt-after-subgraph",
-            "literature_reviewer",
+            # "--interrupt-after-subgraph",
+            # "literature_reviewer",
             "--save-root",
             os.path.join("outputs", "user_proj"),
         ]

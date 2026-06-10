@@ -4,24 +4,32 @@ import time
 import psutil
 import argparse
 
+
 def start_vllm_process(model_path, max_len="64000", port="8000", gpu="0", log_to_file=False, extra_args=""):
     gpu_per_process = len(gpu.split(","))
-    
+
     cmd = [
-        "vllm", "serve", model_path, 
-        "--max-model-len", max_len, 
-        # "--tensor-parallel-size", f"{gpu_per_process}", 
-        "--pipeline-parallel-size", f"{gpu_per_process}", 
-        "--port", port,
+        "vllm",
+        "serve",
+        model_path,
+        "--max-model-len",
+        max_len,
+        # "--tensor-parallel-size", f"{gpu_per_process}",
+        "--pipeline-parallel-size",
+        f"{gpu_per_process}",
+        "--port",
+        port,
         # "--enable-expert-parallel",
         # "--gpu-memory-utilization", 0.9,
         "--enable-auto-tool-choice",
-        "--served-model-name", "llm"
+        "--enable-prefix-caching",
+        "--served-model-name",
+        "llm",
     ]
-    
+
     if extra_args:
         cmd += extra_args.split(" ")
-    
+
     if "glm" in model_path.lower():
         tool_parser = "glm45"
         reasoning_parser = "glm45"
@@ -30,23 +38,24 @@ def start_vllm_process(model_path, max_len="64000", port="8000", gpu="0", log_to
         if "coder" in model_path.lower():
             tool_parser = "qwen3_coder"
             cmd += ["--tool-call-parser", tool_parser]
+        elif "qwen3.5" in model_path.lower():
+            # https://modelscope.cn/models/Qwen/Qwen3.5-397B-A17B-FP8
+            cmd += ["--tool-call-parser", "qwen3_coder", "--reasoning-parser", "qwen3"]
         else:
             tool_parser = "hermes"
             cmd += ["--tool-call-parser", tool_parser]
     else:
         print("Model type not recognized. Using hermes parser.")
         cmd += ["--tool-call-parser", "hermes"]
-    
-    
+
     if "AWQ" not in model_path:
         cmd += ["--config-format", "hf"]
-    
-        
+
     this_os_env = os.environ.copy()
     this_os_env["CUDA_VISIBLE_DEVICES"] = str(gpu)
     # this_os_env["CUDA_LAUNCH_BLOCKING"] = "1"
     print(f"Running command: {' '.join(cmd)} on GPU: {gpu}")
-    
+
     if log_to_file:
         timestamp = time.strftime("%Y%m%d_%H%M%S", time.localtime())
         log_dir = os.path.join(os.path.dirname(__file__), "outputs")
@@ -57,6 +66,7 @@ def start_vllm_process(model_path, max_len="64000", port="8000", gpu="0", log_to
     else:
         p = subprocess.Popen(cmd, env=this_os_env)
     return p
+
 
 def kill_process_tree(pid):
     try:
@@ -72,6 +82,7 @@ def kill_process_tree(pid):
     except psutil.NoSuchProcess:
         pass
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Deploy model with vLLM")
     parser.add_argument("-m", "--model", type=str, required=True, help="Model path")
@@ -82,18 +93,18 @@ if __name__ == "__main__":
     parser.add_argument("--enforce-eager", action="store_true", help="Enable eager mode")
     # 后面可以附加更多参数，比如--dtype
     parser.add_argument("--extra", nargs=argparse.REMAINDER, type=str, help="Additional arguments for vLLM", default="")
-    
+
     args = parser.parse_args()
-    
+
     print(f"All args: {args}")
-    
+
     gpu_list = str(args.gpu).split(",")
     port_list = str(args.port).split(",")
     assert len(gpu_list) % len(port_list) == 0, "Port number must be divisible by GPU number"
-    
+
     gpu_per_process = len(gpu_list) // len(port_list)
-    gpu_alloc_list = [gpu_list[i:i+gpu_per_process] for i in range(0, len(gpu_list), gpu_per_process)]
-    
+    gpu_alloc_list = [gpu_list[i : i + gpu_per_process] for i in range(0, len(gpu_list), gpu_per_process)]
+
     proc_list = []
     for gpu_group, port in zip(gpu_alloc_list, port_list):
         print(f"Starting vLLM on GPUs: {gpu_group}, port: {port}")
@@ -106,10 +117,10 @@ if __name__ == "__main__":
             extra_args=" ".join(args.extra),
         )
         proc_list.append(p)
-    
+
     print("Waiting for models to initialize...")
     time.sleep(60)
-    
+
     try:
         while True:
             time.sleep(10)

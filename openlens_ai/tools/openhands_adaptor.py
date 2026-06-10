@@ -64,7 +64,7 @@ def fix_permissions_in_docker_container(oh_config_str: str):
         ]
         for v in all_volumes:
             cmd += ["-v", f"{v}"]
-        cmd += [image_name, "bash", "-c", f"sudo chmod -R 777 /workspace"]
+        cmd += [image_name, "bash", "-c", f"'sudo chmod -R 777 /workspace'"]
         logger.debug(f"Fix permissions command: {' '.join(cmd)}")
         result = subprocess.run(cmd, capture_output=True, text=True)
 
