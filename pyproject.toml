@@ -22,6 +22,7 @@ dependencies = [
   "beautifulsoup4",
   "feedparser",
   "httpx",
+  "chardet",
   "langchain",
   "langchain-mcp-adapters",
   "langchain-openai",
@@ -45,7 +46,9 @@ dependencies = [
   "html2image",
   "streamlit-autorefresh", 
   "langchain_text_splitters", 
-  "cairosvg"
+  "cairosvg",
+  "pdf2image",
+  "psutil"
 ]
 
 [project.scripts]

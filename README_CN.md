@@ -131,6 +131,7 @@ cd ../../
 cd modules/OpenHands
 conda install conda-forge::nodejs
 conda install conda-forge::poetry
+pip install chardet
 make build
 cd ../../
 ```
