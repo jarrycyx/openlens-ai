@@ -14,6 +14,7 @@ from .utils.send_email import send_email, send_localized_email
 from .utils.config import Config
 from .state import State, load_state
 from .build_graph import build_graph, run_graph, all_subgraphs
+from .tools.openhands_adaptor import fix_permissions_in_docker_container
 
 
 def main(config: Config, interrupt_after_subgraph="") -> None:
@@ -36,6 +37,7 @@ def main_resume(
     config, state, start_from_subgraph, file_manager = load_state(
         save_dir, start_from_subgraph=start_from_subgraph, start_from_subtask_index=start_from_subtask_index
     )
+    fix_permissions_in_docker_container(config)
     config.refine_suggestion = refine_suggestion
     if config.refine_suggestion and config.refine_suggestion.strip():
         state["question"] = f"# Refine suggestion: {refine_suggestion}\n\n\n # Original question: {config.question}"

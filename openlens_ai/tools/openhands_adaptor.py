@@ -49,22 +49,43 @@ def get_available_port(start_port=9077):
     return port
 
 
-def fix_permissions_in_docker_container(oh_config_str: str):
+def _build_sandbox_volumes(config: Config) -> str:
+    """Build sandbox volumes string from config, used by both fix_permissions and make_openhands_config."""
+    pwd = os.getcwd()
+    workspace_dir = os.path.join(pwd, config.save_path, "workspace")
+    latex_template_path = os.path.join(pwd, "openlens_ai/tools/latex_template/blank")
+    dot_openhands_path = os.path.join(pwd, "openlens_ai/tools/openhands_configs/dot_openhands")
+
+    if config.dataset_path:
+        dataset_path = os.path.join(pwd, config.dataset_path)
+        return (
+            f"{os.path.abspath(workspace_dir)}:/workspace/:rw,"
+            f"{os.path.abspath(dataset_path)}:/workspace/datasets/:ro,"
+            f"{os.path.abspath(latex_template_path)}:/workspace/latex_template/:ro,"
+            f"{os.path.abspath(dot_openhands_path)}:/workspace/.openhands/:ro"
+        )
+    else:
+        return (
+            f"{os.path.abspath(workspace_dir)}:/workspace/:rw,"
+            f"{os.path.abspath(latex_template_path)}:/workspace/latex_template/:ro,"
+            f"{os.path.abspath(dot_openhands_path)}:/workspace/.openhands/:ro"
+        )
+
+
+def fix_permissions_in_docker_container(config: Config):
     """Run sudo chmod -R 777 command in docker container"""
     try:
-        oh_config = toml.loads(oh_config_str)
-        image_name = oh_config["sandbox"]["runtime_container_image"]
-        volumes = oh_config["sandbox"]["volumes"]
+        image_name = config.docker.docker_name
+        volumes = _build_sandbox_volumes(config)
         all_volumes = [v.strip() for v in volumes.split(",")]
         cmd = [
             "docker",
             "run",
             "--rm",
-            "-it",
         ]
         for v in all_volumes:
             cmd += ["-v", f"{v}"]
-        cmd += [image_name, "bash", "-c", f"'sudo chmod -R 777 /workspace'"]
+        cmd += [image_name, "bash", "-lc", f"sudo chmod -R 777 /workspace"]
         logger.debug(f"Fix permissions command: {' '.join(cmd)}")
         result = subprocess.run(cmd, capture_output=True, text=True)
 
@@ -232,30 +253,14 @@ def make_openhands_config(template, config: Config, port: int):
     oh_config = oh_config.replace("{openhands_traj_path}", openhands_traj_path)
     oh_config = oh_config.replace("{log_completions_folder}", openhands_llm_log_path)
     oh_config = oh_config.replace("{runtime_container_image}", docker_name)
-    
+
     if config.workflow.e2e_test:
         oh_config = oh_config.replace("{default_agent}", "DummyAgent")
         logger.warning("E2E test mode enabled, using DummyAgent")
     else:
         oh_config = oh_config.replace("{default_agent}", "CodeActAgent")
-    
-    if config.dataset_path:
-        dataset_path = os.path.join(pwd, config.dataset_path)
-        assert os.path.exists(dataset_path), f"Dataset path {dataset_path} does not exist."
-        oh_config = oh_config.replace(
-            "{sandbox_volumes}",
-            f"{os.path.abspath(workspace_dir)}:/workspace/:rw,"
-            f"{os.path.abspath(config.dataset_path)}:/workspace/datasets/:ro,"
-            f"{os.path.abspath(latex_template_path)}:/workspace/latex_template/:ro,"
-            f"{os.path.abspath(dot_openhands_path)}:/workspace/.openhands/:ro",
-        )
-    else:
-        oh_config = oh_config.replace(
-            "{sandbox_volumes}",
-            f"{os.path.abspath(workspace_dir)}:/workspace/:rw,"
-            f"{os.path.abspath(latex_template_path)}:/workspace/latex_template/:ro,"
-            f"{os.path.abspath(dot_openhands_path)}:/workspace/.openhands/:ro",
-        )
+
+    oh_config = oh_config.replace("{sandbox_volumes}", _build_sandbox_volumes(config))
     return oh_config
 
 def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True, file_manager: FileManager = None):
@@ -353,7 +358,7 @@ def run_openhands_prompt(prompts, config: Config, add_file_summary: bool = True,
                 config,
             )
             results = run_openhands(cmd, config)
-            fix_permissions_in_docker_container(oh_config)
+            fix_permissions_in_docker_container(config)
             
             # Remove ANSI escape sequences (color codes, etc.)
             results = re.sub(r"\033\[[\d;]*m", "", results)
