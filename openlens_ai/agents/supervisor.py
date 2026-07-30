@@ -5,7 +5,7 @@ from typing_extensions import TypedDict
 
 
 from langgraph.graph import StateGraph, START, END
-from langchain.chat_models import init_chat_model
+from ..utils.llm_provider import build_chat_model
 from langchain_tavily import TavilySearch
 
 from file1agent.file_manager import FileManager
@@ -50,13 +50,7 @@ def build_supervisor(config: Config, file_manager: FileManager) -> StateGraph:
         state["current_subtask_index"] = 1
         return state
 
-    llm = init_chat_model(
-        config.llm.chat.model,
-        base_url=config.llm.chat.base_url,
-        model_provider="openai",
-        openai_api_key=config.llm.chat.api_key,
-        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
-    )
+    llm = build_chat_model(config.llm.chat, enable_thinking=True)
     llm_with_tools = llm.bind_tools(tools)
     chatbot = chatbot_with_context_manager(config, llm_with_tools, prompt, calling_subgraph="supervisor")
     alter_chatbot = chatbot_with_context_manager(config, llm_with_tools, alter_prompt, calling_subgraph="supervisor")

@@ -12,6 +12,8 @@ class ModelConfig(BaseModel):
     model: str = Field(default="", description="Chat model name")
     base_url: Optional[str] = Field(default=None, description="Base URL for API")
     api_key: Optional[str] = Field(default=None, description="API key for chat service")
+    provider: str = Field(default="openai", description="Model provider identifier, e.g. 'openai' or 'minimax'")
+    region: Optional[str] = Field(default=None, description="Provider region profile (e.g. 'global_en' or 'cn_zh') used to resolve the base URL when it is not set explicitly")
 
 class LLMConfig(BaseModel):
     """Language model configuration"""
