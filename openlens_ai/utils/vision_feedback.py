@@ -16,7 +16,7 @@ try:
     from langchain_core.load.dump import dumps
 except ImportError:
     from langchain.load.dump import dumps
-from langchain.chat_models import init_chat_model
+from .llm_provider import build_chat_model
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
 from ..utils.config import Config, get_lang_prompt
@@ -66,13 +66,10 @@ def compress_image(img_data, max_size=4000):
 
 
 def get_vlm(config: Config):
-    return init_chat_model(
-        config.llm.vision.model,
-        base_url=config.llm.vision.base_url,
-        model_provider="openai",
-        openai_api_key=config.llm.vision.api_key,
+    return build_chat_model(
+        config.llm.vision,
+        enable_thinking=True,
         max_tokens=config.context.max_context_token_cnt,
-        extra_body={"chat_template_kwargs": {"enable_thinking": True}, "max_tokens": config.context.max_context_token_cnt},
     )
 
 

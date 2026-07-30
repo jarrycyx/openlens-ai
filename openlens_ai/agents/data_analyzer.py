@@ -7,7 +7,7 @@ from loguru import logger
 import traceback
 
 from langgraph.graph import StateGraph, START, END
-from langchain.chat_models import init_chat_model
+from ..utils.llm_provider import build_chat_model
 from langchain_tavily import TavilySearch
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 
@@ -46,13 +46,7 @@ def build_data_analyzer(config: Config, file_manager: FileManager) -> StateGraph
     # Load prompts based on domain configuration
     data_report_prompt = load_prompt_file(config, "data_report.md")
 
-    llm = init_chat_model(
-        config.llm.chat.model,
-        base_url=config.llm.chat.base_url,
-        model_provider="openai",
-        openai_api_key=config.llm.chat.api_key,
-        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
-    )
+    llm = build_chat_model(config.llm.chat, enable_thinking=True)
     # report_writer_tool = ReportWriterTool(config.save_path, file_name="data_report.md")
     # tools = [report_writer_tool]
     # llm_with_tools = llm.bind_tools(tools)

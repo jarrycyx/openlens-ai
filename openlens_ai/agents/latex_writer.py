@@ -6,7 +6,7 @@ from loguru import logger
 import traceback
 
 from langgraph.graph import StateGraph, START, END
-from langchain.chat_models import init_chat_model
+from ..utils.llm_provider import build_chat_model
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
 from file1agent.file_manager import FileManager
@@ -73,20 +73,8 @@ def build_latex_writer(config: Config, file_manager: FileManager) -> StateGraph:
     latex_literature_check_prompt = load_prompt_file(config, "latex_literature_check.md")
     latex_figure_check_prompt = load_prompt_file(config, "latex_figure_check.md")
 
-    concluder_llm = init_chat_model(
-        config.llm.chat.model,
-        base_url=config.llm.chat.base_url,
-        model_provider="openai",
-        openai_api_key=config.llm.chat.api_key,
-        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
-    )
-    router_llm = init_chat_model(
-        config.llm.chat.model,
-        base_url=config.llm.chat.base_url,
-        model_provider="openai",
-        openai_api_key=config.llm.chat.api_key,
-        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
-    )
+    concluder_llm = build_chat_model(config.llm.chat, enable_thinking=True)
+    router_llm = build_chat_model(config.llm.chat, enable_thinking=True)
 
     report_writer_tool = ReportWriterTool(config.save_path, file_name="manuscript/latex_quality_report.md")
 

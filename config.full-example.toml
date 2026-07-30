@@ -17,6 +17,16 @@ model = "glm-4.1v-9b-thinking"  # The vision model used for image analysis tasks
 base_url = "https://open.bigmodel.cn/api/paas/v4/"  # Base URL for the vision model API service
 api_key = "<YOUR API KEY>"  # API key for accessing the vision model
 
+### Optional: select a non-default model provider.
+### When provider = "minimax", base_url may be omitted and is resolved from region
+### ("global_en" -> https://api.minimax.io/v1, "cn_zh" -> https://api.minimaxi.com/v1).
+### MiniMax-M3 supports "adaptive"/"disabled" thinking; MiniMax-M2.7 always reasons.
+# [llm.chat]
+# provider = "minimax"       # Provider identifier; defaults to "openai" when omitted
+# region = "global_en"       # Region profile: "global_en" or "cn_zh"
+# model = "MiniMax-M3"        # MiniMax-M3 or MiniMax-M2.7
+# api_key = "<YOUR API KEY>"  # API key for the selected provider
+
 [rerank]
 rerank_model = "bge-reranker-v2-m3"  # The reranking model used to improve search result relevance
 rerank_api_key = "<YOUR API KEY>" # API key for accessing the reranking model (infiniai service)

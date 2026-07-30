@@ -5,7 +5,7 @@ import os
 from loguru import logger
 import asyncio
 
-from langchain.chat_models import init_chat_model
+from ..utils.llm_provider import build_chat_model
 from langgraph.graph import StateGraph, END, START
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
@@ -63,20 +63,8 @@ def build_literature_review_subgraph(config: Config, file_manager: FileManager):
     search_prompt_template = load_prompt_file(config, "literature_search.md")
 
     # 初始化语言模型
-    search_llm = init_chat_model(
-        config.llm.chat.model,
-        base_url=config.llm.chat.base_url,
-        model_provider="openai",
-        openai_api_key=config.llm.chat.api_key,
-        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
-    )
-    write_llm = init_chat_model(
-        config.llm.chat.model,
-        base_url=config.llm.chat.base_url,
-        model_provider="openai",
-        openai_api_key=config.llm.chat.api_key,
-        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
-    )
+    search_llm = build_chat_model(config.llm.chat, enable_thinking=True)
+    write_llm = build_chat_model(config.llm.chat, enable_thinking=True)
     search_tools = [
         SearchArxivTool(),
         ReadArxivPaperTool(),
