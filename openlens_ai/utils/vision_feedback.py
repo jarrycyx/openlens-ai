@@ -16,7 +16,7 @@ try:
     from langchain_core.load.dump import dumps
 except ImportError:
     from langchain.load.dump import dumps
-from .llm_provider import build_chat_model
+from .llm_provider import build_chat_model, build_multimodal_message
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 
 from ..utils.config import Config, get_lang_prompt
@@ -346,35 +346,20 @@ def save_llm_call(messages: list, config: Config):
 
 
 
-base64_prefix_png = "data:image/png;base64,"
-MSG_FORMATTERS = [
-    # Formatter A: Standard OpenAI format
-    lambda p, img: [
-        {
-            "role": "user",
-            "content": [{"type": "text", "text": p}, {"type": "image_url", "image_url": {"url": img if img.startswith("data:") else base64_prefix_png + img}}],
-        }
-    ],
-    # # Formatter B: Alternative format for some models
-    # lambda p, img: [
-    #     {
-    #         "role": "user",
-    #         "content": [
-    #             {"type": "text", "text": p},
-    #             {"type": "image", "source_type": "base64", "data": img, "mime_type": "image/jpeg"},
-    #         ],
-    #     }
-    # ],
-]
-
-def call_vlm_with_prompt(config: Config, image_base64: str, prompt: str) -> str:
+def call_vlm_with_prompt(
+    config: Config,
+    media: str,
+    prompt: str,
+    media_type: str = "image",
+) -> str:
     """
     Generic VLM calling function for handling image-related requests
 
     Args:
-        image_base64: Base64 encoded image data
+        media: Media URL, data URI, or base64-encoded image data
         config: Configuration object
         prompt: Prompt text
+        media_type: Input modality, either ``image`` or ``video``
 
     Returns:
         VLM response content
@@ -382,26 +367,32 @@ def call_vlm_with_prompt(config: Config, image_base64: str, prompt: str) -> str:
 
     vlm = get_vlm(config)
 
-    # Select formatter to use
-    formatters = MSG_FORMATTERS
     error_msg = ""
     for try_i in range(3):
-        for this_formatter in formatters:
-            try:
-                # Call VLM to evaluate the image
-                image_message = this_formatter(prompt, image_base64)
-
-                vlm_response = vlm.invoke(image_message)
-                save_llm_call(image_message + [vlm_response], config)
-                logger.debug(f"Vision response: {vlm_response.content}")
-                return vlm_response.content
-            except Exception as e:
-                error_msg = f"Error when calling llm: {e}"
-                logger.warning(f"Error when calling llm: {e}")
-                logger.warning(traceback.format_exc())
-                logger.warning("Retrying...")
-                time.sleep(5)
+        try:
+            media_message = build_multimodal_message(
+                config.llm.vision.provider,
+                config.llm.vision.model,
+                prompt,
+                media,
+                media_type,
+            )
+            vlm_response = vlm.invoke(media_message)
+            save_llm_call(media_message + [vlm_response], config)
+            logger.debug(f"Vision response: {vlm_response.content}")
+            return vlm_response.content
+        except Exception as e:
+            error_msg = f"Error when calling llm: {e}"
+            logger.warning(f"Error when calling llm: {e}")
+            logger.warning(traceback.format_exc())
+            logger.warning("Retrying...")
+            time.sleep(5)
     return error_msg
+
+
+def call_video_vlm_with_prompt(config: Config, video_url: str, prompt: str) -> str:
+    """Call a video-capable vision model with a remote video URL."""
+    return call_vlm_with_prompt(config, video_url, prompt, media_type="video")
 
 
 def _load_prompt(config: Config, prompt_filename: str) -> str:

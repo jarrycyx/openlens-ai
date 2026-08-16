@@ -2,9 +2,12 @@ import unittest
 
 from openlens_ai.utils.llm_provider import (
     MINIMAX_DEFAULT_REGION,
+    MINIMAX_MODEL_INPUT_MODALITIES,
     MINIMAX_REGIONS,
+    build_multimodal_message,
     build_extra_body,
     minimax_base_url,
+    minimax_input_modalities,
     normalize_provider,
     resolve_minimax_region,
     resolve_minimax_thinking_mode,
@@ -47,6 +50,62 @@ class TestLLMProvider(unittest.TestCase):
 
     def test_thinking_mode_unknown_model(self):
         self.assertIsNone(resolve_minimax_thinking_mode("unknown-model", True))
+
+    def test_minimax_model_input_modalities(self):
+        self.assertEqual(
+            MINIMAX_MODEL_INPUT_MODALITIES["MiniMax-M3"],
+            ("text", "image", "video"),
+        )
+        self.assertEqual(minimax_input_modalities("MiniMax-M2.7"), ("text",))
+
+    def test_multimodal_message_formats_image_input(self):
+        self.assertEqual(
+            build_multimodal_message(
+                "minimax",
+                "MiniMax-M3",
+                "Describe this image",
+                "encoded-image",
+                "image",
+            ),
+            [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Describe this image"},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": "data:image/png;base64,encoded-image"
+                            },
+                        },
+                    ],
+                }
+            ],
+        )
+
+    def test_multimodal_message_formats_video_input(self):
+        video_url = "https://media.example/video.mp4"
+        message = build_multimodal_message(
+            "minimax",
+            "MiniMax-M3",
+            "Summarize this video",
+            video_url,
+            "video",
+        )
+        self.assertEqual(
+            message[0]["content"][1],
+            {"type": "video_url", "video_url": {"url": video_url}},
+        )
+
+    def test_multimodal_message_rejects_unsupported_model_input(self):
+        with self.assertRaisesRegex(ValueError, "does not support 'video' input"):
+            build_multimodal_message(
+                "minimax",
+                "MiniMax-M2.7",
+                "Summarize this video",
+                "https://media.example/video.mp4",
+                "video",
+            )
 
     def test_extra_body_openai_default_matches_legacy_payload(self):
         self.assertEqual(
