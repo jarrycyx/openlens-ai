@@ -12,7 +12,7 @@ model_list:
   - model_name: local-llm
     litellm_params:
       model: openai/llm
-      api_base: http://127.0.0.1:8000/v1
+      api_base: http://127.0.0.1:8078/v1
       api_key: "0"
   - model_name: glm-4.7
     litellm_params:
