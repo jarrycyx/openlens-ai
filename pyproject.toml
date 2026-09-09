@@ -37,7 +37,7 @@ dependencies = [
   "pydantic",
   "pypdf",
   "python-dotenv>=1.0.1",
-  "streamlit",
+  "streamlit>=1.40",
   "typing-extensions",
   "pillow",
   "Authlib", 
