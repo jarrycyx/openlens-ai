@@ -48,6 +48,18 @@ MINIMAX_MODEL_THINKING: dict[str, tuple[str, ...]] = {
     "MiniMax-M2.7": ("always_on",),
 }
 
+# Input capabilities are kept with the provider profile so request formatting
+# can reject unsupported media before making a remote call.
+MINIMAX_MODEL_INPUT_MODALITIES: dict[str, tuple[str, ...]] = {
+    "MiniMax-M3": ("text", "image", "video"),
+    "MiniMax-M2.7": ("text",),
+}
+
+MULTIMODAL_CONTENT_TYPES = {
+    "image": "image_url",
+    "video": "video_url",
+}
+
 
 def normalize_provider(provider: Optional[str]) -> str:
     """Return a canonical provider identifier, defaulting to ``openai``."""
@@ -84,6 +96,45 @@ def resolve_minimax_thinking_mode(model: str, enable_thinking: bool) -> Optional
     if enable_thinking:
         return "adaptive" if "adaptive" in modes else modes[0]
     return "disabled" if "disabled" in modes else modes[0]
+
+
+def minimax_input_modalities(model: str) -> tuple[str, ...]:
+    """Return the registered input modalities for a MiniMax model."""
+    return MINIMAX_MODEL_INPUT_MODALITIES.get(model, ("text",))
+
+
+def build_multimodal_message(
+    provider: Optional[str],
+    model: str,
+    prompt: str,
+    media: Optional[str] = None,
+    media_type: str = "text",
+) -> list[dict[str, Any]]:
+    """Build one user message containing text and optional image or video input."""
+    modality = media_type.strip().lower()
+    if normalize_provider(provider) == "minimax":
+        supported = minimax_input_modalities(model)
+        if modality not in supported:
+            raise ValueError(
+                f"MiniMax model {model!r} does not support {modality!r} input; "
+                f"expected one of {supported}"
+            )
+
+    content: list[dict[str, Any]] = [{"type": "text", "text": prompt}]
+    if modality == "text":
+        return [{"role": "user", "content": content}]
+
+    content_type = MULTIMODAL_CONTENT_TYPES.get(modality)
+    if content_type is None:
+        raise ValueError(f"Unsupported media input type: {media_type!r}")
+    if not media:
+        raise ValueError(f"{modality} input requires a URL or data URI")
+
+    media_url = media
+    if modality == "image" and not media.startswith(("data:", "http://", "https://")):
+        media_url = f"data:image/png;base64,{media}"
+    content.append({"type": content_type, content_type: {"url": media_url}})
+    return [{"role": "user", "content": content}]
 
 
 def build_extra_body(
