@@ -40,11 +40,16 @@ MINIMAX_REGIONS: dict[str, dict[str, str]] = {
 }
 MINIMAX_DEFAULT_REGION = "global_en"
 
-# Per-model reasoning ("thinking") capabilities for the MiniMax provider. The
-# tuple lists the thinking modes each model supports; the first entry is used as
-# the fallback when a requested mode is unavailable.
+# Current MiniMax models, with the recommended model first. The tuple lists the
+# thinking modes each model supports; the first mode is the fallback when a
+# requested mode is unavailable.
 MINIMAX_MODEL_THINKING: dict[str, tuple[str, ...]] = {
+    "MiniMax-M3.1-Flash": ("adaptive",),
     "MiniMax-M3": ("adaptive", "disabled"),
+}
+
+# Preserve reasoning behavior for explicitly configured older model IDs.
+_LEGACY_MINIMAX_MODEL_THINKING: dict[str, tuple[str, ...]] = {
     "MiniMax-M2.7": ("always_on",),
 }
 
@@ -76,7 +81,7 @@ def resolve_minimax_thinking_mode(model: str, enable_thinking: bool) -> Optional
     whose only mode is ``always_on`` always reason and expose no toggle, so the
     caller should not send any thinking control for them.
     """
-    modes = MINIMAX_MODEL_THINKING.get(model)
+    modes = MINIMAX_MODEL_THINKING.get(model) or _LEGACY_MINIMAX_MODEL_THINKING.get(model)
     if not modes:
         return None
     if "always_on" in modes:

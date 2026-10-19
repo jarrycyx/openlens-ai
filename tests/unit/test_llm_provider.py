@@ -1,8 +1,12 @@
 import unittest
+from types import ModuleType, SimpleNamespace
+from unittest.mock import Mock, patch
 
 from openlens_ai.utils.llm_provider import (
     MINIMAX_DEFAULT_REGION,
+    MINIMAX_MODEL_THINKING,
     MINIMAX_REGIONS,
+    build_chat_model,
     build_extra_body,
     minimax_base_url,
     normalize_provider,
@@ -37,6 +41,21 @@ class TestLLMProvider(unittest.TestCase):
         with self.assertRaises(ValueError):
             resolve_minimax_region("mars")
 
+    def test_current_minimax_models(self):
+        self.assertEqual(list(MINIMAX_MODEL_THINKING), ["MiniMax-M3.1-Flash", "MiniMax-M3"])
+
+    def test_flash_always_uses_adaptive_thinking(self):
+        for enable_thinking in (True, False):
+            with self.subTest(enable_thinking=enable_thinking):
+                self.assertEqual(
+                    resolve_minimax_thinking_mode("MiniMax-M3.1-Flash", enable_thinking),
+                    "adaptive",
+                )
+                self.assertEqual(
+                    build_extra_body("minimax", "MiniMax-M3.1-Flash", enable_thinking),
+                    {"thinking": {"type": "adaptive"}},
+                )
+
     def test_thinking_mode_adaptive_disabled_model(self):
         self.assertEqual(resolve_minimax_thinking_mode("MiniMax-M3", True), "adaptive")
         self.assertEqual(resolve_minimax_thinking_mode("MiniMax-M3", False), "disabled")
@@ -46,7 +65,38 @@ class TestLLMProvider(unittest.TestCase):
         self.assertEqual(resolve_minimax_thinking_mode("MiniMax-M2.7", False), "always_on")
 
     def test_thinking_mode_unknown_model(self):
-        self.assertIsNone(resolve_minimax_thinking_mode("unknown-model", True))
+        for enable_thinking in (True, False):
+            with self.subTest(enable_thinking=enable_thinking):
+                self.assertIsNone(resolve_minimax_thinking_mode("unknown-model", enable_thinking))
+                self.assertEqual(build_extra_body("minimax", "unknown-model", enable_thinking), {})
+
+    def test_flash_chat_model_forwards_adaptive_thinking_and_options(self):
+        chat_models = ModuleType("langchain.chat_models")
+        chat_models.init_chat_model = Mock()
+        with patch.dict("sys.modules", {"langchain.chat_models": chat_models}):
+            for region, explicit_url, expected_url in (
+                ("global_en", None, "https://api.minimax.io/v1"),
+                ("cn_zh", None, "https://api.minimaxi.com/v1"),
+                ("global_en", "https://proxy.example/v1", "https://proxy.example/v1"),
+            ):
+                with self.subTest(region=region, explicit_url=explicit_url):
+                    model_cfg = SimpleNamespace(
+                        provider="minimax",
+                        model="MiniMax-M3.1-Flash",
+                        region=region,
+                        base_url=explicit_url,
+                        api_key="test-key",
+                    )
+                    model = build_chat_model(model_cfg, enable_thinking=False, max_tokens=2048)
+                    chat_models.init_chat_model.assert_called_with(
+                        "MiniMax-M3.1-Flash",
+                        base_url=expected_url,
+                        model_provider="openai",
+                        openai_api_key="test-key",
+                        max_tokens=2048,
+                        extra_body={"thinking": {"type": "adaptive"}},
+                    )
+                    self.assertIs(model, chat_models.init_chat_model.return_value)
 
     def test_extra_body_openai_default_matches_legacy_payload(self):
         self.assertEqual(
