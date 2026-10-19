@@ -20,11 +20,12 @@ api_key = "<YOUR API KEY>"  # API key for accessing the vision model
 ### Optional: select a non-default model provider.
 ### When provider = "minimax", base_url may be omitted and is resolved from region
 ### ("global_en" -> https://api.minimax.io/v1, "cn_zh" -> https://api.minimaxi.com/v1).
-### MiniMax-M3 supports "adaptive"/"disabled" thinking; MiniMax-M2.7 always reasons.
+### MiniMax-M3.1-Flash always uses adaptive thinking, regardless of the agent's toggle.
+### MiniMax-M3 supports "adaptive"/"disabled" thinking.
 # [llm.chat]
 # provider = "minimax"       # Provider identifier; defaults to "openai" when omitted
 # region = "global_en"       # Region profile: "global_en" or "cn_zh"
-# model = "MiniMax-M3"        # MiniMax-M3 or MiniMax-M2.7
+# model = "MiniMax-M3.1-Flash"  # MiniMax-M3.1-Flash or MiniMax-M3
 # api_key = "<YOUR API KEY>"  # API key for the selected provider
 
 [rerank]
